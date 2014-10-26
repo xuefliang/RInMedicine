@@ -6,6 +6,11 @@ output:
   html_document:
     toc: yes
 ---
+```{r include=FALSE}
+library(epicalc)
+library(mosaic)
+```
+
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
 
 ## 统计量
@@ -37,7 +42,12 @@ result
 mean(sp)
 sd(sp)
 ```
-均值为`r mean(sp)`,标准差为`r sd(sp)`。对均数的95%可信区间的计算可通过t.test()获得。
+均值为`r mean(sp)`,标准差为`r sd(sp)`。对均数和标准差的计算还可以通过summary()函数、epicalc包中的summ()和mosaic包中的favstats()等获得。
+```{r}
+favstats(sp)
+```
+
+对均数的95%可信区间的计算可通过t.test()获得。
 ```{r}
 t.test(sp)
 ```
