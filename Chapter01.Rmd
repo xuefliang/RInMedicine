@@ -3,6 +3,11 @@ title: "描述性统计"
 author: "梁雪枫"
 date: "2014年10月25日"
 output:
+  pdf_document:
+    includes:
+      in_header: header.tex
+    keep_tex: yes
+    latex_engine: xelatex
   html_document:
     toc: yes
 ---
@@ -52,7 +57,7 @@ ks.test(sbp,"pnorm",mean(sbp),sd(sbp))
 mean(sbp)
 sd(sbp)
 ```
-均值为`r mean(sbp)`,标准差为`r sd(sbp)`。对均数和标准差的计算还可以通过base包中的summary()函数、epicalc包中的summ()和mosaic包中的favstats()等方式获得。如favstats()可以一次就可以完成均数和标准差的计算。
+均值为`r mean(sbp)`,标准差为`r sd(sbp)`。对均数和标准差的计算还可以通过base包中的summary()函数、epicalc包中的summ()和mosaic包中的favstats()等方式获得。如favstats()一次就可以完成均数和标准差的计算。
 ```{r}
 favstats(sbp)
 ```
