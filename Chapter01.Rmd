@@ -3,11 +3,13 @@ title: "描述性统计"
 author: "梁雪枫"
 date: "2014年10月25日"
 output:
+  word_document: default
   pdf_document:
     includes:
       in_header: header.tex
     keep_tex: yes
     latex_engine: xelatex
+    toc: yes
   html_document:
     toc: yes
 ---
