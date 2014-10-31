@@ -3,21 +3,22 @@ title: "描述性统计"
 author: "梁雪枫"
 date: "2014年10月25日"
 output:
-  word_document: default
+  html_document:
+    toc: yes
   pdf_document:
     includes:
       in_header: header.tex
     keep_tex: yes
     latex_engine: xelatex
     toc: yes
-  html_document:
-    toc: yes
+  word_document: default
 ---
 
 ```{r include=FALSE}
 library(epicalc)
 library(mosaic)
 library(showtext)
+library(pander)
 ```
 
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
@@ -73,6 +74,8 @@ t.test(sbp)
 ```{r}
 t.test(sbp,conf.level=0.99)
 ```
+
+
 
 
 
