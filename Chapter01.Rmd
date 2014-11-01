@@ -3,15 +3,15 @@ title: "描述性统计"
 author: "梁雪枫"
 date: "2014年10月25日"
 output:
-  word_document: default
+  html_document:
+    toc: yes
   pdf_document:
     includes:
       in_header: header.tex
     keep_tex: yes
     latex_engine: xelatex
     toc: yes
-  html_document:
-    toc: yes
+  word_document: default
 ---
 
 ```{r include=FALSE}
@@ -162,5 +162,8 @@ skewness(S)
 kurtosis(S)
 hist(S,breaks=100)
 ```
-###几何均数
+
+###几何平均数（Geometric mean）
+是n个变量值连乘积的n次方根,几何平均数多用于计算平均比率和平均速度。
+$$H=G=\sqrt[n]{X_{1}*X_{2}*...*X_{n}}=\sum \sqrt[n]{\prod_{i=1}^{n}X_{n}}$$
 
