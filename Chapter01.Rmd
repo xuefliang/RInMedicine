@@ -162,5 +162,5 @@ skewness(S)
 kurtosis(S)
 hist(S,breaks=100)
 ```
-
+###几何均数
 
