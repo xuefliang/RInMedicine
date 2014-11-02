@@ -1,0 +1,81 @@
+---
+title: "数据分布"
+author: "梁雪枫"
+date: "2014年11月02日"
+output:
+  pdf_document:
+    includes:
+      in_header: header.tex
+    keep_tex: yes
+    latex_engine: xelatex
+    toc: yes
+  html_document:
+    toc: yes
+  word_document: default
+---
+
+##正态分布(Normal distribution)
+又名高斯分布(Gaussian distribution)，是一个在数学、物理及工程等领域都非常重要的概率分布，在统计学的许多方面有着重大的影响力。若随机变量X服从一个数学期望为$μ$、方差为$\sigma^2$的正态分布，记为$N(u，\sigma^2)$。其概率密度函数为正态分布的期望值$u$决定了其位置，其标准差$\sigma^2$决定了分布的幅度。因其曲线呈钟形，因此人们又经常称之为钟形曲线。我们通常所说的标准正态分布是$u$ = 0,$\sigma$ = 1的正态分布。
+概率密度函数
+$$f(x)=\frac{1}{\sqrt{2\pi}\sigma}e^{-\frac{(x-\mu)^2}{2\sigma ^2}}$$
+```{r}
+set.seed(1)
+x <- seq(-5,5,length.out=100)
+y <- dnorm(x,0,1)
+  
+plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Normal Density Distribution")
+
+lines(x,dnorm(x,0,0.5),col="green")
+lines(x,dnorm(x,0,2),col="blue")
+lines(x,dnorm(x,-2,1),col="orange")
+
+legend("topright",legend=paste("m=",c(0,0,0,-2)," sd=", c(1,0.5,2,1)), lwd=1, col=c("red", "green","blue","orange"))
+```
+
+累积分布函数
+$$F(x;u,\sigma )=\frac{1}{\sqrt{2\pi}\sigma} \int_{-\infty }^{x}exp(-\frac{(t-u)^2}{2\sigma ^2})dt$$
+```{r}
+set.seed(1)
+x <- seq(-5,5,length.out=100)
+y <- pnorm(x,0,1)
+
+plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Normal Cumulative Distribution")
+
+lines(x,pnorm(x,0,0.5),col="green")
+lines(x,pnorm(x,0,2),col="blue")
+lines(x,pnorm(x,-2,1),col="orange")
+
+legend("bottomright",legend=paste("m=",c(0,0,0,-2)," sd=", c(1,0.5,2,1)), lwd=1,col=c("red", "green","blue","orange"))
+```
+分布检验
+Shapiro-Wilk正态分布检验: 用来检验是否数据符合正态分布，类似于线性回归的方法一样，是检验其于回归曲线的残差。该方法推荐在样本量很小的时候使用，样本在3到5000之间。
+
+该检验原假设为$H_{0}$:数据集符合正态分布，统计量W为：
+$$W=\frac{(\sum_{i=1}^{n}a_{i}x_{(i)})^2}{\sum_{i=1}^{n}(x_{i}-\bar{x})^2}$$
+统计量W 最大值是1，越接近1，表示样本与正态分布匹配,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝$H_{0}$
+```{r}
+set.seed(1)
+S<-rnorm(1000)
+shapiro.test(S)
+```
+结论: W接近1，p-value>0.05，不能拒绝原假设，所以数据集S符合正态分布！
+
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合正态分布，$H_{1}$:样本所来自的总体分布不符合正态分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rnorm(1000)
+ks.test(S, "pnorm")
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合正态分布！
+
+
+
+
