@@ -51,7 +51,7 @@ sbp <- c(147,163,159,124,120,94,135,185,109,143,116,129,157,146,149,127,124,160,
 qqnorm(sbp)
 qqline(sbp)
 #plot(density(sbp)) 核密度
-hist(sbp,breaks=10)
+hist(sbp,freq = F) #freq=T,则绘制频数
 result <- shapiro.test(sbp)
 result
 ks.test(sbp,"pnorm",mean(sbp),sd(sbp))
@@ -97,7 +97,7 @@ income <- c(23408,3468,1939,4360,23545,12233,4583,3546,35781,6578,8981,1345,5567
 qqnorm(income)
 qqline(income)
 #plot(density(income))
-hist(income,breaks=10)
+hist(income,freq = F)
 result <- shapiro.test(income)
 result
 ```
