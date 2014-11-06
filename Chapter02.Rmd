@@ -2,16 +2,15 @@
 title: "数据分布"
 author: "梁雪枫"
 date: "2014年11月02日"
+documentclass: ctexart
 output:
   pdf_document:
-    includes:
-      in_header: header.tex
-    keep_tex: yes
+    fig_caption: yes
     latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
     toc: yes
-  html_document:
-    toc: yes
-  word_document: default
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
 
 ##正态分布(Normal distribution)
