@@ -1,5 +1,6 @@
 ---
 title: "描述性统计"
+author: "梁雪枫"
 documentclass: ctexart
 output:
   pdf_document:

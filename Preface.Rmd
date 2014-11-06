@@ -2,16 +2,15 @@
 title: "前言"
 author: "梁雪枫"
 date: "2014年10月11日"
+documentclass: ctexart
 output:
   pdf_document:
-    includes:
-      in_header: header.tex
-    keep_tex: yes
+    fig_caption: yes
     latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
     toc: yes
-  html_document:
-    toc: yes
-  word_document: default
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
 R目前仍然不为大众所了解，但并不能妨碍其流行趋势，越来越多的人和行业开始使用R做为数据统计工具。相对于R在其他行业的流行，医学领域R应用更加少见，医学领域目前仍然以SPSS和SAS为主，本书主要目的在于将R应用引入到医学领域。
 
