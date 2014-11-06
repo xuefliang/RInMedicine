@@ -1,17 +1,14 @@
 ---
 title: "描述性统计"
-author: "梁雪枫"
-date: "2014年10月25日"
+documentclass: ctexart
 output:
   pdf_document:
-    includes:
-      in_header: header.tex
-    keep_tex: yes
+    fig_caption: yes
     latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
     toc: yes
-  html_document:
-    toc: yes
-  word_document: default
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
 
 ```{r include=FALSE}
@@ -151,11 +148,11 @@ y <- c(6,7,9)
 cor(x,y)
 ```
 ### 偏度(skewness)
-是统计数据分布偏斜方向和程度的度量，是统计数据分布非对称程度的数字特征。设分布函数$F(x)$有中心矩$\mu_{2}=E(X −E(X))^2, \mu_{3} = E(X −E(X))^3$，则$\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$为偏度系数。当$C_{s}$>0时，概率分布偏向均值右则,$C_{s}$<0时，概率分布偏向均值左则。
+是统计数据分布偏斜方向和程度的度量，是统计数据分布非对称程度的数字特征。设分布函数$F(x)$有中心矩$\mu_{2}=E(X-E(X))^2$,$\mu_{3}=E(X-E(X))^3$,则$\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$为偏度系数。当$C_{s}$>0时，概率分布偏向均值右则,$C_{s}$<0时，概率分布偏向均值左则。
 $$C_{s}=\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$$
 
 ###峰度(kurtosis)
-表征概率密度分布曲线在平均值处峰值高低的特征数。峰度刻划不同类型的分布的集中和分散程序。设分布函数$F(x)$有中心矩$\mu_{2}=E(X −E(X))^2, \mu_{4}=E(X −E(X))^4$，则$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$为峰度系数。
+表征概率密度分布曲线在平均值处峰值高低的特征数。峰度刻划不同类型的分布的集中和分散程序。设分布函数$F(x)$有中心矩$\mu_{2}=E(X-E(X))^2$, $\mu_{4}=E(X-E(X))^4$，则$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$为峰度系数。
 $$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$$
 例7. 计算10000个正态分布的样本的偏度和峰度
 ```{r}
