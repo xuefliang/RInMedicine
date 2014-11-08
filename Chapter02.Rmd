@@ -75,6 +75,230 @@ ks.test(S, "pnorm")
 ```
 结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合正态分布！
 
+## 指数分布
+指数分布(Exponential distribution)用来表示独立随机事件发生的时间间隔，比如旅客进机场的时间间隔、中文维基百科新条目出现的时间间隔等等。
 
+许多电子产品的寿命分布一般服从指数分布。有的系统的寿命分布也可用指数分布来近似。它在可靠性研究中是最常用的一种分布形式。指数分布是伽玛分布和weibull分布的特殊情况，产品的失效是偶然失效时，其寿命服从指数分布。
 
+指数分布可以看作当weibull分布中的形状系数等于1的特殊分布，指数分布的失效率是与时间t无关的常数，所以分布函数简单。
+概率密度函数
+$$f(x;\lambda)=\left\{\begin{matrix} \lambda e^{-\lambda x},x>=0
+ &  & \\ 0,x<0
+\end{matrix}\right.$$
+其中$\lambda$> 0是分布的一个参数，常被称为率参数（rate parameter）。即每单位时间发生该事件的次数。指数分布的区间是$[0,\infty)$。 如果一个随机变量X 呈指数分布，则可以写作：$X$ ~ Exponential（$\lambda$）。
+```{r}
+set.seed(1)
+x<-seq(-1,2,length.out=100)
+y<-dexp(x,0.5)
+
+plot(x,y,col="red",xlim=c(0,2),ylim=c(0,5),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Exponential Density Distribution")
+lines(x,dexp(x,1),col="green")
+lines(x,dexp(x,2),col="blue")
+lines(x,dexp(x,5),col="orange")
+
+legend("topright",legend=paste("rate=",c(.5, 1, 2,5)), lwd=1,col=c("red", "green","blue","orange"))
+```
+累积分布函数
+$$F(x;\lambda)=\left\{\begin{matrix} 1-e^{\lambda x},x>=0
+ &  & \\ 0,x<0
+\end{matrix}\right.$$
+```{r}
+set.seed(1)
+x<-seq(-1,2,length.out=100)
+y<-pexp(x,0.5)
+
+plot(x,y,col="red",xlim=c(0,2),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Exponential Cumulative Distribution Function")
+lines(x,pexp(x,1),col="green")
+lines(x,pexp(x,2),col="blue")
+lines(x,pexp(x,5),col="orange")
+
+legend("bottomright",legend=paste("rate=",c(.5, 1, 2,5)), lwd=1, col=c("red", "green","blue","orange"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rexp(1000)
+ks.test(S, "pexp")
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合指数分布！
+
+##γ(伽玛)分布
+伽玛分布(Gamma)是著名的皮尔逊概率分布函数簇中的重要一员，称为皮尔逊Ⅲ型分布。它的曲线有一个峰，但左右不对称。伽玛分布中的参数α，称为形状参数，β称为尺度参数。
+$$Ga(x)=\frac{1}{\beta^{\alpha}\Gamma(\alpha)}x^{\alpha-1}e^{-\frac{x}{\beta}},x>0$$
+伽玛函数为：
+$$\Gamma(x)=\int_{0}^{\infty }t^{x-1}e^{-t}dt$$
+伽玛函数是阶乘在实数上的泛化。
+概率密度函数
+$$f(x)=x^{k-1}\frac{exp(-x/\theta )}{\Gamma (k)\theta^{k}}$$
+```{r}
+set.seed(1)
+x<-seq(0,10,length.out=100)
+y<-dgamma(x,1,2)
+
+plot(x,y,col="red",xlim=c(0,10),ylim=c(0,2),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Gamma Density Distribution")
+
+lines(x,dgamma(x,2,2),col="green")
+lines(x,dgamma(x,3,2),col="blue")
+lines(x,dgamma(x,5,1),col="orange")
+lines(x,dgamma(x,9,1),col="black")
+
+legend("topright",legend=paste("shape=",c(1,2,3,5,9)," rate=", c(2,2,2,1,1)), lwd=1, col=c("red", "green","blue","orange","black"))
+```
+累积分布函数
+$$f(x)=\frac{\gamma (k,x/\theta )}{\Gamma (k)}$$
+```{r}
+set.seed(1)
+x<-seq(0,10,length.out=100)
+y<-pgamma(x,1,2)
+
+plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Gamma Cumulative Distribution Function")
+
+lines(x,pgamma(x,2,2),col="green")
+lines(x,pgamma(x,3,2),col="blue")
+lines(x,pgamma(x,5,1),col="orange")
+lines(x,pgamma(x,9,1),col="black")
+
+legend("bottomright",legend=paste("shape=",c(1,2,3,5,9)," rate=", c(2,2,2,1,1)), lwd=1, col=c("red", "green","blue","orange","black"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rgamma(1000,1)
+ks.test(S, "pgamma", 1)
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合shape=1伽玛分布！
+```{r}
+ks.test(S, "pgamma", 2)
+```
+结论:D值不够小, p-value<0.05，拒绝原假设，所以数据集S符合shape=2伽玛分布！
+##weibull分布
+weibull(韦伯)分布，又称韦氏分布或威布尔分布，是可靠性分析和寿命检验的理论基础。Weibull分布能被应用于很多形式，分布由形状、尺度（范围）和位置三个参数决定。其中形状参数是最重要的参数，决定分布密度曲线的基本形状，尺度参数起放大或缩小曲线的作用，但不影响分布的形状。
+
+Weibull分布通常用在故障分析领域( field of failure analysis)中；尤其是它可以模拟(mimic) 故障率(failture rate)持续( over time)变化的分布。故障率为：
+一直为常量(constant over time)， 那么 $\alpha$ = 1， 暗示在随机事件中发生
+一直减少(decreases over time)，那么$\alpha$ < 1， 暗示"早期失效(infant mortality)"
+一直增加(increases over time)，那么$\alpha$ > 1， 暗示"耗尽(wear out)" 随着时间的推进，失败的可能性变大
+概率密度函数
+$$ f(x;\lambda,k)=\left\{\begin{matrix}
+{k/\lambda (x/\lambda)^{k-1}e^{-(x/\lambda)^{k}}}
+ & \\ 0,x<0
+ & 
+\end{matrix}\right.$$
+```{r}
+set.seed(1)
+x<- seq(0, 2.5, length.out=1000)
+y<- dweibull(x, 0.5)
+
+plot(x, y, type="l", col="blue",xlim=c(0, 2.5),ylim=c(0, 6),
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Weibull Density Distribution")
+
+lines(x, dweibull(x, 1), type="l", col="red")
+lines(x, dweibull(x, 1.5), type="l", col="magenta")
+lines(x, dweibull(x, 5), type="l", col="green")
+lines(x, dweibull(x, 15), type="l", col="purple")
+legend("topright", legend=paste("shape =", c(.5, 1, 1.5, 5, 15)), lwd=1,col=c("blue", "red", "magenta", "green","purple"))
+```
+累积分布函数
+$$ f(x)=1-e^{-(x/\lambda)^{k}}$$
+```{r}
+set.seed(1)
+x<- seq(0, 2.5, length.out=1000)
+y<- pweibull(x, 0.5)
+
+plot(x, y, type="l", col="blue",xlim=c(0, 2.5),ylim=c(0, 1.2),
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Weibull Cumulative Distribution Function")
+
+lines(x, pweibull(x, 1), type="l", col="red")
+lines(x, pweibull(x, 1.5), type="l", col="magenta")
+lines(x, pweibull(x, 5), type="l", col="green")
+lines(x, pweibull(x, 15), type="l", col="purple")
+legend("bottomright", legend=paste("shape =", c(.5, 1, 1.5, 5, 15)), lwd=1, col=c("blue", "red", "magenta", "green","purple"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rweibull(1000,1)
+ks.test(S, "pweibull",1)
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合shape=1的weibull分布！
+
+## F分布
+F-分布（F-distribution）是一种连续概率分布，被广泛应用于似然比率检验，特别是ANOVA中。F分布定义为：设X、Y为两个独立的随机变量，X服从自由度为k1的卡方分布，Y服从自由度为k2的卡方分布，这2 个独立的卡方分布被各自的自由度除以后的比率这一统计量的分布。即： 上式F服从第一自由度为k1，第二自由度为k2的F分布。
+F分布的性质
+
+它是一种非对称分布
+它有两个自由度，即n1 -1和n2-1，相应的分布记为F（ n1 –1， n2-1）， n1 –1通常称为分子自由度， n2-1通常称为分母自由度
+F分布是一个以自由度n1 –1和n2-1为参数的分布族，不同的自由度决定了F 分布的形状
+F分布的倒数性质：$F\alpha,df1,df2=1/F1-\alpha,df1,df2[1]$
+概率密度函数
+$$f(x)=\frac{\sqrt{\frac{d1x^{d1}d2^{d2}}{(d1x+d2)^{d1+d2}}}}{xB(\frac{d1}{2},\frac{d2}{2})}$$
+B是Beta函数(beta function)
+```{r}
+x<-seq(0,5,length.out=1000)
+y<-df(x,1,1,0)
+
+plot(x,y,col="red",xlim=c(0,5),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The F Density Distribution")
+
+lines(x,df(x,1,1,2),col="green")
+lines(x,df(x,2,2,2),col="blue")
+lines(x,df(x,2,4,4),col="orange")
+
+legend("topright",legend=paste("df1=",c(1,1,2,2),"df2=",c(1,1,2,4)," ncp=", c(0,2,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+```
+累积分布函数
+f(x)=I\frac{d1x}{d1x+d2}(d1/2,d2/2)
+I是不完全Beta函数
+```{r}
+set.seed(1)
+x<-seq(0,5,length.out=1000)
+y<-df(x,1,1,0)
+
+plot(x,y,col="red",xlim=c(0,5),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The F Cumulative Distribution Function")
+
+lines(x,pf(x,1,1,2),col="green")
+lines(x,pf(x,2,2,2),col="blue")
+lines(x,pf(x,2,4,4),col="orange")
+
+legend("topright",legend=paste("df1=",c(1,1,2,2),"df2=",c(1,1,2,4)," ncp=", c(0,2,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rf(1000,1,1,2)
+ks.test(S, "pf", 1,1,2)
+```
 
