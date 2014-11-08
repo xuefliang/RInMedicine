@@ -197,9 +197,9 @@ Weibull分布通常用在故障分析领域( field of failure analysis)中；尤
 一直减少(decreases over time)，那么$\alpha$ < 1， 暗示"早期失效(infant mortality)"
 一直增加(increases over time)，那么$\alpha$ > 1， 暗示"耗尽(wear out)" 随着时间的推进，失败的可能性变大
 概率密度函数
-$$ f(x;\lambda,k)=\left\{\begin{matrix}
-{k/\lambda (x/\lambda)^{k-1}e^{-(x/\lambda)^{k}}}
- & \\ 0,x<0
+$$f(x;\lambda,k)=\left\{\begin{matrix}
+{k/\lambda (x/\lambda)^{k-1}e^{-(x/\lambda)^{k}}}, \quad x\geq 0
+ & \\ 0,\quad x<0
  & 
 \end{matrix}\right.$$
 ```{r}
@@ -218,7 +218,7 @@ lines(x, dweibull(x, 15), type="l", col="purple")
 legend("topright", legend=paste("shape =", c(.5, 1, 1.5, 5, 15)), lwd=1,col=c("blue", "red", "magenta", "green","purple"))
 ```
 累积分布函数
-$$ f(x)=1-e^{-(x/\lambda)^{k}}$$
+$$ F(x)=1-e^{-(x/\lambda)^{k}}$$
 ```{r}
 set.seed(1)
 x<- seq(0, 2.5, length.out=1000)
@@ -301,4 +301,215 @@ set.seed(1)
 S<-rf(1000,1,1,2)
 ks.test(S, "pf", 1,1,2)
 ```
+## T分布
+学生t-分布（Student's t-distribution），可简称为t分布。应用在估计呈正态分布的总体的平均数。它是对两个样本均值差异进行显著性测试的学生t检定的基础。学生t检定改进了Z检定（Z-test），因为Z检定以总体标准差已知为前提。虽然在样本数量大（超过30个）时，可以应用Z检定来求得近似值，但Z检定用在小样本会产生很大的误差，因此必须改用学生t检定以求准确。在总体标准差未知的情况下，不论样本数量大或小皆可应用学生t检定。在待比较的数据有三组以上时，因为误差无法压低，此时可以用变异数分析（ANOVA）代替学生t检定。
+概率密度函数
+$$f(x)=\frac{\Gamma ((\nu+1)/2)}{\sqrt{\nu \pi }\Gamma (\nu/2)(1+x^{2}/\nu)^{(v1+1)/2}}$$
+$v$ 等于n − 1。 T的分布称为t-分布。参数$\nu$ 一般被称为自由度。
+$\gamma $是伽玛函数。
+```{r}
+set.seed(1)
+x<-seq(-5,5,length.out=1000)
+y<-dt(x,1,0)
+
+plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,0.5),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The T Density Distribution")
+
+lines(x,dt(x,5,0),col="green")
+lines(x,dt(x,5,2),col="blue")
+lines(x,dt(x,50,4),col="orange")
+
+legend("topleft",legend=paste("df=",c(1,5,5,50)," ncp=", c(0,0,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+```
+累积分布函数
+$$f(x)=\frac{1}{2}+\frac{x\Gamma((\nu+1)/2)_{2}F_{1}(\frac{1}{2},(\nu+1)/2;\frac{3}{2};-\frac{x^{2}}{v})}{\sqrt{\nu \pi }\Gamma (\nu/2)}$$
+$\nu$等于n − 1。 T的分布称为t-分布。参数$\nu$一般被称为自由度。
+$\gamma$是伽玛函数。
+```{r}
+set.seed(1)
+x<-seq(-5,5,length.out=1000)
+y<-pt(x,1,0)
+
+plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,0.5),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The T Cumulative Distribution Function")
+
+lines(x,pt(x,5,0),col="green")
+lines(x,pt(x,5,2),col="blue")
+lines(x,pt(x,50,4),col="orange")
+
+legend("topleft",legend=paste("df=",c(1,5,5,50)," ncp=", c(0,0,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rt(1000, 1,2)
+ks.test(S, "pt", 1, 2)
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合df1=1, ncp=2的T分布！
+##β(贝塔Beta)分布
+贝塔分布(Beta Distribution)是指一组定义在(0,1)区间的连续概率分布，Beta分布有α和β两个参数$\alpha $,$\beta$>0，其中$\alpha $为成功次数加1，$\beta$为失败次数加1。Beta分布的一个重要应该是作为伯努利分布和二项式分布的共轭先验分布出现，在机器学习和数理统计学中有重要应用。贝塔分布中的参数可以理解为伪计数，伯努利分布的似然函数可以表示为，表示一次事件发生的概率，它为贝塔有相同的形式，因此可以用贝塔分布作为其先验分布。
+概率密度函数
+$$f(x)=\frac{1}{B(\alpha,\beta )}(x^{\alpha-1})(1-x)^{\beta-1}$$
+随机变量X服从参数为$\alpha,\beta$，服从Beta分布
+$\gamma$是伽玛函数
+```{r}
+set.seed(1)
+x<-seq(-5,5,length.out=10000)
+y<-dbeta(x,0.5,0.5)
+  
+plot(x,y,col="red",xlim=c(0,1),ylim=c(0,6),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Beta Density Distribution")
+
+lines(x,dbeta(x,5,1),col="green")
+lines(x,dbeta(x,1,3),col="blue")
+lines(x,dbeta(x,2,2),col="orange")
+lines(x,dbeta(x,2,5),col="black")
+
+legend("top",legend=paste("a=",c(.5,5,1,2,2)," b=", c(.5,1,3,2,5)), lwd=1,col=c("red", "green","blue","orange","black"))
+```
+累积分布函数
+$$F(x;\alpha,\beta )=\frac{B_{x}(\alpha,\beta)}{B(\alpha,\beta)}=I_{x}(\alpha,\beta)$$
+I是正则不完全Beta函数
+```{r}
+set.seed(1)
+x<-seq(-5,5,length.out=10000)
+y<-pbeta(x,0.5,0.5)
+
+plot(x,y,col="red",xlim=c(0,1),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Beta Cumulative Distribution Function")
+
+lines(x,pbeta(x,5,1),col="green")
+lines(x,pbeta(x,1,3),col="blue")
+lines(x,pbeta(x,2,2),col="orange")
+lines(x,pbeta(x,2,5),col="black")
+
+legend("topleft",legend=paste("a=",c(.5,5,1,2,2)," b=", c(.5,1,3,2,5)), lwd=1,col=c("red", "green","blue","orange","black"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rbeta(1000,1,2)
+ks.test(S, "pbeta",1,2)
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合shape1=1, shape2=2的Beta分布！
+
+## $\chi^2$(卡方)分布
+若n个相互独立的随机变量$\varepsilon_1$,$\varepsilon_2$$,...,$\varepsilon_n$ ，均服从标准正态分布（也称独立同分布于标准正态分布），则这n个服从标准正态分布的随机变量的平方和构成一新的随机变量，其分布规律称为$\chi^2$分布（chi-square distribution）。其中参数n称为自由度，自由度不同就是另一个$\chi^2$分布，正如正态分布中均值或方差不同就是另一个正态分布一样。
+概率密度函数
+$$f_{k}(x)=\frac{(1/2)^{k/2}}{\Gamma (k/2)}x^{k/2-1}e^{-x/2}$$
+$\gamma$是伽玛函数
+```{r}
+set.seed(1)
+x<-seq(0,10,length.out=1000)
+y<-dchisq(x,1)
+
+plot(x,y,col="red",xlim=c(0,5),ylim=c(0,2),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Chisq Density Distribution")
+
+lines(x,dchisq(x,2),col="green")
+lines(x,dchisq(x,3),col="blue")
+lines(x,dchisq(x,10),col="orange")
+
+legend("topright",legend=paste("df=",c(1,2,3,10)), lwd=1, col=c("red", "green","blue","orange"))
+```
+累积分布函数
+$$f_{k}(x)=\frac{\gamma (k/2,x/2)}{\Gamma (k/2)}$$
+$\gamma$是伽玛函数
+```{r}
+set.seed(1)
+x<-seq(0,10,length.out=1000)
+y<-pchisq(x,1)
+
+plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Chisq Cumulative Distribution Function")
+
+lines(x,pchisq(x,2),col="green")
+lines(x,pchisq(x,3),col="blue")
+lines(x,pchisq(x,10),col="orange")
+
+legend("topleft",legend=paste("df=",c(1,2,3,10)), lwd=1, col=c("red", "green","blue","orange"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-rchisq(1000,1)
+ks.test(S, "pchisq",1)
+```
+
+##均匀分布
+均匀分布(Uniform distribution)是均匀的，不偏差的一种简单的概率分布，分为：离散型均匀分布与连续型均匀分布。
+ 概率密度函数
+ $$f(x)=\left\{\begin{matrix}\frac{1}{b-a} \quad for \quad a\leq x\leq b
+ & \\ 0 \quad elsewhere
+ & 
+\end{matrix}\right.$$
+```{r}
+set.seed(1)
+x<-seq(0,10,length.out=1000)
+y<-dunif(x,0,1)
+
+plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1.2),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Uniform Density Distribution")
+lines(x,dnorm(x,0,0.5),col="green")
+lines(x,dnorm(x,0,2),col="blue")
+lines(x,dnorm(x,-2,1),col="orange")
+lines(x,dnorm(x,4,2),col="purple")
+
+legend("topright",legend=paste("m=",c(0,0,0,-2,4)," sd=", c(1,0.5,2,1,2)), lwd=1, col=c("red", "green","blue","orange","purple"))
+```
+累积分布函数
+$$F(x)\left\{\begin{matrix} 0 \quad for \quad x< a
+ & \\ \quad \frac{x-a}{b-a} \quad for \quad a\leq x < b
+ & \\ 1 \quad for \quad x\geq b
+ & 
+\end{matrix}\right.$$
+```{r}
+set.seed(1)
+x<-seq(0,10,length.out=1000)
+y<-punif(x,0,1)
+
+plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1.2),type='l',
+     xaxs="i", yaxs="i",ylab='density',xlab='',
+     main="The Uniform Cumulative Distribution Function")
+
+lines(x,punif(x,0,0.5),col="green")
+lines(x,punif(x,0,2),col="blue")
+lines(x,punif(x,-2,1),col="orange")
+
+legend("bottomright",legend=paste("m=",c(0,0,0,-2)," sd=", c(1,0.5,2,1)), lwd=1, col=c("red", "green","blue","orange","purple"))
+```
+分布检验
+Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。
+
+该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
+统计量D为: $D=max|F0(x) - Fn(x)|$
+D值越小，越接近0，表示样本数据越接近正态分布,p值，如果p-value小于显著性水平$\alpha$(0.05)，则拒绝H_{0}
+```{r}
+set.seed(1)
+S<-runif(1000)
+ks.test(S, "punif")
+```
+结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合均匀分布！
 
