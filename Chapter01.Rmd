@@ -177,6 +177,7 @@ geosd <- function(x, na.rm = FALSE, ...)
   exp(sd(log(x, ...), na.rm = na.rm, ...))
 }
 s<-c(25,50,50,100,400)
+shapiro.test(log(s))
 geomean(s)
 geosd(s)
 ```
