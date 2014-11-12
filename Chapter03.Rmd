@@ -1,0 +1,102 @@
+---
+title: "参数与非参数估计"
+author: "梁雪枫"
+date: "2014年11月12日"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+```{r include=FALSE}
+library(MASS)
+library(pander)
+```
+
+参数估计(Parameter Estimation)是指用样本指标(称为统计量)估计总体指标(称为参数)。参数估计有点估计(point estimation)和区间估计(interval estimation)两种。 
+
+##点估计
+设总体$X$的分布函数$F(x;\theta)$形式已知，其中$\theta$是待估计的参数，点估计就是利用样本($x_{1},x_{2},...,x_{n}$)，构造一个统计量$\hat{\theta }=\hat{\theta}(x_{1},x_{2},...,x_{n})$来估计$\theta$，称$\hat{\theta}(x_{1},x_{2},...,x_{n})$为$\theta$的点估计量，它是一个随机变量。将样本观测值($x_{1},x_{2},...,x_{n}$)代入估计量$\hat{\theta}(x_{1},x_{2},...,x_{n})$，就得到它的一个具体数值$\hat{\theta}(x_{1},x_{2},...,x_{n})$，这个数值成为$\theta$的点估计值。
+点估计是依据样本估计总体分布中所含的未知参数或未知参数的函数。通常它是总体的某个特征值，如数学期望、方差和相关系数等。点估计问题就是要构造一个只依赖于样本的量，作为未知参数或未知参数的函数的估计值。
+构造点估计常用的方法是：
+
+1.矩估计法  设$(x_{1},x_{2},...,x_{n})$是来自总体$X$的一个样本，根据大数定律，对任意$\varepsilon >0$,有
+$$\lim_{n\rightarrow \infty}P\left \{\right |\bar{X}-E(X)|\geq \varepsilon\}=0$$
+并且对于任何$k$，只要$E(X^{k})$存在，同样有
+$$\lim_{n\rightarrow \infty}P\left \{  \right|\frac{1}{n}\sum_{i=1}^{n}X_{i}^{k}-E(X^{k})|\geq \varepsilon \}=0,k=1,2,...$$
+因此用样本矩估计总体矩，从而得到总体分布中参数的一种估计。如用样本均值估计总体均值。矩法的优点是简单易行，并不需要事先知道总体是什么分布，缺点是当总体类型已知时，没有充分利用分布提供的信息，且矩估计量不具有唯一性。
+
+例1 设某药厂一天中发生着火现象的次数X服从参数为$\lambda $的Poisson分布，$\lambda$未知，有以下样本值，试用矩法估计参数$\lambda$。
+
+着火的次数                 0  1  2  3  4  5  6
+----                      -- -- -- -- -- -- --
+发生k次着火的天数$n_{k}$  75 90 54  22  6  2  1
+
+解 $EX=\lambda,A_{1}=\frac{1}{n}\sum_{i=1}^{n}X_{i}=\bar{X}$,
+
+令$\bar{X}=\lambda $则$\bar{\lambda }=\bar{x}=\frac{1}{250}(0\times 57+1\times 90+...+6\times 1)=1.22$，
+
+所以$\bar{X}=\lambda$,估计值$\hat{\lambda }=1.22$
+
+2.极大似然估计法  它是建立在极大似然原理的基础上的一个统计方法，极大似然原理的直观想法是：一个随机试验如有若干个可能的结果A，B，C，…。若在一次试验中，结果A出现，则一般认为试验条件对A出现有利，也即A出现的概率很大。当从模型总体随机抽取n组样本观测值后，最合理的参数估计量应该是使得从模型中抽取该n组样本观测值的概率最大。在任一次随机抽取中，样本观测值都以一定的概率出现。如果已经知道总体的参数，当然由变量的频率函数可以计算其概率。如果只知道总体服从某种分布，但不知道其分布参数，通过随机样本可以求出总体的参数估计。
+
+例2 对MASS包中的geyser数据，该数据采集自美国黄石公园内的一个名叫Old Faithful 的喷泉。“waiting”就是喷泉两次喷发的间隔时间，“duration”当然就是指每次喷发的持续时间。在这里，我们只用到“waiting”数据
+```{r}
+panderOptions('table.split.table', Inf)
+pander(head(geyser))
+```
+```{r}
+hist(geyser$waiting,freq = F) #从图中可以看出，其分布是两个正态分布的混合。
+```
+用如下的分布函数来描述该数据
+$$f(x)=pN(x_i;\mu_1,\sigma_1)+(1-p)N(x_i;\mu_2,\sigma_2)$$
+该函数中有5个参数$p、\mu_1、\sigma_1、\mu_2、\sigma_2$需要确定。上述分布函数的对数极大似然函数为：
+$$l=\sum_{i=1}^n\log \{pN(x_i;\mu_1,\sigma_1)+(1-p)N(x_i;\mu_2,\sigma_2)\}$$
+在R中定义对数似然函数
+```{r}
+LL<-function(params,data) #定义log-likelihood函数,参数"params"是一个向量，依次包含了五个参数：p,mu1,sigma1,#mu2,sigma2.#参数"data"，是观测数据。
+{
+t1<-dnorm(data,params[2],params[3])  #这里的dnorm()函数是用来生成正态密度函数的。
+t2<-dnorm(data,params[4],params[5])
+f<-params[1]*t1+(1-params[1])*t2
+ll<-sum(log(f))  #混合密度函数,log-likelihood函数
+return(-ll) #nlminb()函数是最小化一个函数的值，但我们是要最大化log-likeilhood函数，所以需要在“ll”前加个“-”号。
+}
+#参数估计
+hist(geyser$waiting,freq = F)
+lines(density(geyser$waiting)) #初始值为p=0.5,mu1=50,sigma1=10,mu2=80,sigma2=10
+geyser.res<-nlminb(c(0.5,50,10,80,10),LL,data=geyser$waiting,lower=c(0.0001,-Inf,0.0001,-Inf,-Inf,0.0001),upper=c(0.9999,Inf,Inf,Inf,Inf))
+```
+估计结果
+```{r}
+geyser.res$par #查看拟合的参数
+X<-seq(40,120,length=100)
+p<-geyser.res$par[1]
+mu1<-geyser.res$par[2]
+sig1<-geyser.res$par[3]
+mu2<-geyser.res$par[4]
+sig2<-geyser.res$par[5]
+f<-p*dnorm(X,mu1,sig1)+(1-p)*dnorm(X,mu2,sig2) #将估计的参数函数代入原密度函数。
+hist(geyser$waiting,probability=T,col=0,ylab="Density", #作出数据的直方图
+     ylim=c(0,0.04),xlab="Eruption waiting times")
+lines(X,f) #画出拟合的曲线
+```
+
+
+
+3.最小二乘法。当从模型总体随机抽取n组样本观测值后，最合理的参数估计量应该使得模型能最好地拟合样本数据，即实际值与估计值的距离最小，主要用于线性统计模型中的参数估计问题。
+
+4.贝叶斯估计法。
+
+##区间估计
+区间估计是依据抽取的样本，根据一定的正确度与精确度的要求，构造出适当的区间，作为总体分布的未知参数或参数的函数的真值所在范围的估计。求置信区间常用的三种方法：
+1.利用已知的抽样分布。
+2.利用区间估计与假设检验的联系。
+3.利用大样本理论。 
+
+##非参数估计
+核密度估计 
