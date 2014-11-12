@@ -492,13 +492,15 @@ ks.test(S, "punif")
 
 ##数据分布直接的关系
 
-![distribution_chart](./distribution_chart.jpg)
+![常见数据分布之间的关系](./distribution_chart.jpg)
 
 ##探索数据分布
 要了解样本数据的总体分布情况，仅有特征统计量是不够的，还需要研究数据的分布状况。经验分布函数是指根据样本构造的概率分布函数，设$x_{1},x_{2},...,x_{n}$为一组样本，定义函数$m(x)$表示样本中小于或者等于$x$的样本个数，则称函数
 $$F_{n}^{x}=\frac{m(x)}{n}$$
 为样本$x_{1},x_{2},...,x_{n}$的经验分布函数。由Glivenko-Cantelli定理，当样本数组数足够大时，经验分布函数是总体分布函数的一个良好的近似。对数据分布的探索可参考下图中的决策树
-![distributions](./distribution.jpg)
+
+![数据分布探索决策树](./distribution.jpg)
+
 例1 探索fitdistrplus中groundbeef的数据分布。
 思路：首先判断数据的特点选择较为可能的分布，然后利用fitdist()获得可能分布的参数估计，再利用gofstat()选择较优的分布，最后可用ks.test()进行验证。
 ```{r}
