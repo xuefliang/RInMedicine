@@ -15,6 +15,7 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ```{r include=FALSE}
 library(MASS)
 library(pander)
+library(mixtools)
 ```
 
 参数估计(Parameter Estimation)是指用样本指标(称为统计量)估计总体指标(称为参数)。参数估计有点估计(point estimation)和区间估计(interval estimation)两种。 
@@ -54,7 +55,7 @@ sigma
 
 2.极大似然估计法（MLE）  它是建立在极大似然原理的基础上的一个统计方法，极大似然原理的直观想法是：一个随机试验如有若干个可能的结果A，B，C，…。若在一次试验中，结果A出现，则一般认为试验条件对A出现有利，也即A出现的概率很大。当从模型总体随机抽取n组样本观测值后，最合理的参数估计量应该是使得从模型中抽取该n组样本观测值的概率最大。在任一次随机抽取中，样本观测值都以一定的概率出现。如果已经知道总体的参数，当然由变量的频率函数可以计算其概率。如果只知道总体服从某种分布，但不知道其分布参数，通过随机样本可以求出总体的参数估计。
 
-例2 对MASS包中的geyser数据，该数据采集自美国黄石公园内的一个名叫Old Faithful 的喷泉。“waiting”就是喷泉两次喷发的间隔时间，“duration”当然就是指每次喷发的持续时间。在这里，我们只用到“waiting”数据
+例3 对MASS包中的geyser数据，该数据采集自美国黄石公园内的一个名叫Old Faithful 的喷泉。“waiting”就是喷泉两次喷发的间隔时间，“duration”当然就是指每次喷发的持续时间。在这里，我们只用到“waiting”数据
 ```{r}
 panderOptions('table.split.table', Inf)
 pander(head(geyser))
@@ -98,7 +99,47 @@ lines(X,f) #画出拟合的曲线
 
 3.最小二乘法。当从模型总体随机抽取n组样本观测值后，最合理的参数估计量应该使得模型能最好地拟合样本数据，即实际值与估计值的距离最小，主要用于线性统计模型中的参数估计问题。
 
-4.EM算法。 EM算法是一种在观测到数据后，用迭代法估计未知参数的方法。可以证明EM算法得到的序列是稳定单调递增的。这种算法对于截尾数据或参数中有一些不感兴趣的参数时特别有效。EM算法的步骤为：E-step（求期望）：在给定y及theta=theta（i）的条件下，求关于完全数据对数似然关于潜在变量z的期望。M-step（求极值）：求上述期望关于theta的最大值theta（i+1）重复以上两步，直至收敛即可得到theta的MLE。可以看到对于一个参数的情况，EM仅仅只是求解MLE的一个迭代算法。
+例4 用最小二乘法估计线性回归模型
+```{r}
+x <- c(5.05, 6.75, 3.21, 2.66)
+y <- c(1.65, 26.5, -5.93, 7.96)
+lsfit(x, y)$coefficients #或者lm(y ~ x)$coefficients
+plot(x, y)
+abline(lsfit(x, y)$coefficients, col="red")
+```
+
+4.EM算法。 EM算法是一种在观测到数据后，用迭代法估计未知参数的方法。可以证明EM算法得到的序列是稳定单调递增的。这种算法对于截尾数据或参数中有一些不感兴趣的参数时特别有效。EM算法的步骤为：E-step（求期望）：利用对隐藏变量的现有估计值，计算其最大似然估计值。M-step（求极值）：最大化在 E 步上求得的最大似然值来计算参数的值，重复以上两步，直至收敛即可得到theta的MLE。可以看到对于一个参数的情况，EM仅仅只是求解MLE的一个迭代算法。
+```{r}
+sim.x <- c()  
+sim.y <- c()  
+
+# 用循环产生2000个点
+for (i in 1:2000) {
+    # first draw to determine which normal distribution is used
+  first.draw = rmultinom(1, 1, c(0.1, 0.2, 0.7))[, 1]
+  y = which(first.draw == 1)
+  sim.y[i] = y
+  
+  # second draw to generate X from corresponding distribution
+  if (y == 1) {
+    x = rnorm(1, mean = 0, sd = 1)
+    sim.x[i] = x
+  }
+  if (y == 2) {
+    x = rnorm(1, mean = 10, sd = 5)
+    sim.x[i] = x
+  }
+  if (y == 3) {
+    x = rnorm(1, mean = -10, sd = 1)
+    sim.x[i] = x
+  }
+}
+plot(density(sim.x), main = "Density plot of sim.x")
+
+mix.model <- normalmixEM(sim.x, lambda = c(0.3, 0.3, 0.4), mu = c(-20, 0, 20), sigma = c(1, 1, 1), k = 3)
+summary(mix.model)
+plot(mix.model, which = 2, density = TRUE)
+```
 
 5.Bootstrap法 以原始数据为基础的模拟抽样统计推断法,可用于研究一组数据的某统计量的分布特征,特别适用于那些难以用常规方法导出对参数的区间估计、假设检验等问题。“Bootstrap”的基本思想是:在原始数据的围内作有放回的再抽样,样本含量仍为n,原始数据中每个观察单位每次被抽到的概率相等,为1，…,n,所得样本称为bootstrap样本。于是可得到参数Η的一个估计值Η(b),这样重复若干次,记为B。设B=1000,就得到该参数的1000个估计值,则参数Η的标准误的bootstrap估计。简而言之就是：就是从样本中重复抽样。
 ```{r}
