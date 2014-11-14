@@ -2,16 +2,19 @@
 title: "参数与非参数估计"
 author: "梁雪枫"
 date: "2014年11月12日"
-documentclass: ctexart
 output:
+  html_document:
+    toc: yes
   pdf_document:
     fig_caption: yes
     latex_engine: xelatex
     number_sections: yes
-    template: !expr rticles::ctex_template()
+    template: C:/Program Files/R/R-3.1.1/library/rticles/rmarkdown/templates/ctex/resources/default.latex
     toc: yes
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+documentclass: ctexart
+classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
 ---
+
 ```{r include=FALSE}
 library(MASS)
 library(pander)
@@ -153,10 +156,86 @@ sd(boot)
 
 
 ##区间估计
-区间估计是依据抽取的样本，根据一定的正确度与精确度的要求，构造出适当的区间，作为总体分布的未知参数或参数的函数的真值所在范围的估计。求置信区间常用的三种方法：
-1.利用已知的抽样分布。
-2.利用区间估计与假设检验的联系。
-3.利用大样本理论。 
+由于点估计不能说明估计值与真实值的偏差到底有多大，也不能说明这个估计有多大的可行度，这些问题需要区间估计予以解决。区间估计是依据抽取的样本，根据一定的正确度与精确度的要求，构造出适当的区间，作为总体分布的未知参数或参数的函数的真值所在范围的估计。求置信区间常用的三种方法：1.利用已知的抽样分布.利用区间估计与假设检验的联系。3.利用大样本理论。 
+
+设总体X的分布中含有未知参数$\thera,\\alpha $是任意给定的正数$(0< \alpha < 1)$，如果能从样本除服确定出两个统计量$\hat{\theta }_{1}(x_{1},x_{2},...,x_{n}),\hat{\theta }_{2}(x_{1},x_{2},...,x_{n})$，使得
+$$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha $$
+成立，我们称$1-\alpha$为置信度或置信概率，区间$\hat{\theta }_{1},\hat{\theta }_{2}$为参数$\theta$的置信度为$1-\alpha$的置信区间。分别称$\hat{\theta }_{1},\hat{\theta }_{2}$为置信上线和置信下线。
+置信度为0.95是指100组样本值所得置信区间的实现中，约有95个能覆盖$\theta$，而不是说一个实现以0.95的概率覆盖了$\theta$。区间的宽度反应了估计的精度，区间越小，精度越高。区间估计中精确性和可靠性是相互矛盾的。当样本容量一定时，提供估计的可靠性，将降低估计的精度，相反，提高估计的精确性，将降低估计的可靠性。实际使用中，总是在保证一定的可靠度的情况下尽可能地提高其精度。
+区间估计的基本步骤
+1.选取一个合适的随机变量T,这个随机变量一方面包括了待估参数$\theta$，另一方面，它的分布是已知的；
+2.根据实际需要，选取合适的置信度$1-\alpha$；
+3.根据相应分布的分位数的概念，写出如下形式的概率表达式
+$$P\left \{ T_{1}<T <T_{2}  \right \}=1-\alpha $$
+4.将上式表达形式变为
+$$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha $$
+5.写出参数$\theta$的置信区间$\hat{\theta }_{1},\hat{\theta }_{2}$
+
+### 单正态总体参数的区间估计
+
+#### 方差已知时的均值的区间估计
+总体方差已知，均值的置信度为$1-\alpha$的单侧置信上限$\bar{X}+\frac{\sigma }{\sqrt{n}}z_{1-\alpha }$,单侧置信下线$\bar{X}-\frac{\sigma }{\sqrt{n}}z_{1-\alpha }$。
+例 某单位随机抽样的15位人员的身高称自己的身高分别为: 159 158 164 169 161 161 160 157 158 163 161 154 166 168 159,  假设身高服从正态分布,方差为4, 要求估计该单位人员身高的置信水平为95%的置信区间.
+
+```{r}
+z.test<-function(x,n,sigma,a,u0=0,alt="two.sided"){
+  result<-list()
+  mean<-mean(x)
+  z<-(mean-u0)/(sigma/sqrt(n))
+  p<-pnorm(z,lower.tail=F)
+  result$z<-z
+  result$p.value<-p
+  if(alt=="two.sided"){
+    result$p.value<-2*p
+  }
+  else if (alt == "greater"|alt =="less" ){
+    result$p.value<p
+  }
+  result$interval<-c(mean-sigma*qnorm(1-a/2,0,1)/sqrt(n),mean+sigma*qnorm(1-a/2,0,1)/sqrt(n))
+  result
+}
+
+x<-c(159,158,164,169,161,161,160,157,158,163,161,154,166,168,159)
+result<-z.test(x,length(x),4,0.05)
+```
+
+#### 方差未知时的均值的区间估计
+总体方差未知，均值的置信度为$1-\alpha$的单侧置信上限$\bar{X}+\frac{\sigma }{\sqrt{n}}t_{1-\alpha }$,单侧置信下线$\bar{X}-\frac{\sigma }{\sqrt{n}}t_{1-\alpha }$。
+方差未知时我们直接利用R语言的t.test( )来求置信区间。上例假设不知道总体的方差
+```{r}
+t.test(x)
+```
+
+#### 方差的区间估计
+方差置信水平$1-\alpha$的置信区间为\left ( \frac{(n-1)S^{2}}{\chi_{1-\alpha /2}^{2}(n-1)},\frac{(n-1)S^{2}}{\chi_{\alpha/2}^{2}(n-1)} \right )
+上例假设不知道总体的方差
+```{r}
+chisq.var.test<-function(x,n,a,alt="two.sided",sigma0=1)
+{
+  result<-list()
+  v<-var(x)
+  result$interval<-c((n-1)*v/qchisq(1-a/2,n-1,lower.tail=T),(n-1)*v/qchisq(a/2,n-1,lower.tail=T))
+  chi2<-(n-1)*v/sigma0
+  result$chi2<-chi2
+  p<-pchisq(chi2,n-1)
+  if(alt=="two.sided")
+    result$p.value<-2*min(pchisq(chi2,n-1),pchisq(chi2,n-1,lower.tail=F))
+  else
+    result$p.value<-pchisq(chi2,n-1,lower.tail=F)
+  result
+}
+
+chisq.var.test(x,15,0.05)
+```
+
+### 两正态总体参数的区间估计
+
+#### 两方差都已知时两均值差的置信区间
+
+#### 两方差都未知但相等时两均值差的置信区间
+
+#### 两方差比的置信区间
+
 
 ##非参数估计
 核密度估计 
