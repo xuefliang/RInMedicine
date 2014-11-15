@@ -17,6 +17,7 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 library(MASS)
 library(pander)
 library(mixtools)
+library(boot)
 ```
 
 参数估计(Parameter Estimation)是指用样本指标(称为统计量)估计总体指标(称为参数)。参数估计有点估计(point estimation)和区间估计(interval estimation)两种。 
@@ -280,13 +281,56 @@ var.test(x,y)
 ```
 
 ##单总体比率$p$的区间估计
-总体比例为$p$的置信水平$1-\alpha$的置信区间为$\left ( \hat{p}-z_{1-\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n},\hat{p}+z_{1-\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n} \right )$
+$x$为容量为n的样本中具有某种特征的个体数量，则样本比例为$x/n$。当总体中的样品数足够多时，$x$近似服从二项分布$b(n,p)$ (实际上它是超几何分布),这时总体比例可用样本比例来估计,总体比例为$p$的置信水平$1-\alpha$的置信区间为$\left ( \hat{p}-z_{1-\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n},\hat{p}+z_{1-\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n} \right )$
 
 例10 在某小学随机抽取了120人，发现其中34人有不同程度的视力下降，假定样本的数量服从正态分布，以95%的置信度, 估计这个小学视力下降比例。
 
 ```{r}
 prop.test(34,120,correct=TRUE) #correct选项为是否做连续性校正
+binom.test(34,120)
 ```
 
 ##两总体比率差$p_{1}-p{2}$的区间估计
+在近似正态性下$p_{1}-p{2}$置信水平为$1-\alpha$的区间估计$(\hat{p_{1}}-\hat{p_{2}})\pm z_{1-\alpha/2}\sqrt{\frac{\hat{p_{1}}(1-\hat{p_{1}})}{n_{1}}+\frac{\hat{p_{2}}(1-\hat{p_{2}})}{n_{2}}}$
+
+例11 对某疾病进行调查。在甲地区调查了160人，有98人符合诊断标准，在乙地区调查了206人，有132人符合诊断标准。试以95%的可靠性对该病在两地差别作出区间估计。
+```{r}
+s <- c(98,132)
+t <- c(160,206)
+prop.test(s,t)
+```
+
+## 基于Bootstrap的区间估计
+对于大多数的统计量而言，计算置信区间的数学公式太过复制或者根本没有数学公式，因而没有计算置信区间的已知的解析形式的公式。采用Bootstrap方法，解析形式的数据公式是不必知道的。当样本不符合理论分布假设时，求样本统计量的置信区间就成为一个难题。而自助法(Bootstrap)的思路是对原始样本重复抽样产生多个新样本，针对每个样本求取统计量，然后得到它的经验分布，再通过求经验分布的分位数来得到统计量的置信区间，这种方法不需要对统计量有任何理论分布的假设。一般认为，只要样本具有代表性，采用自助法需要的原始样本只要20-30个,重复抽样1000次就能达到满意的结果。在R中进行自助法是利用boot扩展包，其流程如下：1.编写一个求取统计量的自定义函数 2.将上面的函数放入boot（）函数中进行运算，得到自助法的结果 3.用boot.ci()函数求取置信区间
+
+例12 对mtcars数据集中的mpg变量估算其中位数的置信区间，将wt和disp作为自变量，mpg 作为因变量，进行回归后对判定系数R-square，用自助法求它的95%置信区间。
+```{r}
+myfun <- function(data,indices){
+  d <- data[indices,]
+  rs <- median(d$mpg)
+  return (rs)
+}
+
+results=boot(data=mtcars,statistic=myfun ,R=1000) #results这个数据结构中包括了原始样本的统计(results$t0)和再抽样样本的统计量(results$t0)，
+boot.ci(results,conf=0.95,type=c('perc','bca')) 
+#其中conf表示置信水平，type表示了用何种算法来求区间，perc即使用百分位方法，bca表示adjusted bootstrap percentile，即对偏差进行了调整
+
+rsq=function(data,indices){
+d=data[indices,]
+fit=lm(formula=mpg~wt+disp,data=d)
+return(summary(fit)$r.square)
+}
+results=boot(data=mtcars,statistic=rsq,R=1000)
+print(results)
+plot(results) 
+#左侧的直方图表示了再抽样样本的统计量的经验分布，其中的虚线表示了原始样本的统计量，从中可以观察到偏差。右侧QQ图有助于判断经验分布是否正态。
+boot.ci(results,conf=0.95,type=c('perc','bca'))
+
+```
+
 ##样本容量的确定
+
+###估计正态总体均值时样本容量的确定
+####总体方差$\sigma ^{2}$已知
+####总体方差$\sigma ^{2}$未知
+###估计比例p时样本容量的确定
