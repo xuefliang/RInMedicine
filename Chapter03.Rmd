@@ -328,6 +328,29 @@ boot.ci(results,conf=0.95,type=c('perc','bca'))
 
 ```
 
+例12 假定例10的样本数量的分布状况未知，以95%的置信度, 估计这个小学视力下降比例。
+
+```{r}
+p.test <- function(x,n)
+{
+  n <- rep(0,each=n)
+  n[seq(1,x)] <- 1
+  data <- as.data.frame(n)
+  
+  p <- function(data,indices)
+  {
+    d <- data[indices,]
+    ratio<- sum(d)/length(d)
+    return (ratio)
+  }
+  results=boot(data=data,statistic=p,R=1000)
+  boot.ci(results,conf=0.95,type=c('perc','bca'))
+}
+  
+p.test(34,120)
+```
+
+
 ##样本容量的确定
 
 ###估计正态总体均值时样本容量的确定
