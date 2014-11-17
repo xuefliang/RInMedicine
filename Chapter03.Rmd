@@ -396,18 +396,18 @@ size.norm3 <- function(d,s,alpha,beta){
 size.norm3(0.52,1.28,0.05,0.1)
 
 ```
+
 ###单样本估计比例p时样本容量的确定
-z在置信度为$1-\alpha$,最大容许误差为$d$,样本容量为$n=\left ( \frac{z_{1-\alpha /2}}{d} \right )^{2}p(1-p)$
+在置信度为$1-\alpha$,最大容许误差为$d$,样本容量为$n=\left ( \frac{z_{1-\alpha /2}}{d} \right )^{2}p(1-p)$
 
 例16 某实验器材损坏率不超过5%. 现要估计某批产品中的损坏率,要求估计与真值间不超过1%, 且置信度为0.90, 那么要抽取多少样本验收可满足上述要求?
 
 ```{r}
-size.bin<-function(d, p, conf.level=0.95) {
-  alpha = 1 - conf.level
+size.bin<-function(d, p, alpha) {
   ((qnorm(1-alpha/2))/d)^2*p*(1-p)
 }
 
-size.bin(0.01, 0.05, 0.90)
+size.bin(0.01, 0.05, 0.1)
 ```
 
 若样本的置信度为$1-\alpha$,$1-\beta$为检验功效，最大容许误差为$d$,样本容量为$n=(\frac{z_{\alpha }+z_{\beta }}{d})^{2}p(1-p)$。
@@ -472,7 +472,33 @@ size.bin3<-function(p1,p2,q1,q2,alpha,beta) {
 
 size.bin3(0.94,0.85,0.60,0.40,0.05,0.1)
 ```
-#
+####诊断实验中样本容量的估计
+当p接近0.5时，估计公式为$n=\frac{z_{\alpha }^{2}p*(1-p)}{d^{2}}$,p为灵敏度或特异度，d为容许误差。
+当p大于0.8时，估计公式为$n=\left (\frac{57.3z_{\alpha }}{sin^{-1}(d/\sqrt{p(1-p)})}  \right )^{2}$
+
+例21 欲对诊断冠心病的A试验进行评价研究，据初步估计该试验的灵敏度为0.9，特异度为0.86，设计$\alpha=0.05$取双侧，$d=0.05$，试估计样本容量？
+```{r}
+size.diagnosis <- function(p,d,alpha){
+  temp <- (qnorm(1-alpha/2))^2*p*(1-p)
+  (temp/d^2)
+}
+#灵敏度的样本容量
+size.diagnosis(0.9,0.05,0.05)
+#特异度的样本容量
+size.diagnosis(0.85,0.05.0.05)
+```
+```{r echo=FALSE}
+size.diagnosis2 <- function(p,d,alpha){
+  tmp <- 57.3*qnorm(1-alpha/2)
+  temp <- d/sqrt(p*(1-p))
+  ((tmp/asin(temp))^2)
+}
+size.diagnosis2(0.p,0.05,0.05)
+```
+
+若均数的变异系数$CV=\frac{\sigma }{\mu }$,均数的样本容量$n=\left ( \frac{z_{\alpha }CV}{d} \right )^{2}$
+
+若率的变异系统$CV=\sqrt{\frac{1-P}{P}}$,率的样本容量若P在0.2和0.8之间$n=\frac{z_{\alpha }^{2}(1-P)}{d^{3}P}$，若P小于0.2或者大于0.8,$n=\frac{57.3z_{\alpha}}{sin^{-1}[dP/\sqrt{P(1-P)}]}$
 
 
 
