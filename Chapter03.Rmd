@@ -423,7 +423,7 @@ size.bin2(0.13,0.8,0.05,0.10)
 ```
 例17 描述性调查研究时，某病的患病率估计为30%,95%置信区间不超过患病率的5%，计算所需的样本容量。
 ```{r}
-size.bin(0.05,0.3)
+size.bin(0.05,0.3,0.05)
 ```
 ###两样本估计正态总体均值时样本容量的确定
 常通过假设检验的公式反推而得到。
@@ -485,20 +485,29 @@ size.diagnosis <- function(p,d,alpha){
 #灵敏度的样本容量
 size.diagnosis(0.9,0.05,0.05)
 #特异度的样本容量
-size.diagnosis(0.85,0.05.0.05)
-```
-```{r echo=FALSE}
-size.diagnosis2 <- function(p,d,alpha){
-  tmp <- 57.3*qnorm(1-alpha/2)
-  temp <- d/sqrt(p*(1-p))
-  ((tmp/asin(temp))^2)
-}
-size.diagnosis2(0.p,0.05,0.05)
+size.diagnosis(0.85,0.05,0.05)
 ```
 
 若均数的变异系数$CV=\frac{\sigma }{\mu }$,均数的样本容量$n=\left ( \frac{z_{\alpha }CV}{d} \right )^{2}$
-
+  
 若率的变异系统$CV=\sqrt{\frac{1-P}{P}}$,率的样本容量若P在0.2和0.8之间$n=\frac{z_{\alpha }^{2}(1-P)}{d^{3}P}$，若P小于0.2或者大于0.8,$n=\frac{57.3z_{\alpha}}{sin^{-1}[dP/\sqrt{P(1-P)}]}$
+ 
+ 例22 从某中学5400名学生中抽取270人作为样本进行近视眼情况预调查。结果为：平均视力为0.8，标准差为0.54。患近视眼的学生工123人。试估计该中学学生的平均视力及患近视眼学生共为123人。试估计该中学学生的平均视力及患近视眼的比例。要求相对误差为10%，置信水平为$\alpha=0.05$。
+ 
+```{r}
+size.cv.norm<- function(s,mean,d,alpha){
+  cv <- s/mean
+  (qnorm(1-alpha/2)*cv/d)^2
+}
+size.cv.norm(0.54,0.8,0.1,0.05)
+
+size.cv.p.norm <- function(p,d,alpha){
+  (qnorm(1-alpha/2))^2*(1-p)/(d^3*p)  
+}
+
+size.cv.p.norm (123/270,0.1,0.05)
+```
+
 
 
 
