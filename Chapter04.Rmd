@@ -1,0 +1,80 @@
+---
+title: "样本容量估计"
+author: "梁雪枫"
+date: "2014年11月18日"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+
+```{r include=FALSE}
+library(TrialSize)
+```
+
+样本容量过小，信息不充分，所得指标不够稳定，抽样误差较大，结论的可靠性差，用于推断总体的精度差，检验效能低，会导致总体中存在的差异未能检验出来，出现假阴性的结果。样本容量过大，花费的人力、物力、财力和时间较大，还会增加工作中质量控制的难度，样本量过大还可能引入更多的混杂因素，对研究结果产生不良影响。常见样本容量的影响因素如下1.第一类错误的大小$\alpha$(或置信度为$1-\alpha$)，$\alpha$越小所需的样本容量越大。2.第二类错误的大小$\beta$，$\beta$越小，检验效能$1-\beta$越大，所需的样本量也越大，一般要求检验效能不低于0.8。在参数估计的样本容量估计中不设计$\beta$。3.容许误差d，是指研究者要求的或者客观存在的样本统计量和总体参数间或样本统计量间的差值，或专业上认为有意义的最小差值，容许误差越小，所需样本两越大。4.总体标准差s或者总体率p，常根据预实验以及既往资料进行估计，其值越大或远离0.5时，所需样本量越大。
+
+##均数比较的样本量估计
+###单组设计
+####差异性检验
+当总体方差为$sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$,样本容量为$n= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
+
+例1 用某药治疗高胆固醇血症。已知：血清高胆固醇平均降低0.52mmol/L在专业上认为有意义。若总体方差为1.28mmol/L，$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+OneSampleMean.Equality(0.05,0.1,1.28,0.52)
+```
+当总体方差未知检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$,样本容量为$n= \frac{(t_{\alpha/2}+t_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
+
+例2 假设例1总体方差未知，样本标准差为1.28mmol/L，问需要多大的样本容量？
+```{r}
+OneSampleMean.Equality2 <- function(alpha, beta, sigma, margin,m=1000)
+{
+  t0<-qt(alpha/2,m,lower.tail=FALSE)+qt(beta,m,lower.tail=FALSE)
+  n0 <- (t0*sigma/margin)^2
+  t1 <- qt(alpha/2,n0,lower.tail=FALSE)+qt(beta,n0,lower.tail=FALSE)
+  n1<-(t1*sigma/margin)^2
+  while(abs(n1-n0)>0.5){
+    n0<-((qt(alpha/2,n1,lower.tail=FALSE)+qt(beta,n1,lower.tail=FALSE))*sigma/margin)^2
+    n1<-((qt(alpha/2,n0,lower.tail=FALSE)+qt(beta,n0,lower.tail=FALSE))*sigma/margin)^2
+  }
+  n1
+}
+
+OneSampleMean.Equality2(0.05,0.1,1.28,0.52)
+```
+
+####非劣效/优效性检验
+####等效性检验
+###两组设计
+####差异性检验
+####非劣效/优效性检验
+####等效性检验
+###多组设计
+####差异性检验
+##率比较的样本量估计
+###单组设计
+####差异性检验
+####非劣效/优效性检验
+####等效性检验
+###两组设计
+####差异性检验
+####非劣效/优效性检验
+####等效性检验
+###基于优势比的检验
+####差异性检验
+####非劣效/优效性检验
+####等效性检验
+##生存分析的样本量估计
+###基于指数模型的生存分析
+####差异性检验
+####非劣效/优效性检验
+###基于Cox比例风险模型的生存分析
+####差异性检验
+####非劣效/优效性检验
+###基于Logrank对数秩的生存分析
+####差异性检验
