@@ -21,16 +21,16 @@ library(TrialSize)
 
 ##均数比较的样本量估计
 ###单组设计
-####差异性检验
+####显著性性检验
 当总体方差为$sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$,样本容量为$n= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
 
-例1 用某药治疗高胆固醇血症。已知：血清高胆固醇平均降低0.52mmol/L在专业上认为有意义。若总体方差为1.28mmol/L，$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+例1 一项临床试验研究新型降压药治疗高血压的作用，和安慰剂对照。如果新型降压药能够比安慰剂平均多降低收缩压10mmHg，则认为有价值。估计新型降压药和安慰剂降低收缩压差值的标准差为15mmHg，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
 ```{r}
-OneSampleMean.Equality(0.05,0.1,1.28,0.52)
+OneSampleMean.Equality(0.05,0.1,15,10)
 ```
 当总体方差未知检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$,样本容量为$n= \frac{(t_{\alpha/2}+t_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
 
-例2 假设例1总体方差未知，样本标准差为1.28mmol/L，问需要多大的样本容量？
+例2 假设例1总体方差未知，样本标准差为15mmol/L，问需要多大的样本容量？
 ```{r}
 OneSampleMean.Equality2 <- function(alpha, beta, sigma, margin,m=1000)
 {
@@ -45,13 +45,34 @@ OneSampleMean.Equality2 <- function(alpha, beta, sigma, margin,m=1000)
   n1
 }
 
-OneSampleMean.Equality2(0.05,0.1,1.28,0.52)
+OneSampleMean.Equality2(0.05,0.1,15,10)
 ```
 
 ####非劣效/优效性检验
+当总体方差为$sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$，$\delta$具有临床意义的高限或低限,样本容量为$n= \frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}}{(\epsilon -\delta ) ^{2}}$
+例3 一项临床试验研究新型降压药治疗高血压的作用，和临床有效药品洛丁新进行对照，进行非劣性设计。如果新型降压药能够比洛丁新平均多降低收缩压10mmHg，则认为有价值。估计新型降压药和安慰剂降低收缩压差值的标准差为15mmHg,新型降压药降压能力最多低于洛丁新5mmHg，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+OneSampleMean.Equivalence(0.05,0.1,15,10,5)
+```
 ####等效性检验
+当总体方差为$sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$，$\delta$具有临床意义的高限或低限,样本容量为$n= \frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}}{(\epsilon -|\delta|) ^{2}}$
+例4 一项临床试验研究新型降压药治疗高血压的作用，和临床有效药品洛丁新进行对照，进行等效设计。如果新型降压药能够比洛丁新平均多降低收缩压10mmHg，则认为有价值。估计新型降压药和安慰剂降低收缩压差值的标准差为15mmHg,新型降压药降压能力与洛丁新最多相差5mmHg，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+OneSampleMean.NIS2 <- function (alpha, beta, sigma, margin, delta) 
+{
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/(margin - 
+                                                           delta)^2
+  n
+}
+
+OneSampleMean.NIS2(0.05,0.1,15,10,5)
+#TrialSize包中OneSampleMean.NIS有误
+```
+
 ###两组设计
-####差异性检验
+####显著性性检验
+当总体方差为$sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,最大容许误差为$\epsilon$,样本容量为$n= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
+
 ####非劣效/优效性检验
 ####等效性检验
 ###多组设计
@@ -69,12 +90,3 @@ OneSampleMean.Equality2(0.05,0.1,1.28,0.52)
 ####差异性检验
 ####非劣效/优效性检验
 ####等效性检验
-##生存分析的样本量估计
-###基于指数模型的生存分析
-####差异性检验
-####非劣效/优效性检验
-###基于Cox比例风险模型的生存分析
-####差异性检验
-####非劣效/优效性检验
-###基于Logrank对数秩的生存分析
-####差异性检验
