@@ -155,7 +155,7 @@ table2flat <- function(mytable){
   cols <- dim(df)[2]
   x <- NULL
   for(i in 1:rows){
-    for(j in 1:df$Freq[i]){
+    for(j in 1:as.integer(as.character(df$Freq[i]))){
       row <- df[i,c(1:(cols-1))]
       x <- rbind(x,row)
     }
