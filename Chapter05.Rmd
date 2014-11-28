@@ -151,6 +151,9 @@ ks.test(a,b)
 P值大于0.05，可以认为A、B两组相同。
 
 ###列联表的独立性检验
+在研究问题时有时候会遇到要求判断两个分类变量之间是否存在联系的问题，通常使用$\chi ^{2}$检验判断两组或多组资料是否相互关联。如果不相互关联，就称为独立，这类问题处理称为独立性检验（Test of Independence）。
+####Pearson$\chi ^{2}$检验
+在$i$为行，$j$为列的列联表中，统计量为$K=\sum_{i=1}^{I}\sum_{j=1}^{J}\frac{[n\cdot n_{ij}-n_{i}\cdot n_{j}]^{2}}{n\cdot n_{i}\cdot n_{j}}$。
 
 例9 vcd包中Arthritis数据集是一项风湿性关节炎新疗法的双盲临床实验的结果，请分析治疗措施是否与风湿性关节炎改善情况有关？
 ```{r}
@@ -160,11 +163,10 @@ pander(head(Arthritis))
 ```{r}
 mytable <- xtabs(~Treatment+Improved,data=Arthritis)
 chisq.test(mytable)
-fisher.test(mytable) #fish.test()函数不可用于2*2列联表
 ```
 P值小于0.05，可以认为治疗情况与改善状况有关。
 
-例10 为了研究吸烟是否与患肺癌有关，对63位肺癌患者及43名非肺癌患者调查了其中的吸烟人数，得到2*2列联表，如下表所示
+例10 某杂志刊登了一篇研究吸烟是否与患肺癌有关文章，对63位肺癌患者及43名非肺癌患者调查了其中的吸烟人数，得到2*2列联表，如下表所示，认为吸烟与肺癌有关，请予以验证！
 
                患肺癌          未患肺癌
 ---            ---             --- 
@@ -178,7 +180,54 @@ chisq.test(x,correct = FALSE)
 ```
 P值小于0.05，可以认为吸烟与肺癌有关。
 
+####Fisher精确独立检验
+在样本较小时（单元的期望频数小于5），需要用Fisher精确检验来做独立性检验。
 
+例11 对例9进行Fisher精确独立检验。
+
+```{r}
+mytable <- xtabs(~Treatment+Improved,data=Arthritis)
+fisher.test(mytable) #fish.test()函数不可用于2*2列联表
+```
+
+####Cochran-Mantel-Haenszel检验
+在存在第三个分类变量的情况下，有条件的检验两个分类变量的关联度，需要用Cochran-Mantel-Haenszel检验。其原假设是两个分类变量在第三个变量的每一层中都是条件独立的。
+
+例12 Arthritis数据集检验治疗情况和改善情况在性别的每一水平下是否独立，假设不存在三阶交互作用（治疗情况×改善情况×性别）。
+
+```{r}
+mytable <- xtabs(~Treatment+Improved+Sex,data=Arthritis)
+mantelhaen.test(mytable)
+```
+P值较小，表明接受治疗与得到改善在性别的每一水平下并不独立即，分性别来看，用药治疗的患者叫接受安慰剂的患者有了更多的改善。
+
+
+####相关性度量
+常用phi系数(Phi-Coefficient)描述$2*2$(四格表)数据相关程度，$\varphi =\sqrt{x^{2}/n}$,$n$总频数；列联系数(Contingency Coefficient)主要用于大于$2*2$的列联表，$C=\sqrt{\frac{x^{2}}{x^{2}+n}}$；Cramer‘s V系数,$V =\sqrt{\frac{x^{2}}{n*\min[(R-1),(C-1)]}}$。可用vcd包中的assocstats()函数计算。
+
+```{r}
+mytable <- xtabs(~Treatment+Improved,data=Arthritis)
+assocstats(mytable)
+```
+
+
+####McNemar检验
+McNemar检验用于配对计数资料的分析，主要分析配对资料中对照组和处理组的频数或比率是否有差异，也可以分析统一批观察对象用药前后或试验前后的结果是否有差异，并不是独立性检验。
+
+例13 研究人员将患霍奇金淋巴瘤的病人和非病人按同性别及年龄在5岁以内的条件进行配对，共配对85对病人。两组人群中扁桃体切除情况如下，试问配对的两组人群扁桃体切除率是否有差别？
+
+                      非病人
+病人          是          否
+----          ---        --- 
+ 是            26        15 
+ 否            7         37
+
+```{r}
+x <- c(26,7,15,37)
+dim(x) <- c(2,2)
+mcnemar.test(x,correct=F)
+```
+P值大于0.05，不能认为两组人群扁桃体切除率有差异。
 
 ###符号检验
 ###秩相关检验
