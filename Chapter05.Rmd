@@ -152,6 +152,7 @@ P值大于0.05，可以认为A、B两组相同。
 
 ###列联表的独立性检验
 在研究问题时有时候会遇到要求判断两个分类变量之间是否存在联系的问题，通常使用$\chi ^{2}$检验判断两组或多组资料是否相互关联。如果不相互关联，就称为独立，这类问题处理称为独立性检验（Test of Independence）。
+
 ####Pearson$\chi ^{2}$检验
 在$i$为行，$j$为列的列联表中，统计量为$K=\sum_{i=1}^{I}\sum_{j=1}^{J}\frac{[n\cdot n_{ij}-n_{i}\cdot n_{j}]^{2}}{n\cdot n_{i}\cdot n_{j}}$。
 
@@ -203,7 +204,7 @@ P值较小，表明接受治疗与得到改善在性别的每一水平下并不�
 
 
 ####相关性度量
-常用phi系数(Phi-Coefficient)描述$2*2$(四格表)数据相关程度，$\varphi =\sqrt{x^{2}/n}$,$n$总频数；列联系数(Contingency Coefficient)主要用于大于$2*2$的列联表，$C=\sqrt{\frac{x^{2}}{x^{2}+n}}$；Cramer‘s V系数,$V =\sqrt{\frac{x^{2}}{n*\min[(R-1),(C-1)]}}$。可用vcd包中的assocstats()函数计算。
+常用phi系数(Phi-Coefficient)描述$2*2$(四格表)数据相关程度，$\varphi =\sqrt{x^{2}/n}$,$n$总频数；列联系数(Contingency Coefficient)主要用于大于$2*2$的列联表，$C=\sqrt{\frac{x^{2}}{x^{2}+n}}$；Cramer's V系数,$V =\sqrt{\frac{x^{2}}{n*\min[(R-1),(C-1)]}}$;可用vcd包中的assocstats()函数计算。
 
 ```{r}
 mytable <- xtabs(~Treatment+Improved,data=Arthritis)
@@ -212,15 +213,14 @@ assocstats(mytable)
 
 
 ####McNemar检验
-McNemar检验用于配对计数资料的分析，主要分析配对资料中对照组和处理组的频数或比率是否有差异，也可以分析统一批观察对象用药前后或试验前后的结果是否有差异，并不是独立性检验。
+McNemar检验用于配对计数资料的分析，主要分析配对资料中对照组和处理组的频数或比率是否有差异，也可以分析统一批观察对象用药前后或试验前后的结果是否有差异，并不是独立性检验。Kappa统计量用于测量两次调查的可重复性，$k=\frac{p_{0}-p_{e}}{1-p_{e}}$,$p_{0}$两次调查中一致的概率，$p_{e}$两次调查的期望一致概率，$p_{e}= \sum_{i=1}^{c}a_{i}b_{i}$，$a_{i}b_{i}$为$c*c$列联表中两个调查第$i$个类型的边际概率,k>0.75表示极好的重复性,0.4<=k<=0.75好的重复性,0<=k<0.4边界(勉强够格)的重复性。
 
 例13 研究人员将患霍奇金淋巴瘤的病人和非病人按同性别及年龄在5岁以内的条件进行配对，共配对85对病人。两组人群中扁桃体切除情况如下，试问配对的两组人群扁桃体切除率是否有差别？
 
-                      非病人
-病人          是          否
-----          ---        --- 
- 是            26        15 
- 否            7         37
+             对照是       对照否
+----         ---         --- 
+病人是       26          15 
+病人否       7           37
 
 ```{r}
 x <- c(26,7,15,37)
@@ -228,6 +228,36 @@ dim(x) <- c(2,2)
 mcnemar.test(x,correct=F)
 ```
 P值大于0.05，不能认为两组人群扁桃体切除率有差异。
+
+例14 同时使用甲乙两种方法测定265份标本中的金黄色葡萄球菌，结果如下，问甲乙两种方法可重复性(kappa)是多少？
+
+             甲+         甲-
+----         ---         --- 
+乙+          107         35 
+乙-          24          99
+
+```{r}
+kappa.test <- function(x)
+{
+  N=sum(x)
+  Po=sum(diag(x)/N) #观察到的一致数
+  mr=apply(x,1,sum) #行边际
+  mr=mr/N
+  mc=apply(x,2,sum) #列边际
+  mc=mc/N
+  Pe=sum(mc * mr) #期望一致数
+  k=(Po-Pe)/(1-Pe) #kappa统计量
+  se_k = sqrt((Pe+Pe^2-sum(mr*mc*(mr+mc)))/(N*(1-Pe)^2)) # kappa统计量的标准误
+  z=k/se_k #检验统计量
+  p.value=1-pnorm(z) # p值
+  res=list(kappa=k,se_k=se_k,p.value=p.value,z=z)
+}
+
+X<-c(107, 24, 35, 99)
+dim(X)<-c(2,2)
+k <- kappa.test(X)
+k
+```
 
 ###符号检验
 ###秩相关检验

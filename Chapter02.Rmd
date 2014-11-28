@@ -16,6 +16,31 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 library(fitdistrplus)
 library(CircStats)
 ```
+
+如果给定一种概率分布，通常会有四类计算问题：计算其概率密度density(d);计算其概率分布probability(p);计算其百分位数quantile(q);随机数模拟random(r),R中常见的函数、分布和参数如下
+
+R funciton    Distribution	       Parameters
+----          ----                 ----
+beta	        beta	               shape1,shape2
+binom	        binomial	           sample,size,probability
+cauchy	      Cauchy	             location,scale
+exp	          exponential	         rate(optional)
+chisq	        Chi-squared	         degrees of freedom
+f	            Fisher's F	         df1,df2
+gamma	        gamma	               shape
+geom	        geometric	           probability
+hyper	        hypergeometric	     m,n,k
+lnorm	        lognormal	           mean,standard deviation
+logis	        logistic	           location,scale
+nbinom	      negative binomial    size,probability
+norm	        normal	             mean,standard deviation
+pois	        Poisson	             mean
+signrank    	Wilcoxon signed rank sample size n
+t	            Student's t	         degree of freedom
+unif	        uniform	             minimum,maximum(opt.)
+weibull	      Weibull	             shape
+wilcox	      Wilcoxon rank sum    m,n
+
 ##正态分布(Normal distribution)
 又名高斯分布(Gaussian distribution)，是一个在数学、物理及工程等领域都非常重要的概率分布，在统计学的许多方面有着重大的影响力。若随机变量X服从一个数学期望为$μ$、方差为$\sigma^2$的正态分布，记为$N(u，\sigma^2)$。其概率密度函数为正态分布的期望值$u$决定了其位置，其标准差$\sigma^2$决定了分布的幅度。因其曲线呈钟形，因此人们又经常称之为钟形曲线。我们通常所说的标准正态分布是$u$ = 0,$\sigma$ = 1的正态分布。
 概率密度函数
