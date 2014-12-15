@@ -179,12 +179,14 @@ model2 <- lm(y~x,subset=-1)
 gvlma(model2)
 influence.measures(model2)
 ```
-
+提示2号点是个异常值。
 ```{r}
 model3 <- lm(y~x,subset=c(-1,-2))
 gvlma(model3)
 influence.measures(model3)
 ```
+
+删除1、2观测值后，模型的影响分析的结果变得更好。但应该对删除观测点的方法谨慎，因为收集数据的异常点可能是最有意义东西，除非确定数据点时记录错误或者没有相关遵守规程。
 
 
 
