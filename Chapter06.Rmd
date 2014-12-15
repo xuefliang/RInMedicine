@@ -1,5 +1,5 @@
 ---
-title: "线性回归"
+title: "回归分析"
 author: "梁雪枫"
 date: "2014年12月10日"
 documentclass: ctexart
