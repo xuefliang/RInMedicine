@@ -132,9 +132,7 @@ gvlma(model)
 ```
 Global Stat给模型假设提供了一个单独的综合检验（通过/不通过），本例中，可以看到数据满足线性回归模型所有的统计假设（P=0.7071）。同时还对偏度(Skewness)、峰度(Kurtosis)、连接函数(Link function)和异方差性(Heteroscedasticity)进行了评价。
 
-2.影响分析
-
-是探查对估计有异常影响的数据，如果一个样本不服从某个模型，其余数据服从这个模型，则称该样本点为强影响点。影响分析就是区分这样的样本数据。
+2.影响分析是探查对估计有异常影响的数据，如果一个样本不服从某个模型，其余数据服从这个模型，则称该样本点为强影响点。影响分析就是区分这样的样本数据。
 
 离群点指那些模型预测效果不佳的观测点，通常有很大的、或正或负的残差，正残差说明模型低估了响应值，负残差说明高佑了响应值。
 
@@ -165,15 +163,30 @@ plot(model,which=4)
 ```
 Cook距离(Cook’s distance)图显示了对回归的影响点。根据Cook距离，13号点可能是个强影响点。
 
+帽子统计量、DFFITS准测、Cook统计量和COVRATIO准则在R软件可分别通过hatvalues(),dffits(),cooks.distance()和covration()函数计算。influence.measures()可对一次获得这四个统计量的结果。
 影响分析综合分析 
 ```{r}
-influence.measures(model)
 influencePlot(model) #car包中的influencePlot（）函数，可将离群点、杠杆点和强影响点的信息整合到一幅图形中
+influence.measures(model)
 ```
-纵坐标超过2或小于-2的州可被认为是离群点，水平轴超过0.2或0.3的州有高杠杆值（通常为预测值的组合）。圆圈大小与影响成比例，圆圈很大的点可能是对模型估计造成的不成比例影响的强影响点。
-
+纵坐标超过2或小于-2的州可被认为是离群点，水平轴超过0.2或0.3的州有高杠杆值（通常为预测值的组合）。圆圈大小与影响成比例，圆圈很大的点可能是对模型估计造成的不成比例影响的强影响点。influence.measures()的inf用×标注异常值。
 
 3.共线性，条件数 本例只有一个自变量，不涉及。
+
+改进措施
+```{r}
+model2 <- lm(y~x,subset=-1)
+gvlma(model2)
+influence.measures(model2)
+```
+
+```{r}
+model3 <- lm(y~x,subset=c(-1,-2))
+gvlma(model3)
+influence.measures(model3)
+```
+
+
 
 
 ##多重共线性
