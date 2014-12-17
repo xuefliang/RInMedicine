@@ -20,7 +20,8 @@ library(pspearman)
 library(gvlma)
 library(car)
 library(lmtest)
-library(leaps)  
+library(leaps) 
+library(plyr) 
 ```
 因变量是分类的，则为分类分析，因变量是连续的，称为回归分析。回归分析通过建立函数表达式，用一个或者多个自变量的变化解释或预测因变量，常用于描述、探索和检验自变量和因变量之间因果关系，根据自变量的变化预测因变量的取值。通常按照自变量的个数划分为一元回归和多元回归。按照函数表达式的形式，分为线性回归和非线性回归。
 
