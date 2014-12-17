@@ -137,7 +137,6 @@ spearman.test(x,abs(residuals(model))) #R中pspearman包中的spearman.
 自变量与残差绝对值的等级相关系数为`r cor.test(x,abs(residuals(model)),method="spearman")$p.value`,P值大于0.05，无统计学意义，可以认为残差方差齐性。
 
 car包提供了两个有用的函数，可判断误差方差是否恒定，ncvTest()函数生成一个计分检验，零假设为误差方差不变,备择假设为误差方差随着拟合值水平的变化而变化。若检验显著，择说明存在异方差性。spreadLevelPlot()函数创建一个添加了最佳拟合曲线的散点图，展示标准化残差绝对值与拟合值的关系。
-
 ```{r}
 ncvTest(model)  
 spreadLevelPlot(model) 
@@ -286,14 +285,9 @@ library(plyr)
 records <- read.table("example1")
 ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
 attach(ex)
-par(mfrow=c(2,2))
-plot(age,mtfc)
-plot(sbp,mtfc)
-plot(dbp,mtfc)
-plot(wbc,mtfc)
-par(mfrow=c(1,1))
+scatterplotMatrix(ex,spread=F,lty.smooth=2,main="scatter plot matrix")
 ```
-首先做单因素的线性回归，尽管有时候单因素的分析不是必须的，其结果也不一定可靠，但有助于初步探索自变量和因变量之间的关系。
+绘制因变量与自变量的散点图矩阵显示mtfc和wbc线性关系不是很好。首先做单因素的线性回归，尽管有时候单因素的分析不是必须的，其结果也不一定可靠，但有助于初步探索自变量和因变量之间的关系。
 ```{r}
 summary(lm(mtfc~age))
 summary(lm(mtfc~sbp))
@@ -347,8 +341,9 @@ influence.measures(fit)
 ```{r}
 kappa(cor(ex))
 vif(fit) #car包
+sqrt(vif(fit)) > 2
 ```
-一般来说kappa大于1000，或vif大于10说明存在多重共线性。本例中未发现存在多重共线性。
+一般来说kappa大于1000，或vif大于10说明存在多重共线性,vif开平方是否大于2，若大于2，则存在多重共线性问题。本例中未发现存在多重共线性。
 
 
 ###模型比较
@@ -376,30 +371,53 @@ detach(ex)
 尽管通过模型比较，获得了lm(mtfc~age+sbp+log10(wbc))模型，模型的回归诊断也能通过，但从决定系数来看自变量对因变量的解释程度并不高。
 
 ##逐步回归
-实际中，影响因变量的自变量较多，对如何从自变量中选择若干个，得到最佳的回归方程，在不同的准则下有不同的方法来获得最佳回归方程。常用的逐步方法有“向前法”，“向后法”，“逐步回归法”和“一切子集法”。在R中，通过step()函数的direction = c("both", "backward", "forward")选项分别完成“逐步回归法”、“向后法”和“向前法”。leaps包可以完成最优子集法。
+实际中，影响因变量的自变量较多，对如何从自变量中选择若干个，得到最佳的回归方程，在不同的准则下有不同的方法来获得最佳回归方程。对于一个包含n个自变量的的回归问题，全部的回归模型将有$2^{n}-1$个。常用的逐步方法有“向前法”，“向后法”，“逐步法”和“最优子集法”。在R中，通过step()函数的direction = c("both", "backward", "forward")选项分别完成“逐步回归法”、“向后法”和“向前法”。leaps包可以完成最优子集法,leaps()函数以$C_{p}$准则（默认）、校正$R^{2}$和$R^{2}$来选择全局最优模型。
 
 例3 example2中有5个自变量x1～x5和1个因变量，请用逐步回归完成自变量的筛选。
 ```{r}
 records <- read.table("example2")
-data<- rename(records, c("V1"="x1","V2"="x2","V3"="x3","V4"="x4","V5"="y"))
+df<- rename(records, c("V1"="x1","V2"="x2","V3"="x3","V4"="x4","V5"="y"))
 
-attach(data)
+attach(df)
 leapmodels <- leaps(x = cbind(x1,x2,x3,x4),y = y)
 plot(leapmodels$size, leapmodels$Cp)
 abline(0,1)
 cbind(leapmodels$size,leapmodels$which, leapmodels$Cp)
-
-subsets <- regsubsets(y~x1+x2+x3+x4,data=data)
-plot(subsets)
-summary(subsets)
-
-fit <- lm(y~x1+x2+x3+x4,data=data)
-fit.step <- step(fit)  #基于AIC
 ```
-最优子集法基于残差的平方和校正的决定系数，。step()函数通过AIC信息准则，删除了x3变量后AIC值最小24.97，得到y ~ x1 + x2 + x4。
+选择$C_{p}$统计量最小的变量集合，本例中$C_{p}$统计量最小值所对应的变量集合为x1和x2。结果中1为选中，0为未选中。
 ```{r}
-
+subsets <- regsubsets(y~x1+x2+x3+x4,data=df)
+summary(subsets)
+plot(subsets,scale="adjr2") #基于调整R平方，不同子集大小的最佳模型
 ```
+图的顶部的图形便是最适合的模型，校正R平方值0.98最高，x1和x2两预测变量是最佳模型。
+```{r}
+subsets(subsets,statistic="cp",main="cp plot for all subsets regression")
+abline(1,1,lty=2,col="red") #画截距项和斜率均为1的直线
+summary(subsets)
+```
+越好的模型离截距项和斜率均为1的直线越近，x1-x2、x1-x2-x4和x1-x2-x3-x4均与直线比较接近，选择变量较少的，x1和x2两预测变量是最佳模型。
+
+```{r}
+fit <- lm(y~x1+x2+x3+x4,data=df)
+fit.step <- step(fit)  #基于AIC
+summary(fit.step)
+```
+step()函数通过AIC信息准则，删除了x3变量后AIC值最小24.97，得到y ~ x1 + x2 + x4。回归系数的显著性检验水平有较大提升，但x2和x4的系数检验仍不理想。
+```{r}
+drop1(fit.step)
+```
+去掉x4后，AIC值会上升到25.42，残差的平方和会上升到9.93，是上升最少的。去掉x4后
+```{r}
+lm.opt<-lm(y ~ x1+x2, data=df)
+summary(lm.opt)
+gvlma(lm.opt)
+influence.measures(lm.opt)
+sqrt(vif(lm.opt)) > 2
+detach(df)
+```
+检验结果显著，回归诊断和多重共线性均通过，影响分析中只发现有一个异常点。
+
 
 
 
