@@ -282,7 +282,6 @@ age sbp dbp wbc   mtfc
 69	150	80	6.33	22.67
 
 ```{r}
-library(plyr)
 records <- read.table("example1")
 ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
 attach(ex)
