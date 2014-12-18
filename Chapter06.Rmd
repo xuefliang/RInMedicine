@@ -231,7 +231,7 @@ age sbp dbp wbc   mtfc
 67	100	60	7.31	28
 65	119	61	5.67	30.33
 66	120	64	5.11	27
-73	130	88	6.40    47
+73	130	88	6.40  47
 53	113	68	4.41	27.67
 76	120	70	4.20	37.33
 76	136	70	5.38	35.67
@@ -281,7 +281,7 @@ age sbp dbp wbc   mtfc
 63	190	100	5.25	46
 69	150	80	6.33	22.67
 
-```{r}
+```{r warning=FALSE}
 records <- read.table("example1")
 ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
 attach(ex)
@@ -373,12 +373,15 @@ detach(ex)
 ##逐步回归
 实际中，影响因变量的自变量较多，对如何从自变量中选择若干个，得到最佳的回归方程，在不同的准则下有不同的方法来获得最佳回归方程。对于一个包含n个自变量的的回归问题，全部的回归模型将有$2^{n}-1$个。常用的逐步方法有“向前法”，“向后法”，“逐步法”和“最优子集法”。在R中，通过step()函数的direction = c("both", "backward", "forward")选项分别完成“逐步回归法”、“向后法”和“向前法”。leaps包可以完成最优子集法,leaps()函数以$C_{p}$准则（默认）、校正$R^{2}$和$R^{2}$来选择全局最优模型。
 
-例3 example2中有5个自变量x1～x5和1个因变量，请用逐步回归完成自变量的筛选。
+例3 有5个自变量x1～x5和1个因变量，请用逐步回归完成自变量的筛选。
 ```{r}
-records <- read.table("example2")
-df<- rename(records, c("V1"="x1","V2"="x2","V3"="x3","V4"="x4","V5"="y"))
+x1<- c(7,1,11,11,7,11,3,1,2,21,1,11,10)
+x2<- c(26,29,56,31,52,55,71,31,54,47,40,66,68)
+x3<- c(6,15,8,8,6,9,17,22,18,4,23,9,8)
+x4<- c(60,52,20,47,33,22,6,44,22,26,34,12,12)
+y<- c(78.5,74.3,104.3,87.6,95.9,109.2,102.7,72.5,93.1,115.9,83.8,113.3,109.4)
+df <- as.data.frame(cbind(x1,x2,x3,x4,y))
 
-attach(df)
 leapmodels <- leaps(x = cbind(x1,x2,x3,x4),y = y)
 plot(leapmodels$size, leapmodels$Cp)
 abline(0,1)
@@ -389,14 +392,15 @@ cbind(leapmodels$size,leapmodels$which, leapmodels$Cp)
 subsets <- regsubsets(y~x1+x2+x3+x4,data=df)
 summary(subsets)
 plot(subsets,scale="adjr2") #基于调整R平方，不同子集大小的最佳模型
+#也可以通过cp统计量完成变量的选择
+#cp图越好的模型离截距项和斜率均为1的直线越近，x1-x2、x1-x2-x4和x1-x2-x3-x4均与直线比较接近，
+#选择变量较少的，x1和x2两预测变量是最佳模型。
+#sbs<- regsubsets(y~x1+x2+x3+x4,data=df)
+#subsets(sbs,statistic="cp",main="cp plot for all subsets regression")
+#abline(1,1,lty=2,col="red") #画截距项和斜率均为1的直线
+#summary(sbs)
 ```
 图的顶部的图形便是最适合的模型，校正R平方值0.98最高，x1和x2两预测变量是最佳模型。
-```{r}
-subsets(subsets,statistic="cp",main="cp plot for all subsets regression")
-abline(1,1,lty=2,col="red") #画截距项和斜率均为1的直线
-summary(subsets)
-```
-越好的模型离截距项和斜率均为1的直线越近，x1-x2、x1-x2-x4和x1-x2-x3-x4均与直线比较接近，选择变量较少的，x1和x2两预测变量是最佳模型。
 
 ```{r}
 fit <- lm(y~x1+x2+x3+x4,data=df)
@@ -414,7 +418,6 @@ summary(lm.opt)
 gvlma(lm.opt)
 influence.measures(lm.opt)
 sqrt(vif(lm.opt)) > 2
-detach(df)
 ```
 检验结果显著，回归诊断和多重共线性均通过，影响分析中只发现有一个异常点。
 
