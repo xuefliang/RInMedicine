@@ -286,6 +286,7 @@ age sbp dbp wbc   mtfc
 records <- read.table("example1")
 ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
 attach(ex)
+#scatterplotMatrix()函数默认在非对角线区域绘制变量间的散点图，并添加平滑（loess）和线性拟合区间
 scatterplotMatrix(ex,spread=F,lty.smooth=2,main="scatter plot matrix")
 ```
 绘制因变量与自变量的散点图矩阵显示mtfc和wbc线性关系不是很好。首先做单因素的线性回归，尽管有时候单因素的分析不是必须的，其结果也不一定可靠，但有助于初步探索自变量和因变量之间的关系。
@@ -423,6 +424,7 @@ sqrt(vif(lm.opt)) > 2
 检验结果显著，回归诊断和多重共线性均通过，影响分析中只发现有一个异常点。因为全子集回归考虑了更多模型，全子集回归要优于逐步回归，但当自变量个数较多时，全子集回归较慢。一般来所，变量的自动筛选应建立在背景知识理解基础上进行，防止出现拟合效果好，但没有实际意义的模型。
 
 ##交叉验证
+就是按一定比例将原始数据按照拆分成训练集和测试集，现在训练集上获取回归方程，然后在测试集上做预测。由于测试集不涉及模型参数的选择，该样本可获得比新数据获得更为精确的估计。$k$重交叉验证中，样本被分为$k$个子样本，轮流将$k-1$个子样本作为训练集，另外1个样本作为测试集。通过获得$k$个预测方程，记录$k$个测试集的预测结果，然后求其平均值。
 
 ```{r}
 shrinkage<-function(fit,k=5){  
@@ -442,6 +444,42 @@ shrinkage<-function(fit,k=5){
 fit <- lm(y~x1+x2,data=df)
 shrinkage(fit)
 ```
+获得原始R平方为0.9786,交叉验证后的R平方为0.9962（基于BootStrap方法，每次运行结果会有不同）。R平方减少得越少，预测越精准。
+
+##相对重要性
+评价自变量相对重要性，最简单的方法为比较标准化的回归系数，它表示当其他自变量不变时，该自变量变化1个单位引起的因变量的变化。前面通过lm.beta()函数获得了标准化的回归系数。基于相对权重的重要性测量，是对所有可能自模型添加一个自变量引起的R平方平均增加量的一个近似值，比标准化回归系数更为直观。
+
+```{r}
+relweights<-function(fit,...){  
+  R<-cor(fit$model)  
+  nvar<-ncol(R)  
+  rxx<-R[2:nvar,2:nvar]  
+  rxy<-R[2:nvar,1]  
+  svd<-eigen(rxx)  
+  evec<-svd$vectors  
+  ev<-svd$values  
+  delta<-diag(sqrt(ev))  
+  lambda<-evec%*%delta%*%t(evec)  
+  lambdasq<-lambda^2  
+  beta<-solve(lambda)%*%rxy  
+  rsquare<-colSums(beta^2)  
+  rawwgt<-lambdasq%*%beta^2  
+  import<-(rawwgt/rsquare)*100  
+  lbls<-names(fit$model[2:nvar])  
+  rownames(import)<-lbls  
+  colnames(import)<-"Weight"  
+  barplot(t(import),names.arg=lbls, 
+          ylab="% of R-Square",  
+          xlab="Predictor Variables",  
+          main="Relative Importance of Predictor Variables",  
+          sub=paste("R-Square=",round(rsquare,digits=3)),...)  
+  return(import)  
+}  
+fit <- lm(y~x1+x2,data=df)
+relweights(fit,col="lightgrey")  
+```
+
+可以看到x2解释了56.7%的R平方，x1解释了43.2的平方，x2相比x1更为重要。
 
 
 
