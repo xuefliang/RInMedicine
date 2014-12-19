@@ -392,15 +392,15 @@ cbind(leapmodels$size,leapmodels$which, leapmodels$Cp)
 subsets <- regsubsets(y~x1+x2+x3+x4,data=df)
 summary(subsets)
 plot(subsets,scale="adjr2") #基于调整R平方，不同子集大小的最佳模型
-#也可以通过cp统计量完成变量的选择
-#cp图越好的模型离截距项和斜率均为1的直线越近，x1-x2、x1-x2-x4和x1-x2-x3-x4均与直线比较接近，
-#选择变量较少的，x1和x2两预测变量是最佳模型。
-#sbs<- regsubsets(y~x1+x2+x3+x4,data=df)
-#subsets(sbs,statistic="cp",main="cp plot for all subsets regression")
-#abline(1,1,lty=2,col="red") #画截距项和斜率均为1的直线
-#summary(sbs)
 ```
-图的顶部的图形便是最适合的模型，校正R平方值0.98最高，x1和x2两预测变量是最佳模型。
+图的顶部的图形便是最适合的模型，校正R平方值0.98最高，x1和x2两预测变量是最佳模型。也可以通过$C_{p}$统计量完成变量的选择。
+```{r}
+sbs<- regsubsets(y~x1+x2+x3+x4,data=df)
+subsets(sbs,legend=FALSE,statistic="cp",main="cp plot for all subsets regression")
+abline(1,1,lty=2,col="red") #画截距项和斜率均为1的直线
+summary(sbs)
+```
+$C_{p}$图越好的模型离截距项和斜率均为1的直线越近，x1-x2、x1-x2-x4和x1-x2-x3-x4均与直线比较接近，这三个模型根据$C_{p}$统计量结果类似。
 
 ```{r}
 fit <- lm(y~x1+x2+x3+x4,data=df)
