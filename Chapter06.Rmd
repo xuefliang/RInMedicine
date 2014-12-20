@@ -122,7 +122,20 @@ dwtest(model)
 ```{r}
 crPlots(model) 
 ```
-图形呈现线性，建模比较充分。
+图形呈现线性，建模比较充分。car包中提供了一个linearHypothesis()函数可以自动的进行线性假设检验,比图形更为精准。根据对模型的设定，这个函数既可以用一般的方法或调整后的协方差矩阵进行F或Wald检验。
+```{r}
+linearHypothesis(model, "x=0") #x的系数是否为0
+# tests Beta1 = Beta2
+#linear.hypothesis(fit,"x1 = x2") 
+# Tests  Beta0 = Beta1 = Beta2= 1
+#linear.hypothesis(fit,c("(Intercept)", "x1","x2"),rep(1,3)) 
+# Tests  Beta0 = Beta1 = Beta2 = 0
+#linear.hypothesis(fit,c("(Intercept)", "x1","x2"),rep(0,3)) 
+# Tests Beta1 = Beta2 = 0
+#linear.hypothesis(fit,c("x1","x2"),rep(0,2)) 
+```
+P值小于0.05，可以认为x的系数不为0。
+
 
 方差齐性 通过以因变量为x轴，学生化残差为y轴做残差图，进行判断。
 ```{r}
