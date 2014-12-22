@@ -1,0 +1,108 @@
+---
+title: "Logistic回归分析"
+author: "梁雪枫"
+date: "2014年12月22日"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+
+```{r include=FALSE}
+library(pander)
+library(ggplot2)
+library(plyr) 
+library(elrm) 
+library(epicalc)
+```
+广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
+
+      连接函数                     典型误差函数
+----  ---                          ---
+恒等  $x^{T}\beta =E(y)$           正态分布
+对数  $x^{T}\beta =lnE(y)$         Poisson分布
+Logit $x^{T}\beta =logitE(y)$      二项分布
+逆    $x^{T}\beta =\frac{1}{E(y)}$ Gamma分布
+
+R中常用的分布族和连接函数见下表
+
+分布族            连接函数
+----              ----
+binomial          logit,probit,cloglog
+gaussian          identity
+Gamma             identity,inverse,log
+inverse.gaussian  1/mu^2
+poisson           identity,log,sqrt
+quasi             logit,probit,cloglog,identity,
+                  inverse,log,1/mu^2,sqrt
+                  
+R中通过glm(formula, family=family.generator,data=data.frame) 函数用来做广义线性回归。正态分布族的使用方法：glm(formula, family = gaussian(link = identity),data = data.frame) , link指定了连接函数，正态分布族的连接函数缺省值是恒等的，link = identity可以不写。分布族缺省值是正态分布，family = gaussian也可以不写。glm(formula,data=data.frame)与lm(formula,data=data.frame)等价。
+
+因变量为二分类或多分类时，Logistics回归是非常重要的模型。Logistics回归由于对资料的正态性和方差齐性不做要求、对自变量类型也不做要求等，使得Logistic回归模型在医学研究各个领域被广泛用，可探索某疾病的危险因素，根据危险因素预测某疾病发生的概率，等等。例如，想探讨胃癌发生的危险因素，可以选择两组人群，一组是胃癌组，一组是非胃癌组，两组人群肯定有不同的体征和生活方式等。这里的因变量就是是否胃癌，即“是”或“否”，为两分类变量，自变量就可以包括很多了，例如年龄、性别、饮食习惯、幽门螺杆菌感染等。自变量既可以是连续的，也可以是分类的。通过logistic回归分析，就可以大致了解到底哪些因素是胃癌的危险因素。Logistics回归模型的表达形式为
+$$logit(P)=ln(\frac{P}{1-P})=\beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots +\beta_{p}X_{p}$$
+P为暴露于某种状态下的结局概率。$logit(P)$是一种变量变换方式，表示对P进行logit变换。$beta_{i}$为偏回归系数，表示在其他自变量不变的条件下，$X_{i}$每变化一个单位$logit(P)$的估计值。对P进行了$logit(P)$变换后，$ln(\frac{P}{1-P})$的值可以取任意值。Logistics回归是通过最大似然估计（maximum likelihood estimation,MLE）求解常数项和偏回归系数。
+
+在R语言中，进行logistic回归的命令是通过广义线性模型进行的：fm <- glm(formula, family = binomial(link = logit),data=data.frame) 。Logistic回归的基本方法是极大似然方法，其前提是样本较大。在样本量较小、数据结构较偏时，可以用精确Logistic回归（Exact logistic regression）来解决这一问题，该方法通过建立条件似然函数，进一步求出参数的充分统计量的分布函数。随着计算方法的发展和优化，也出现了使用马尔可夫链蒙特卡罗算法来模拟精确Logistic回归。R语言中的elrm包就可以实现这种算法。glm()拟合二项模型时对于因变量，如果是向量， 则假定操作二元（binary）数据，因此要求是0/1向量。 如果因变量是双列矩阵，则假定第一列为试验成功的次数第二列为试验失败的次数。如果因变量是因子，则第一水平作为失败 (0) 考虑而其他的作为`成功'(1) 考虑。 
+
+## 单因素Logistics回归
+某项研究观察一种基因对于胃癌的诊断价值，选择了115名胃癌患者和115名非胃癌患者，检测他们的基因表达状态，欲分析该基因对胃癌是否有一定的诊断价值。
+
+胃癌        基因+        基因-
+----        ---          ---
+是          50           65
+否          4            111
+
+本例研究的因变量为二分类变量，分析基因的影响可以用$\chi ^{2}$和Logistics回归。
+```{r}
+x<-c(50, 4, 65, 111)
+dim(x)<-c(2,2)
+chisq.test(x,correct = FALSE)
+```
+P值较小，可以认为该基因对胃癌的诊断具有统计学意义。
+```{r}
+#将表转化为扁平格式
+table2flat <- function(mytable){
+  df <- as.data.frame(mytable)
+  rows <- dim(df)[1]
+  cols <- dim(df)[2]
+  x <- NULL
+  for(i in 1:rows){
+    for(j in 1:as.integer(as.character(df$Freq[i]))){
+      row <- df[i,c(1:(cols-1))]
+      x <- rbind(x,row)
+    }
+  }
+  row.names(x) <- c(1:dim(x)[1])
+  return(x)
+}
+
+gene <- rep(c(1,0),times=2)
+cancer <- rep(c("0","1"),each=2)
+Freq <- c(50,4,65,111)
+mytable <- as.data.frame(cbind(gene,cancer,Freq))
+mydata <- table2flat(mytable)
+
+fit.glm<- glm(cancer~gene,family = binomial, data = mydata)
+summary(fit.glm)
+logistic.display(fit.glm)
+influence.measures(fit.glm)
+```
+
+例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
+```{r}
+data(drugDat)
+pander(drugDat)
+```
+
+```{r,eval=FALSE}
+data(drugDat)
+drug.elrm=elrm(formula=recovered/n~sex+treatment,interest=~sex+treatment,iter=100000,burnIn=1000,dataset=drugDat)
+summary(drug.elrm)
+```
+
+
