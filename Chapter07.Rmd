@@ -19,6 +19,8 @@ library(ggplot2)
 library(plyr) 
 library(elrm) 
 library(epicalc)
+library(car)
+library(rms)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
 
@@ -92,10 +94,63 @@ mydata <- table2flat(mytable)
 fit.glm<- glm(cancer~gene,family = binomial, data = mydata)
 summary(fit.glm)
 logistic.display(fit.glm)
-influence.measures(fit.glm)
 ```
 
-### 单因素Logistics回归
+当评价模型的适用性时，可以绘制初始响应变量的预测值与残差的图形。
+
+```{r}
+plot(predict(fit.glm,type=”response”),residuals(fit.glm,type=”deviance”))  
+```
+对于影响分析，识别异常值可用
+```{r}
+influencePlot(fit.glm)
+influence.measures(fit.glm)
+```
+#### 模型评价指标
+##### 拟合优度（goodness of fit）
+拟合优度度量的是预测值和观测值之间的总体一致性。但是在评价模型时，实际上测量的是预测值和观测值之间的差别，也就是实际上检测的是模型预测的“劣度”不是”优度“，即拟合不佳检验 （lack of fit test）常用的两个指标是 Hosmer-Lemeshow指标（HL）和信息测量指标（information measure）(IM).
+ Hosmer Lemeshow拟合优度指标(通常简写为H-L),对应的统计假设$H_{0}$是预测值概率和观测值之间无显著差异，所以如果HL指标显示较大的P-value，说明统计结果不显著，因此，不能拒绝关于模型拟合数据很好的假设，换句话说，模型很好的拟合了数据。 IM指标中比较著名的是AIC，在其他条件不变的情况下，较小的AIC值表示拟合模型较好。
+Ｈosmer-Lemeshowz指标
+```{r}
+hosmerlem = function(y, yhat, g=10) {
+  cutyhat = cut(yhat,
+                breaks = quantile(yhat, probs=seq(0,
+                                                  1, 1/g)), include.lowest=TRUE)
+  obs = xtabs(cbind(1 - y, y) ~ cutyhat)
+  expect = xtabs(cbind(1 - yhat, yhat) ~ cutyhat)
+  chisq = sum((obs - expect)^2/expect)
+  P = 1 - pchisq(chisq, g - 2)
+  return(list(chisq=chisq,p.value=P))
+}
+
+hosmerlem(y=life$Y, yhat=fitted(fit.glm))
+```
+##### 模型卡方统计（model chi-square statistic）
+模型卡方统计检测的是模型中所包含的统计量对因变量有显著的解释能力。也就是说所设模型比零假设模型（即只包含常数项的模型）要好，在多元线性回归和ANOVA中，常用F检验达到目的。在logistic中用似然比检验（likelihood ratio test）,相当于F检验。需要注意的是，模型卡方值和拟合优度是两个完全不同的概念：模型卡方值度量的是自变量是否与因变量的odds自然对数线性相关，而拟合优度 度量的是预测值与观测值之间的一致性。所以按照理想情况，最好是模型的卡方检验统计性显著而拟合优度的统计性不显著。如果发生不一致，实践中更优先关注前者。
+
+```{r}
+logLik(fit.glm)
+```
+##### 预测准确性
+模型卡方统计关注的只是对于零假设模型而言，所设模型显著不显著，它只是从总体上考虑了模型的显著性，但是所有X变量到底能解释多少 Y变量的波动？这是预测准确性的问题，有两种方法：(1)类RSQUARE指标：在线性回归中，可以用RSQUARE来度量，显然RSQUARE越高说明预测越好，在logistic中，也有类似的指标。logistic中的RSQUARE也有许多重要的性质：与经典的RSQUARE定义一致，它可以被理解为Y变异中被解释的比例。(2)AUC值：拟合优度只是给出了观测值和预测概率直接的差别程度，然后给出了一个总体评价的指标，但是在实际应用中，人民往往更关心观测值和模型预测的条件事件概率的关联强度，这类指标被称为序列相关指标，指标值越高，表示预测概率与观测反应变量直接的关联越密切。通常用ROC图来和ROC图的曲线下面积（AUC）进行，AUC可以定量地评价模型的效果，AUC越大则模型效果越好。ROC曲线下的面积值在1.0和0.5之间。在AUC>0.5的情况下，AUC越接近于1，说明诊断效果越好。AUC在 0.5～0.7时有较低准确性，AUC在0.7～0.9时有一定准确性，AUC在0.9以上时有较高准确性。AUC=0.5时，说明诊断方法完全不起作用，无诊断价值。AUC<0.5不符合真实情况，在实际中极少出现。大于或等于0.75一般认为认为模型是可靠的。
+Deducer包rocplot可以绘制ROC曲线并计算AUC值。
+```{r}
+rocplot(fit.glm)
+```
+ROC（receiver operating characteristic curve，受试者工作特征曲线）曲线，横轴是1-Specificity（特异度），纵轴是Sensitivity（灵敏度）。45度线是作为参照（baseline model）出现的，就是说，ROC的好坏，乃是跟45度线相比的。选择最佳的诊断界限值。ROC曲线越靠近左上角,试验的准确性就越高。最靠近左上角的ROC曲线的点是错误最少的最好阈值，其假阳性和假阴性的总数最少。两种或两种以上不同诊断试验对疾病识别能力的比较。在对同一种疾病的两种或两种以上诊断方法进行比较时，可将各试验的ROC曲线绘制到同一坐标中，以直观地鉴别优劣，靠近左上角的ROC曲线所代表的受试者工作最准确。亦可通过分别计算各个试验的ROC曲线下的面积(AUC)进行比较，哪一种试验的 AUC最大，则哪一种试验的诊断价值最佳。
+
+对于0-1变量的二分类问题，分类的最终结果可以用表格表示为：
+
+            预测值0     预测值1
+----        ---         ---            
+实际值0     a           b
+实际值1     c           d
+
+其中，d是“实际为1而预测为1”的样本个数，c是“实际为1而预测为0”的样本个数，其余依此类推。显然地，主对角线所占的比重越大，则预测效果越佳，这也是一个基本的评价指标——总体准确率(a+d)/(a+b+c+d)。TPR（真阳性率、灵敏度）：True Positive Rate，将实际的1正确地预测为1的概率，d/(c+d)。FPR：False Positive Rate（假阳性率，1-特异度），将实际的0错误地预测为1的概率，b/(a+b)。TPR与FPR相互影响的重要因素就是“阈值”。当阈值为0时，所有的样本都被预测为正例，因此TPR=1，而FPR=1。此时的FPR过大，无法实现分类的效果。随着阈值逐渐增大，被预测为正例的样本数逐渐减少，TPR和FPR各自减小，当阈值增大至1时，没有样本被预测为正例，此时TPR=0，FPR=0。
+
+统计量最为关注的是AUC值，其次是似然卡方统计量，然后才是HL统计量，对AIC 和RSQUARE 极少关注，这一点和多元线性回归有很大的不同，根本原因是多元线性回归是一个预测模型，目标变量的值具有实际的数值意义；而logistic是一个分类模型，目标变量的值是一个分类标识，因此更关注观测值和预测值之间的相对一致性，而不是绝对一致性。
+
+### 多因素Logistics回归
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
@@ -109,5 +164,8 @@ data(drugDat)
 drug.elrm=elrm(formula=recovered/n~sex+treatment,interest=~sex+treatment,iter=100000,burnIn=1000,dataset=drugDat)
 summary(drug.elrm)
 ```
+
+## Possion回归
+Poisson回归的因变量是计数型的变量，自变量是连续型变量。
 
 
