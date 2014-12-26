@@ -97,35 +97,11 @@ summary(fit.glm)
 logistic.display(fit.glm)
 ```
 
-当评价模型的适用性时，可以绘制初始响应变量的预测值与残差的图形。
-
-```{r}
-plot(predict(fit.glm,type=”response”),residuals(fit.glm,type=”deviance”))  
-```
-对于影响分析，识别异常值可用
-```{r}
-influencePlot(fit.glm)
-influence.measures(fit.glm)
-```
 #### 模型评价指标
 ##### 拟合优度（goodness of fit）
 拟合优度度量的是预测值和观测值之间的总体一致性。但是在评价模型时，实际上测量的是预测值和观测值之间的差别，也就是实际上检测的是模型预测的“劣度”不是”优度“，即拟合不佳检验 （lack of fit test）常用的两个指标是 Hosmer-Lemeshow指标（HL）和信息测量指标（information measure）(IM).
  Hosmer Lemeshow拟合优度指标(通常简写为H-L),对应的统计假设$H_{0}$是预测值概率和观测值之间无显著差异，所以如果HL指标显示较大的P-value，说明统计结果不显著，因此，不能拒绝关于模型拟合数据很好的假设，换句话说，模型很好的拟合了数据。 IM指标中比较著名的是AIC，在其他条件不变的情况下，较小的AIC值表示拟合模型较好。
-Ｈosmer-Lemeshowz指标
-```{r}
-hosmerlem = function(y, yhat, g=10) {
-  cutyhat = cut(yhat,
-                breaks = quantile(yhat, probs=seq(0,
-                                                  1, 1/g)), include.lowest=TRUE)
-  obs = xtabs(cbind(1 - y, y) ~ cutyhat)
-  expect = xtabs(cbind(1 - yhat, yhat) ~ cutyhat)
-  chisq = sum((obs - expect)^2/expect)
-  P = 1 - pchisq(chisq, g - 2)
-  return(list(chisq=chisq,p.value=P))
-}
 
-hosmerlem(y=life$Y, yhat=fitted(fit.glm))
-```
 ##### 模型卡方统计（model chi-square statistic）
 模型卡方统计检测的是模型中所包含的统计量对因变量有显著的解释能力。也就是说所设模型比零假设模型（即只包含常数项的模型）要好，在多元线性回归和ANOVA中，常用F检验达到目的。在logistic中用似然比检验（likelihood ratio test）,相当于F检验。需要注意的是，模型卡方值和拟合优度是两个完全不同的概念：模型卡方值度量的是自变量是否与因变量的odds自然对数线性相关，而拟合优度 度量的是预测值与观测值之间的一致性。所以按照理想情况，最好是模型的卡方检验统计性显著而拟合优度的统计性不显著。如果发生不一致，实践中更优先关注前者。
 
@@ -151,7 +127,28 @@ ROC（receiver operating characteristic curve，受试者工作特征曲线）�
 
 统计量最为关注的是AUC值，其次是似然卡方统计量，然后才是HL统计量，对AIC 和RSQUARE 极少关注，这一点和多元线性回归有很大的不同，根本原因是多元线性回归是一个预测模型，目标变量的值具有实际的数值意义；而logistic是一个分类模型，目标变量的值是一个分类标识，因此更关注观测值和预测值之间的相对一致性，而不是绝对一致性。
 
+
+对于影响分析，识别异常值可用
+```{r}
+influencePlot(fit.glm)
+influence.measures(fit.glm)
+```
+
 ### 多因素Logistics回归
+
+Ｈosmer-Lemeshowz指标
+```{r}
+hosmerlem  <- function(y, yhat, g=10) {
+  cutyhat = cut(yhat, breaks = quantile(yhat, probs=seq(0,1,1/g)), include.lowest=TRUE)
+  obs = xtabs(cbind(1 - y, y) ~ cutyhat)
+  expect = xtabs(cbind(1 - yhat, yhat) ~ cutyhat)
+  chisq = sum((obs - expect)^2/expect)
+  P = 1 - pchisq(chisq, g - 2)
+  return(list(chisq=chisq,p.value=P))
+}
+
+hosmerlem(y=life$Y, yhat=fitted(fit.glm))
+```
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
