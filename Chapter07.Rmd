@@ -23,6 +23,7 @@ library(car)
 library(rms)
 library(Deducer)
 library(boot)
+library(bestglm)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
 
@@ -178,6 +179,20 @@ logistic.display(fit.glm)
 exp(coef(fit.glm))即为OR值，表示自变量增加一个单位，因变量则乘以OR值。OR值具有风险的含义，在危险因素研究中具有重要意义。LR-test（likelihood ration test）为似然比检验,Wald's test为Wadld检验，P值小于0.05均说明回归系数具有统计学意义，自变量与因变量有统计学联系。OR值大于1，为危险因素。OR值小于1，为保护因素。
 
 ### 多因素Logistics回归
+AER包中包含一个Affairs数据，记录了一组婚外情数据，其中包括参与者性别、年龄、婚龄、是否有小孩、宗教信仰程度（5分制，1表示反对，5表示非常信仰）、学历、职业和婚姻的自我评分（5分制，1表示非常不幸福，5表示非常幸福）。
+```{r}
+data(Affairs,package="AER")
+Affairs$ynaffair[Affairs$affairs > 0] <- 1
+Affairs$ynaffair[Affairs$affairs==0] <- 0
+Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
+
+fit.full <- glm(ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating,data=Affairs,family=binomial())
+library(bestglm)
+Affairs <- Affairs[,c("gender","age","yearsmarried","children","religiousness","education","occupation","rating","ynaffair")]
+best.logistic <-bestglm(Affairs,family = binomial,IC = "AIC",method = "exhaustive") 
+best.logistic$BestModels
+summary(best.logistic$BestModel)
+```
 
 Ｈosmer-Lemeshowz指标
 ```{r}
