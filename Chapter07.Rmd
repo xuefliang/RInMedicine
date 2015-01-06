@@ -164,10 +164,13 @@ influence.measures(fit.glm)
 因变量的方差大于期望的二项分布的方差，过度离散会导致奇异标准误检验和不精确的的显著性检验。检验过度离散的一种方法是比较二项分布模型的残差偏差与残差自由度，如果比值比1大很多，可以认为存在过度离散。对过度离散的假设检验需要用family = "quasibinomial"再进行一次模型拟合。
 
 ```{r}
-fit.glm$deviance/fit.glm$df.residual
-
-fit.od<- glm(cancer~gene,family = quasibinomial, data = mydata)
-pchisq(summary(fit.od)$dispersion*fit.glm$df.residual,fit.glm$df.residual,lower=F)
+overdispersion <- function(fit.glm){
+  Phi <- fit.glm$deviance/fit.glm$df.residual
+  fit.od <- glm(fit.glm$formula,family = quasibinomial, data = fit.glm$data)
+  p <- pchisq(summary(fit.od)$dispersion*fit.glm$df.residual,fit.glm$df.residual,lower=F)
+  return (list(Phi=Phi,p.value=p))
+  }
+overdispersion(fit.glm)
 ```
 比值在1附近，并且P值大于0.05，不能拒绝比值为1的假设，可以认为不存在过度离散。
 
@@ -185,17 +188,35 @@ data(Affairs,package="AER")
 Affairs$ynaffair[Affairs$affairs > 0] <- 1
 Affairs$ynaffair[Affairs$affairs==0] <- 0
 Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
-
-fit.full <- glm(ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating,data=Affairs,family=binomial())
-library(bestglm)
+```
+与线性回归相似，bestglm包中bestglm函数可以完成logistic回归的全子集的自变量筛选。
+```{r}
 Affairs <- Affairs[,c("gender","age","yearsmarried","children","religiousness","education","occupation","rating","ynaffair")]
 best.logistic <-bestglm(Affairs,family = binomial,IC = "AIC",method = "exhaustive") 
 best.logistic$BestModels
 summary(best.logistic$BestModel)
 ```
-
-Ｈosmer-Lemeshowz指标
+也可用逐步法完成自变量的筛选。
 ```{r}
+fit.full <- glm(ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating,data=Affairs,family=binomial())
+step(fit.full)
+```
+
+全自集和逐步法对自变量的筛选均应建立在对自变量专业考虑的基础上进行。本例中两种方法结果类似，对其结果进行诊断。
+```{r}
+fit <- glm(ynaffair ~ gender + age + yearsmarried + religiousness + rating, family = binomial(), data = Affairs)
+
+lrm(ynaffair ~ gender + age + yearsmarried + religiousness + rating,data=Affairs)
+```
+AUC=0.70,模型尚可。
+```{r}
+fit0 <- glm(formula = ynaffair ~ 1, family = binomial(), data = Affairs)
+anova(fit0,fit,test="Chisq")
+```
+模型的likelihood-ratio检验，P值小于0.05，可以认为模型的自变量与因变量的odds自然对数线性相关。
+
+Hosmer-Lemeshowz指标
+```{r error=FALSE}
 hosmerlem  <- function(y, yhat, g=10) {
   cutyhat = cut(yhat, breaks = quantile(yhat, probs=seq(0,1,1/g)), include.lowest=TRUE)
   obs = xtabs(cbind(1 - y, y) ~ cutyhat)
@@ -205,8 +226,20 @@ hosmerlem  <- function(y, yhat, g=10) {
   return(list(chisq=chisq,p.value=P))
 }
 
-hosmerlem(y=life$Y, yhat=fitted(fit.glm))
+hosmerlem(y=Affairs$ynaffair, yhat=fitted(fit))
 ```
+Hosmer Lemeshow拟合优度指标检验P值小于0.05，可以认为预测值和观测值之间差异显著。
+过度离散诊断
+```{r}
+overdispersion(fit)
+```
+过度离散检验P值大于0.05，可以认为不存在过度离散。
+
+多重共线性
+```{r}
+sqrt(vif(fit)) > 2
+```
+自变量之间不存在多重共线性。可用influence.measures()函数进行影响分析，logistic.display()对自变量进行解释。
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
