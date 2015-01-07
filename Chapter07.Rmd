@@ -255,8 +255,9 @@ case变量1表示患病，0表示未患病。matset变量表示对子号。epica
 ```{r}
 fit.c <- clogit(case~smoking+alcohol+rubber+strata(matset),data=VC1to1,method = "exact")
 summary(fit.c)
+fit.c$loglik
 ```
-survival包中clogit()函数可以完成条件Logistic回归，结果显示模型与空模型比较，差异无显著性。自变量smoking和rubber均无显著性差异，自变量alcohol差异显著。
+survival包中clogit()函数可以完成条件Logistic回归，结果显示模型与空模型比较，差异无显著性。自变量smoking和rubber均无显著性差异，自变量alcohol差异显著。条件Logistic回归模型不能得到对数似然比和AIC值，但能得到条件对数似然比，以表示模型的拟合水平。
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
