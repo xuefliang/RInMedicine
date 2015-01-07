@@ -24,6 +24,7 @@ library(rms)
 library(Deducer)
 library(boot)
 library(bestglm)
+library(survival)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
 
@@ -240,6 +241,16 @@ overdispersion(fit)
 sqrt(vif(fit)) > 2
 ```
 自变量之间不存在多重共线性。可用influence.measures()函数进行影响分析，logistic.display()对自变量进行解释。
+
+### 条件logistic回归
+
+```{r}
+data(VC1to1,package = "epicalc")
+use(VC1to1)
+matchTab(case,smoking,strat=matset)
+summary(clogit(case~smoking+alcohol+strata(matset)))
+```
+
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
