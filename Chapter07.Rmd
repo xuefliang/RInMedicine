@@ -53,7 +53,7 @@ R中通过glm(formula, family=family.generator,data=data.frame) 函数用来做�
 
 因变量为二分类或多分类时，Logistics回归是非常重要的模型。Logistics回归由于对资料的正态性和方差齐性不做要求、对自变量类型也不做要求等，使得Logistic回归模型在医学研究各个领域被广泛用，可探索某疾病的危险因素，根据危险因素预测某疾病发生的概率，等等。例如，想探讨胃癌发生的危险因素，可以选择两组人群，一组是胃癌组，一组是非胃癌组，两组人群肯定有不同的体征和生活方式等。这里的因变量就是是否胃癌，即“是”或“否”，为两分类变量，自变量就可以包括很多了，例如年龄、性别、饮食习惯、幽门螺杆菌感染等。自变量既可以是连续的，也可以是分类的。通过logistic回归分析，就可以大致了解到底哪些因素是胃癌的危险因素。Logistics回归模型的表达形式为
 $$logit(P)=ln(\frac{P}{1-P})=\beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots +\beta_{p}X_{p}$$
-P为暴露于某种状态下的结局概率。$logit(P)$是一种变量变换方式，表示对P进行logit变换。$beta_{i}$为偏回归系数，表示在其他自变量不变的条件下，$X_{i}$每变化一个单位$logit(P)$的估计值。对P进行了$logit(P)$变换后，$ln(\frac{P}{1-P})$的值可以取任意值。Logistics回归是通过最大似然估计（maximum likelihood estimation,MLE）求解常数项和偏回归系数,基本思想时当从总体中随机抽取n个样本后，最合理的参数估计量应该使得这n个样本观测值的概率最大。
+P为暴露于某种状态下的结局概率。$logit(P)$是一种变量变换方式，表示对P进行logit变换。$beta_{i}$为偏回归系数，表示在其他自变量不变的条件下，$X_{i}$每变化一个单位$logit(P)$的估计值。对P进行了$logit(P)$变换后，$ln(\frac{P}{1-P})$的值可以取任意值。Logistics回归是通过最大似然估计（maximum likelihood estimation,MLE）求解常数项和偏回归系数,基本思想时当从总体中随机抽取n个样本后，最合理的参数估计量应该使得这n个样本观测值的概率最大。最大似然法的基本思想是先建立似然函数与对数似然函数，再通过使对数似然函数最大求解相应的参数值，所得到的估计值称为参数的最大似然估计值。
 
 在R语言中，进行logistic回归的命令是通过广义线性模型进行的：fm <- glm(formula, family = binomial(link = logit),data=data.frame) 。Logistic回归的基本方法是极大似然方法，其前提是样本较大。在样本量较小、数据结构较偏时，可以用精确Logistic回归（Exact logistic regression）来解决这一问题，该方法通过建立条件似然函数，进一步求出参数的充分统计量的分布函数。随着计算方法的发展和优化，也出现了使用马尔可夫链蒙特卡罗算法来模拟精确Logistic回归。R语言中的elrm包就可以实现这种算法。glm()拟合二项模型时对于因变量，如果是向量， 则假定操作二元（binary）数据，因此要求是0/1向量。 如果因变量是双列矩阵，则假定第一列为试验成功的次数第二列为试验失败的次数。如果因变量是因子，则第一水平作为失败 (0) 考虑而其他的作为`成功'(1) 考虑。
 
@@ -243,14 +243,20 @@ sqrt(vif(fit)) > 2
 自变量之间不存在多重共线性。可用influence.measures()函数进行影响分析，logistic.display()对自变量进行解释。
 
 ### 条件logistic回归
+条件logistic回归假设自变量在各配对组中对结果变量的作用是相同的，即自变量的回归系数与配对组无关。配对设计的Logistic回归模型不含常数项，参数估计是根据条件概率得到的。对病例和对照进行配比能控制影响实验效应的主要非处理因素，可以提高统计分析的效能，通常可分为1:1，1:n，m:n配对。epicalc包中的VC1to1来自于验证吸烟、酗酒和橡胶行业工作是否是食管癌的危险因素的病例对照研究。
 
 ```{r}
 data(VC1to1,package = "epicalc")
+pander(VC1to1)
 use(VC1to1)
 matchTab(case,smoking,strat=matset)
-summary(clogit(case~smoking+alcohol+strata(matset)))
 ```
-
+case变量1表示患病，0表示未患病。matset变量表示对子号。epicalc包中matchTab()函数用以计算条件优势比（McNemar's优势比），表示病例间不一致部分的计数比值，其95%置信区间如果包含1，则表示变量没有统计学意义。
+```{r}
+fit.c <- clogit(case~smoking+alcohol+rubber+strata(matset),data=VC1to1,method = "exact")
+summary(fit.c)
+```
+survival包中clogit()函数可以完成条件Logistic回归，结果显示模型与空模型比较，差异无显著性。自变量smoking和rubber均无显著性差异，自变量alcohol差异显著。
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
