@@ -27,6 +27,7 @@ library(bestglm)
 library(survival)
 library(robust)
 library(mlogit)
+library(VGAM)
 library(nnet)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
@@ -269,16 +270,37 @@ fit.c$loglik
 ```
 survival包中clogit()函数可以完成条件Logistic回归，结果显示模型与空模型比较，差异无显著性。自变量smoking和rubber均无显著性差异，自变量alcohol差异显著。条件Logistic回归模型不能得到对数似然比和AIC值，但能得到条件对数似然比，以表示模型的拟合水平。
 
-### 多项式Logistic回归 
-若因变量包含两个以上的无序类别（比如，已婚/寡居/离婚），便可使用mlogit包中的mlogit（）函数拟合多项Logistic回归。epicalc中Ectopic数据集，其中outc变量中Deci表示正常分娩，IA表示发生人工流产，EP表示发生宫外孕。hia变量表示以前是否有IA（人工流产），gravi表示IA的次数。
+### 无序多分类Logistic回归 
+若因变量包含两个以上的无序类别（比如，已婚/寡居/离婚），便可使用mlogit包中的mlogit（）函数拟合多项Logistic回归。epicalc中Ectopic数据集，其中outc变量中Deci表示正常分娩，IA表示发生人工流产，EP表示发生宫外孕。hia变量表示以前是否有IA（人工流产史），gravi表示怀孕的次数。
 ```{r}
-Ectopic.w <- mlogit.data(Ectopic,shape = "wide", choice = "outc")
-fit.m <- mlogit(outc~0|hia+gravi,data=Ectopic.w)
-summary(fit.m)
+data(Ectopic,package = "epicalc")
+library(pander)
 ```
-formula：mlogit提供了条件logit，多项logit，混合logit多种模型，对于多项logit的估计模型应写为：因变量~0|自变量,data：使用mlogit.data函数使得数据结构符合mlogit函数要求。Choice：确定分类变量是什么Shape：如果每一行是一个观测，我们选择wide，如果每一行是表示一个选择，那么就应该选择long。alt.var：对于shape为long的数据，需要标明所有的选择名称。出的结果与nnet包中的multinom()函数一致。由于mlogit包可以做的logit模型更多。
+```{r}
+ep <- Ectopic$outc=="EP"
+ia <- Ectopic$outc=="IA"
+deli <- Ectopic$outc=="Deli"
+mnFit <- multinom(cbind(deli,ep,ia)~hia+gravi, data=Ectopic)
+summary(mnFit)
+mlogit.display(mnFit)
+```
 
-### 有序Logistic回归
+```{r}
+vglmFitMN <- vglm(outc~hia+gravi, family=multinomial(refLevel=3), data=Ectopic)
+summary(vglmFitMN)
+exp(VGAM::coef(vglmFitMN))
+```
+
+```{r}
+dfMNL <- mlogit.data(Ectopic, choice="outc", shape="wide", varying=NULL)
+mlogitFit <- mlogit(outc ~ 0 | hia+gravi,, reflevel="Deli", data=dfMNL)
+exp(mlogitFit$coefficients)
+```
+nnet包中multinom()函数、VGAM包中的vglm()函数、mlogit包中mlogit()函数均得到了相似的结果。mlogit()函数对数据格式于其他两个函数的要求有所不同，其中formula：mlogit提供了条件logit，多项logit，混合logit多种模型，对于多项logit的估计模型应写为：因变量~0|自变量,data：使用mlogit.data函数使得数据结构符合mlogit函数要求。Choice：确定分类变量是什么Shape：如果每一行是一个观测，选择wide，如果每一行是表示一个选择，那么选择long。alt.var：对于shape为long的数据，需要标明所有的选择名称。由于mlogit包可以做的logit模型更多。
+
+本例中是以outc变量的Deli(分娩)做为参考水平的，有人工流产史的病例(hia ever IA)发生宫外孕（EP）的危险增加4.44，有人工流产史的病例(hia ever IA)发生人工流产（IA）的危险增加1.47(置信区间包括1，无显著性意义)。multinom()函数默认是第一水平，可通过levels(Ectopic$outc)方法查看。vglm()和mlogit()函数可以指定参考水平。
+
+### 有序多分类Logistic回归
 若因变量是一有序的类别（比如，无效/有效/显效/控制），便可使用rms包中的lrm（）函数拟合Logistic回归。程序包MASS提供polr()函数可以进行ordered logit或probit回归。
 
 ### 精确Logistic回归
