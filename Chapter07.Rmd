@@ -300,6 +300,59 @@ nnet包中multinom()函数、VGAM包中的vglm()函数、mlogit包中mlogit()函
 
 本例中是以outc变量的Deli(分娩)做为参考水平的，有人工流产史的病例(hia ever IA)发生宫外孕（EP）的危险增加4.44，有人工流产史的病例(hia ever IA)发生人工流产（IA）的危险增加1.47(置信区间包括1，无显著性意义)。multinom()函数默认是第一水平，可通过levels(Ectopic$outc)方法查看。vglm()和mlogit()函数可以指定参考水平。
 
+#### 模型拟合评价
+正确分类率 
+```{r}
+PhatCateg <- VGAM::predict(vglmFitMN, type="response")
+categHat <- levels(Ectopic$outc)[max.col(PhatCateg)]
+facHat <- factor(categHat,levels=levels(Ectopic$outc))
+cTab   <- xtabs(~ outc+ facHat, data=Ectopic)
+addmargins(cTab)
+CCR <- sum(diag(cTab)) / sum(cTab)
+```
+
+偏差、对数似然值和AIC值
+```{r}
+VGAM::deviance(vglmFitMN)
+VGAM::logLik(vglmFitMN)
+VGAM::AIC(vglmFitMN)
+```
+
+McFadden, Cox & Snell and Nagelkerke 伪决定系数
+```{r}
+vglm0 <- vglm(outc~ 1, family=multinomial(refLevel=3), data=Ectopic)
+LLf   <- VGAM::logLik(vglmFitMN)
+LL0   <- VGAM::logLik(vglm0)
+N <- nrow(Ectopic)
+McFadden <- as.vector(1 - (LLf / LL0))
+CoxSnell<- as.vector(1 - exp((2/N) * (LL0 - LLf)))
+Nagelkerke<- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+```
+
+
+
+#### 预测分类
+vglm拟合结果可通过如下的方法得到每个分类的预测概率。
+```{r}
+PhatCateg <- VGAM::predict(vglmFitMN, type="response")
+head(PhatCateg)
+```
+还可以通过如下两种方法分别得到针对multinom()、mlogit()每个分类的预测概率。
+```{r eval=FALSE}
+predict(mnFit, type="probs")
+fitted(mlogitFit, outcome=FALSE)
+```
+对分类结果的预测有如下两种方法。
+```{r}
+PhatCateg <- VGAM::predict(vglmFitMN, type="response")
+categHat <- levels(Ectopic$outc)[max.col(PhatCateg)]
+head(categHat)
+```
+```{r eval=FALSE}
+predCls <- predict(mnFit, type="class")
+head(predCls)
+```
+
 ### 有序多分类Logistic回归
 若因变量是一有序的类别（比如，无效/有效/显效/控制），便可使用rms包中的lrm（）函数拟合Logistic回归。程序包MASS提供polr()函数可以进行ordered logit或probit回归。
 
