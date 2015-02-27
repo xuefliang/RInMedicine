@@ -395,13 +395,13 @@ polrFit <- polr(intense.ord~agegr+shoes,method="logistic",data=HW93)
 exp(MASS:::confint.polr(polrFit))
 ordinal.or.display(polrFit)
 ```
-VGAM包
+VGAM包,累积Logistic回归模型(cumulative logit model),${logit}(p(Y \geq g)) = \ln \frac{P(Y \geq g)}{1 - P(Y \geq g)} = \beta_{0_{g}} + \beta_{1} X_{1} + \dots + \beta_{p} X_{p} \quad(g = 2, \ldots, k)$
 ```{r}
 vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
 ```
 
 ```{r,eval=FALSE}
-vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE, reverse=TRUE), data=HW93)
+vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE, reverse=TRUE),data=HW93)
 vglm(intense.ord~agegr+shoes, family=acat(parallel=TRUE), data=HW93)
 vglm(intense.ord~agegr+shoes, family=sratio(parallel=TRUE), data=HW93)
 ```
