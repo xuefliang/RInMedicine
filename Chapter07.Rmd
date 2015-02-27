@@ -29,6 +29,7 @@ library(robust)
 library(mlogit)
 library(VGAM)
 library(nnet)
+library(ordinal)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
 
@@ -274,7 +275,7 @@ survival包中clogit()函数可以完成条件Logistic回归，结果显示模�
 若因变量包含两个以上的无序类别（比如，已婚/寡居/离婚），便可使用mlogit包中的mlogit（）函数拟合多项Logistic回归。epicalc中Ectopic数据集，其中outc变量中Deci表示正常分娩，IA表示发生人工流产，EP表示发生宫外孕。hia变量表示以前是否有IA（人工流产史），gravi表示怀孕的次数。
 ```{r}
 data(Ectopic,package = "epicalc")
-library(pander)
+pander(head(Ectopic))
 ```
 ```{r}
 ep <- Ectopic$outc=="EP"
@@ -381,7 +382,106 @@ head(predCls)
 ```
 
 ### 有序多分类Logistic回归
-若因变量是一有序的类别（比如，无效/有效/显效/控制），便可使用rms包中的lrm（）函数拟合Logistic回归。程序包MASS提供polr()函数可以进行ordered logit或probit回归。
+若因变量是一有序的类别（比如，无效/有效/显效/控制），使用无序多分类Logistic回归处理因变量，不但会丧失变量间联系的功效，而且会曲解因变量和自变量之间的相关方式。程序包MASS提供polr()函数、ordinal提供clm()函数、rms提供orm()函数、VGAM提供vglm()函数可以进行ordered logit或probit回归。
+例 epicalc中HW93数据集是1993年泰国南部钩虫感染的调查资料，其中intense变量表示感染的严重程度为有序多分类变量，shoes表示是否穿鞋，agegr是年龄分组。
+```{r}
+data(HW93,package = "epicalc")
+intense.ord <- ordered(HW93$intense)
+```
+
+MASS包
+```{r}
+polrFit <- polr(intense.ord~agegr+shoes,method="logistic",data=HW93)
+exp(MASS:::confint.polr(polrFit))
+ordinal.or.display(polrFit)
+```
+VGAM包
+```{r}
+vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
+```
+
+```{r,eval=FALSE}
+vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE, reverse=TRUE), data=HW93)
+vglm(intense.ord~agegr+shoes, family=acat(parallel=TRUE), data=HW93)
+vglm(intense.ord~agegr+shoes, family=sratio(parallel=TRUE), data=HW93)
+```
+
+rms包
+```{r}
+ormFit <- orm(intense~agegr+shoes, data=HW93)
+```
+
+ordinal包
+```{r}
+clmFit <- clm(intense~agegr+shoes, link="logit", data=HW93)
+```
+结果显示，上述有序多分类Logisitic回归模型有两个截距，每一个都是结果的一个切割点，这些截距项的值没有实际意义。年龄的系数通过两个切割点进行了分割，两个系数均为正数表示危险度随年龄的增加而增加，穿鞋的系数为负数表示穿鞋对两种感染水平均有保护作用。
+
+#### 模型评价
+```{r}
+vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
+PhatCateg <- VGAM::predict(vglmFit, type="response")
+categHat <- levels(HW93$intense)[max.col(PhatCateg)]
+facHat <- factor(categHat, levels=levels(HW93$intense))
+cTab   <- xtabs(~ intense + facHat, data=HW93)
+addmargins(cTab)
+(CCR <- sum(diag(cTab)) / sum(cTab))
+```
+上述方法可获得模型的正确分类率，本例的正确分类率为`r CCR`，正确分类率偏低。
+偏差、对数似然值和AIC值
+```{r}
+deviance <- VGAM::deviance(vglmFit)
+logLik<- VGAM::logLik(vglmFit)
+AIC <- VGAM::AIC(vglmFit)
+deviance
+logLik
+AIC
+```
+
+McFadden, Cox & Snell and Nagelkerke $R^{2}$伪决定系数
+```{r}
+vglm0 <- vglm(intense.ord~ 1, family=propodds, data=HW93)
+LLf   <- VGAM::logLik(vglmFit)
+LL0   <- VGAM::logLik(vglm0)
+McFadden <- as.vector(1 - (LLf / LL0))
+CoxSnell<- as.vector(1 - exp((2/N) * (LL0 - LLf)))
+Nagelkerke<- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+McFadden
+CoxSnell
+Nagelkerke
+```
+
+####系数及模型的检验
+```{r}
+sumOrd   <- summary(vglmFit)
+coefOrd <- coef(sumOrd)
+exp(coefOrd[,1])
+zCrit   <- qnorm(c(0.05/2, 1 - 0.05/2))
+ciCoef <- t(apply(coefOrd, 1, function(x) x["Estimate"] - zCrit*x["Std. Error"] ))
+```
+
+```{r}
+summary(clmFit)
+```
+
+#### 模型比较
+```{r}
+vglmR <- vglm(intense.ord~ shoes, family=propodds, data=HW93)
+VGAM::lrtest(vglmFit, vglmR)
+VGAM::lrtest(vglmFit, vglm0)
+```
+#### Test assumption of proportional odds (=parallel logits)
+```{r}
+vglmP  <- vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE,  reverse=TRUE),data=HW93)
+vglmNP <- vglm(intense.ord~agegr+shoes, family=cumulative(parallel=FALSE, reverse=TRUE),data=HW93)
+VGAM::lrtest(vglmP, vglmNP)
+```
+
+```{r}
+clmP  <- clm(intense~agegr+shoes, link="logit", data=HW93)
+clmNP <- clm(intense~shoes, nominal=~agegr, data=HW93)
+anova(clmP, clmNP)
+```
 
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
