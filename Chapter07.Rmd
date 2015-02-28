@@ -382,24 +382,24 @@ head(predCls)
 ```
 
 ### 有序多分类Logistic回归
-若因变量是一有序的类别（比如，无效/有效/显效/控制），使用无序多分类Logistic回归处理因变量，不但会丧失变量间联系的功效，而且会曲解因变量和自变量之间的相关方式。程序包MASS提供polr()函数、ordinal提供clm()函数、rms提供orm()函数、VGAM提供vglm()函数可以进行ordered logit或probit回归。
+若因变量是一有序的类别（比如，无效/有效/显效/控制），使用无序多分类Logistic回归处理因变量，不但会丧失变量间联系的功效，而且会曲解因变量和自变量之间的相关方式。程序包MASS提供polr()函数、ordinal提供clm()函数、rms提供orm()函数、VGAM提供vglm()函数可以进行ordered logit或probit回归。累积Logistic回归模型(cumulative logit model)如下，${logit}(p(Y \geq g)) = \ln \frac{P(Y \geq g)}{1 - P(Y \geq g)} = \beta_{0_{g}} + \beta_{1} X_{1} + \dots + \beta_{p} X_{p} \quad(g = 2, \ldots, k)$。成比例比数比累计Logistic模型(proportional-adds cumulative logit mode)简化上述模型，使自变量$X_{i}$所对应的回归系数$\beta_{i}$都是相等。在此假设条件下，不同累计Logistic的回归线相互平行，只是截距$\beta_{i}$不同。
 例 epicalc中HW93数据集是1993年泰国南部钩虫感染的调查资料，其中intense变量表示感染的严重程度为有序多分类变量，shoes表示是否穿鞋，agegr是年龄分组。
 ```{r}
 data(HW93,package = "epicalc")
 intense.ord <- ordered(HW93$intense)
 ```
 
-MASS包
+在自变量较多的时候，可以采用R中自动逐步变量筛选step()函数，仅MASS包中polr()函数能够支持自变量的筛选。
 ```{r}
 polrFit <- polr(intense.ord~agegr+shoes,method="logistic",data=HW93)
 exp(MASS:::confint.polr(polrFit))
 ordinal.or.display(polrFit)
 ```
-VGAM包,累积Logistic回归模型(cumulative logit model),${logit}(p(Y \geq g)) = \ln \frac{P(Y \geq g)}{1 - P(Y \geq g)} = \beta_{0_{g}} + \beta_{1} X_{1} + \dots + \beta_{p} X_{p} \quad(g = 2, \ldots, k)$
+VGAM包
 ```{r}
 vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
 ```
-
+VGAM包能进行所有类型的logistic回归的计算，并且能进行累计Logistic回归模型的平行性假设检验，其他包则不能。模型中family=cumulative(parallel=TRUE, reverse=TRUE)指定拟合累计Logistic回归模型，而且parallel=T指定模型按平行性假定进行拟合，该选项可简写为amily=propodds。
 ```{r,eval=FALSE}
 vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE, reverse=TRUE),data=HW93)
 vglm(intense.ord~agegr+shoes, family=acat(parallel=TRUE), data=HW93)
@@ -460,6 +460,13 @@ zCrit   <- qnorm(c(0.05/2, 1 - 0.05/2))
 ciCoef <- t(apply(coefOrd, 1, function(x) x["Estimate"] - zCrit*x["Std. Error"] ))
 ```
 
+MASS包建立的模型可直接使用confint()函数计算OR值及其可信区间。
+```{r}
+summary(polrFit)
+exp(cbind(OR=coef(polrFit),t(confint(polrFit))))
+```
+
+ordinal包建立的模型用summary()函数即可输出系数。
 ```{r}
 summary(clmFit)
 ```
@@ -470,7 +477,15 @@ vglmR <- vglm(intense.ord~ shoes, family=propodds, data=HW93)
 VGAM::lrtest(vglmFit, vglmR)
 VGAM::lrtest(vglmFit, vglm0)
 ```
-#### Test assumption of proportional odds (=parallel logits)
+vglmFit与其他两个模型比较均有显著性差异，选择LogLik值较大的，还有两个自变量的模型。选择更优模型还可以比较两个模型的信息统计量AIC和BIC，信息统计量小的模型更优。
+```{r}
+AIC(vglmR)
+AIC(vglm0)
+AIC(vglmFit)
+```
+
+#### 平行性假设检验
+为了检验平行性假设，需要建立非平行的模型，将平行性模型与非平行性模型进行似然比检验，检验平行性假设
 ```{r}
 vglmP  <- vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE,  reverse=TRUE),data=HW93)
 vglmNP <- vglm(intense.ord~agegr+shoes, family=cumulative(parallel=FALSE, reverse=TRUE),data=HW93)
@@ -482,7 +497,7 @@ clmP  <- clm(intense~agegr+shoes, link="logit", data=HW93)
 clmNP <- clm(intense~shoes, nominal=~agegr, data=HW93)
 anova(clmP, clmNP)
 ```
-
+平行性假设检验结果表明，P值小于0.05，可以认为平行性假设不成立。检验结果可用is.parallel()函数获得。
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
 ```{r}
