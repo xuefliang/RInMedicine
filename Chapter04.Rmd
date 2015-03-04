@@ -2,15 +2,17 @@
 title: "样本容量估计"
 author: "梁雪枫"
 date: "2014年11月18日"
-documentclass: ctexart
 output:
   pdf_document:
     fig_caption: yes
     latex_engine: xelatex
     number_sections: yes
-    template: !expr rticles::ctex_template()
+    template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.1/rticles/rmarkdown/templates/ctex/resources/default.latex
     toc: yes
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+  html_document:
+    toc: yes
+documentclass: ctexart
+classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
 ---
 
 ```{r include=FALSE}
@@ -58,14 +60,14 @@ OneSampleMean.Equality2(0.05,0.1,18,10)
 ```
 
 ####非劣效/优效性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，$\delta$具有临床意义的界值,进行非劣效性检验，界值应为负值，若进行优效性检验，界值为正值。样本容量为$n= \frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}}{(\epsilon -\delta ) ^{2}}$
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，$\delta$具有临床意义的界值,进行非劣效性检验，界值应为负值，若进行优效性检验，界值为正值。样本容量为$n= \frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}}{(\epsilon -\delta ) ^{2}}$
 
 例3 一项临床试验研究新型降压药治疗高血压的作用，对某社区50~70岁平均收缩压为158mmHg，标准差为18mmHg的男性进行治疗，进行非劣性设计。如果认为有临床价值界值为10mmHg，差值为8mmHg,在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
 ```{r}
 OneSampleMean.NIS(0.05,0.1,18,8,-10)
 ```
 ####等效性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，$\delta$具有临床意义的界值,样本容量为$n= \frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}}{(\delta -|\epsilon|) ^{2}}$
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，$\delta$具有临床意义的界值,样本容量为$n= \frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}}{(\delta -|\epsilon|) ^{2}}$
 
 例4 一项临床试验研究新型降压药治疗高血压的作用，对北京某社区50~70岁平均收缩压为158mmHg，标准差为18mmHg的男性进行治疗，进行等效性检验。如果认为有临床价值界值为10mmHg，差值为8mmHg,在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
 ```{r}
@@ -74,7 +76,7 @@ OneSampleMean.Equivalence(0.05,0.1,18,8,10)
 
 ###两组设计(平行)
 ####显著性性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{\epsilon ^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{\epsilon ^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
 
 例5 为研究某地正常成年男、女末稍血液的红细胞的差别，据文献报道，男性红细胞均数为465万/mm3 ，女性红细胞均数为422万/mm3，标准差为52万/mm3，1:1平行对照设计，取双侧$\alpha=0.05$,$\beta=0.1$，问要抽查多少人才能发现男女间红细胞的差别？ 
 
@@ -85,7 +87,7 @@ n
 每组样本量为31人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
 
 ####非劣效/优效性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{(\epsilon-\delta)^{2}}$，$n_{t}=kn_{2}$,k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{(\epsilon-\delta)^{2}}$，$n_{t}=kn_{2}$,k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
 
 例6 为研究某地正常成年男、女末稍血液的红细胞的差别，据文献报道，男性红细胞均数为465万/mm3 ，女性红细胞均数为422万/mm3，标准差为52万/mm3，1:1平行对照设计，取双侧$\alpha=0.05$,$\beta=0.1$，界值为10mmHg，进行非劣性设计，要抽查多少人才能发现男女间红细胞的差别？ 
 
@@ -96,7 +98,7 @@ n
 每组样本量为17人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
 
 ####等效性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{(\epsilon-|\delta|)^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{(\epsilon-|\delta|)^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
 
 例7 为研究某地正常成年男、女末稍血液的红细胞的差别，据文献报道，男性红细胞均数为465万/mm3 ，女性红细胞均数为422万/mm3，标准差为52万/mm3，1:1平行对照设计，取双侧$\alpha=0.05$,$\beta=0.1$，界值为10mmHg，进行等效性设计，要抽查多少人才能发现男女间红细胞的差别？ 
 
@@ -107,8 +109,9 @@ n
 每组样本量为53人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
 
 ###两组设计(交叉)
+两组交叉设计的样本量估计公式也适用配对设计、交叉配对设计和随机区组配对设计。
 ####显著性性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}_{m}}{2\epsilon ^{2}}$。
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}_{m}}{2\epsilon ^{2}}$。
 
 例8 AAA 药品和对照药品治疗高血压，患者先服用对照药品 1 个月，洗脱2 周，再服用 AAA 1 个月，另一组反之。如果 AAA 能够比对照药品平均多降低收缩压 5mmHg（差值），则认为有推广价值。预试验差值标准差为 10。选用 α=0.05,Power=90%, 双侧显著性检验，需要多少样本含量? 
 
@@ -117,7 +120,7 @@ TwoSampleCrossOver.Equality(0.05,0.1,10,5)
 ```
 
 ####非劣效/优效性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}_{m}}{2(\epsilon -\delta )^{2}}$。
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}_{m}}{2(\epsilon -\delta )^{2}}$。
 
 例9 AAA 药品和对照药品治疗高血压，患者先服用对照药品 1 个月，洗脱2 周，再服用 AAA 1 个月，另一组反之。如果 AAA 能够比对照药品平均多降低收缩压 5mmHg（差值），则认为有推广价值。预试验差值标准差为 10。选用 α=0.05,Power=90%, 界值为1,双侧非劣效检验，需要多少样本含量? 
 
@@ -126,7 +129,7 @@ TwoSampleCrossOver.NIS(0.05,0.1,10,-1,5)
 ```
 
 ####等效性检验
-当标准差为$\sigma ^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(n=\frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}_{m}}{2(\epsilon -|\delta| )^{2}}$。
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=n=\frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}_{m}}{2(\epsilon -|\delta|)^{2}}$。
 
 例10 AAA 药品和对照药品治疗高血压，患者先服用对照药品 1 个月，洗脱2 周，再服用 AAA 1 个月，另一组反之。如果 AAA 能够比对照药品平均多降低收缩压 5mmHg（差值），则认为有推广价值。预试验差值标准差为 10。选用 α=0.05,Power=90%, 界值为1,双侧等效性检验，需要多少样本含量? 
 
@@ -136,15 +139,49 @@ TwoSampleCrossOver.Equivalence(0.05,0.1,10,1,5)
 
 ###多组设计
 ####单因素方差分析
-#####完全随机设计
-#####区组设计
-试验组为2个或以上，且设有对照的试验设计，主要观察指标为计量资料。当标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\margin = \mu_{i} − \mu_{j}$取最小值,$\tau$ 的配对对比，样本量为$n_{ij}=\frac{2(z_{\alpha/(2\tau))}+z_{\beta})^2\sigma^{2}}{\epsilon ^{2}_{ij}}$。
+#####平行设计 
+该设计考察的试验因素只有一个，并且该因素的水平(组数)$k\geqslant 3$,用来考察各组观察指标总体均数之间的差别是否有统计学意义。$\Delta =\frac{1}{\sigma ^{2}}\sum_{i=1}^{k}(\mu _{i}-\bar{\mu})^{2},\bar{\mu}=\frac{1}{k}\sum_{j=1}^{k}\mu_{j}$,样本量$n=\lambda/\Delta$,其中$\sigma$为标准差，k为组数，$\mu_{1}$为各组的平均数，$\bar{\mu}$为各组平均数的平均数。$\lambda$需要查询下表。
 
+$k$  $\alpha=0.01$  $\alpha=0.05$  $\alpha=0.01$  $\alpha=0.05$     
+---  ---            ---            ---            ---
+     $1-\beta=0.80$                $1-\beta=0.90$
+2    11.68          7.85           14.88	        10.51
+3    13.89	        9.64           17.43          12.66
+4    15.46	        10.91	         19.25	        14.18
+5    16.75	        11.94	         20.74	        15.41
+6    17.87	        12.83	         22.03	        16.47
+7    18.88	        13.63	         23.19	        17.42
+8    19.79	        14.36          24.24	        18.29
+9    20.64	        15.03	         25.22	        19.09
+10   21.43	        15.65	         26.13	        19.83
+11	 22.18	        16.25	         26.99	        20.54
+12	 22.89	        16.81	         27.8	          21.2
+13	 23.57	        17.34	         28.58	        21.84
+14	 24.22	        17.85	         29.32	        22.44
+15	 24.84	        18.34	         30.04	        23.03
+16	 25.44	        18.82	         30.73	        23.59
+17	 26.02	        19.27	         31.39	        24.13
+18	 26.58	        19.71	         32.04	        24.65
+19	 27.12          20.14	         32.66	        25.16
+20	 27.65          20.56	         33.27	        25.66
 
+例11 用四种药品治疗高血压，已知四种药品降低收缩压的平均数分别是8.25,11.75,12和13。各药品降低收缩压的标准差都是3.5.在$\sigma=0.05,\beta=0.1$,双侧检验，需要多少样本？
+查表$\lambda=14.18$
 ```{r}
-OneWayANOVA.pairwise(0.05,0.1,，，)
-```
+delta<- function(mu,sigma){
+  mu0 <- mean(mu)
+  return(sum((mu-mu0)^2)/sigma^2)
+}
 
+14.18/delta(c(8.25,11.75,12,13),3.5)
+```
+每组研究至少需要14名。
+
+#####配对设计
+试验组为2个或以上，且设有对照的试验设计，主要观察指标为计量资料。当标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值,$\tau$ 的配对对比，样本量为$n_{ij}=\frac{2(z_{\alpha/(2\tau))}+z_{\beta})^2\sigma^{2}}{\epsilon ^{2}_{ij}}$。使用TrialSize包中的OneWayANOVA.pairwise()进行计算。
+
+#####Williams设计
+该设计通过交叉对照研究多个治疗组效应，常见的Williams设计有三组设计（一个6×3的交叉设计）和四组设计（一个4*4的交叉设计）。当试验组是奇数，设计结果是$2k×k$交叉设计，当试验组是偶数，设计结果$k×k$交叉设计。
 
 ##率比较的样本量估计
 ###单组设计
