@@ -313,3 +313,25 @@ TwoSampleProportion.Equivalence2 <- function (alpha, beta, p1, p2, k, delta, mar
 TwoSampleProportion.Equivalence2(0.05,0.1,0.7,0.9,1,0.05,(0.7-0.9))
 ```
 每组需要144例,TrialSize的作者在TwoSampleProportion.Equivalence()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，beta也未除以2.
+
+###两组设计(交叉设计)
+
+####显著性检验
+$\sigma$为两组率的差的标准差,$\epsilon$为试验组率-对照组率，样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}\sigma^2_{d}}{2\epsilon ^{2}}$
+
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果 试验药能够比对照药品的有效率高 5%（差值），则认为有推广价值。预试验差值标准差为2。选用 α=0.05,Power=90%, 双侧显著性检验，需要多少样本含量? 
+
+```{r}
+TwoSamplePropCrossOver.Equality <- function (alpha, beta, sigma, margin) 
+{
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma/2(margin^2)
+    n
+}
+```
+
+
+####非劣效/优效性检验
+$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}\sigma^2_{d}}{a(\epsilon-\delta)^{2}}$
+
+####等效性检验
+$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{a(\delta-|\epsilon|)^{2}}$
