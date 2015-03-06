@@ -139,8 +139,7 @@ TwoSampleCrossOver.Equivalence(0.05,0.1,10,1,5)
 ```
 
 ###多组设计
-####单因素方差分析
-#####平行设计 
+####平行设计 
 该设计考察的试验因素只有一个，并且该因素的水平(组数)$k\geqslant 3$,用来考察各组观察指标总体均数之间的差别是否有统计学意义。$\Delta =\frac{1}{\sigma ^{2}}\sum_{i=1}^{k}(\mu _{i}-\bar{\mu})^{2},\bar{\mu}=\frac{1}{k}\sum_{j=1}^{k}\mu_{j}$,样本量$n=\lambda/\Delta$,其中$\sigma$为标准差，k为组数，$\mu_{1}$为各组的平均数，$\bar{\mu}$为各组平均数的平均数。$\lambda$需要查询下表。
 
 $k$  $\alpha=0.01$  $\alpha=0.05$  $\alpha=0.01$  $\alpha=0.05$     
@@ -178,10 +177,19 @@ delta<- function(mu,sigma){
 ```
 每组研究至少需要14名。
 
-#####配对设计
+####两两比较设计
 试验组为2个或以上，且设有对照的试验设计，主要观察指标为计量资料。当标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值,$\tau$ 的配对对比，样本量为$n_{ij}=\frac{2(z_{\alpha/(2\tau))}+z_{\beta})^2\sigma^{2}}{\epsilon ^{2}_{ij}}$。使用TrialSize包中的OneWayANOVA.pairwise()进行计算。
 
-#####Williams设计
+例 试验药两剂量的降低收缩压的平均数分别30和35，对照的降低收缩压的平均数为20，两剂量降低收缩压的标准差分别是5.3和4.2,进行1：1：1的平行对照实验，在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量?
+```{r}
+n1 <- OneWayANOVA.pairwise(0.05, 0.1, 2, 5.3, (30-20))
+n2 <- OneWayANOVA.pairwise(0.05, 0.1, 2, 4.2, (35-20))
+n <- max(n1,n2)
+n
+```
+每组需要7个例。
+
+####Williams设计
 当交叉试验可使用的时期数与处理数相同时，采用广义拉丁方以尽量少的受试者来均衡一阶延滞作用的交叉设计为Williams设计。常见的Williams设计有三组设计（一个6×3的交叉设计）和四组设计（一个4*4的交叉设计）。当试验组是奇数，设计结果是$2k×k$交叉设计，当试验组是偶数，设计结果$k×k$交叉设计。
 
 #####显著性检验
@@ -195,6 +203,7 @@ n2 <- MeanWilliamsDesign.Equality(0.05,0.1,3.5,6,(8.25-12))
 n3 <- MeanWilliamsDesign.Equality(0.05,0.1,3.5,6,(11.75-12))
 
 n  <- max(n1,n2,n3)
+n
 ```
 研究的每个序列至少需要343例。
 
@@ -209,6 +218,7 @@ n2 <- MeanWilliamsDesign.NIS(0.05,0.1,3.5,6,-5,(8.25-12))
 n3 <- MeanWilliamsDesign.NIS(0.05,0.1,3.5,6,-5,(11.75-12))
 
 n  <- max(n1,n2,n3)
+n
 ```
 研究的每个序列至少需要12例。
 
@@ -223,6 +233,7 @@ n2 <- MeanWilliamsDesign.Equivalence(0.05,0.1,3.5,6,5,(8.25-12))
 n3 <- MeanWilliamsDesign.Equivalence(0.05,0.1,3.5,6,5,(11.75-12))
 
 n  <- max(n1,n2,n3)
+n
 ```
 研究的每个序列至少需要14例。
 
@@ -319,19 +330,70 @@ TwoSampleProportion.Equivalence2(0.05,0.1,0.7,0.9,1,0.05,(0.7-0.9))
 ####显著性检验
 $\sigma$为两组率的差的标准差,$\epsilon$为试验组率-对照组率，样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}\sigma^2_{d}}{2\epsilon ^{2}}$
 
-例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果 试验药能够比对照药品的有效率高 5%（差值），则认为有推广价值。预试验差值标准差为2。选用 α=0.05,Power=90%, 双侧显著性检验，需要多少样本含量? 
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%, 双侧显著性检验，需要多少样本含量? 
 
 ```{r}
 TwoSamplePropCrossOver.Equality <- function (alpha, beta, sigma, margin) 
 {
-    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma/2(margin^2)
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/2*(margin^2)
     n
 }
-```
 
+TwoSamplePropCrossOver.Equality(0.05,0.1,10,0.2)
+```
+每组需要21例.
 
 ####非劣效/优效性检验
-$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}\sigma^2_{d}}{a(\epsilon-\delta)^{2}}$
+$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}\sigma^2_{d}}{2(\epsilon-\delta)^{2}}$
+
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧非劣效检验，需要多少样本含量? 
+
+```{r}
+TwoSamplePropCrossOver.NIS <- function (alpha, beta, sigma, delta,margin) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/2*(margin-delta)^2
+    n
+}
+
+TwoSamplePropCrossOver.NIS(0.05,0.1,10,-0.1,0.2)
+```
+每组需要38例。
 
 ####等效性检验
-$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{a(\delta-|\epsilon|)^{2}}$
+$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{2(\delta-|\epsilon|)^{2}}$
+
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧非劣效检验，需要多少样本含量? 
+
+```{r}
+TwoSamplePropCrossOver.Equivalence <- function (alpha, beta, sigma, delta,margin) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/2*(delta-abs(margin))^2
+    n
+}
+
+TwoSamplePropCrossOver.Equivalence(0.05,0.1,10,-0.1,0.2)
+```
+每组需要49例。
+
+###多组设计
+
+在试验因素只有一个，且该因素的水平$k\geqslant 3$时，为多组平行对照设计，又称单因素多水平设计（ANOVA）。
+
+####两两比较
+试验组为2个或以上，且设有对照的试验设计，主要观察指标为计数资料。检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值，样本量为$n_{ij}=\frac{(z_{\alpha/(2\tau))}+z_{\beta})^2[p_{1}(1-p_{1})+p_{2}(1-p_{2})]}{\epsilon ^{2}_{ij}}$，$n=max{n_{ij}}$。上述公式适用了多组平行对照设计。
+
+例 试验药两剂量的有效率分别30%和35%，对照的有效率为20%，进行1：1：1的平行对照实验，在
+在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量?
+
+```{r}
+n1 <- OneWayANOVA.PairwiseComparison(0.05,0.1,2,0.3,0.2,(0.3-0.2))
+n2 <- OneWayANOVA.PairwiseComparison(0.05,0.1,2,0.35,0.2,(0.35-0.2))
+n <- max(n1,n2)
+n
+```
+每组需要459例。
+
+#### Williams设计
+
+
+
