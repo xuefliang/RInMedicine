@@ -9,8 +9,6 @@ output:
     number_sections: yes
     template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.1/rticles/rmarkdown/templates/ctex/resources/default.latex
     toc: yes
-  html_document:
-    toc: yes
 documentclass: ctexart
 classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
 ---
@@ -180,7 +178,7 @@ delta<- function(mu,sigma){
 ####两两比较设计
 试验组为2个或以上，且设有对照的试验设计，主要观察指标为计量资料。当标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值,$\tau$ 的配对对比，样本量为$n_{ij}=\frac{2(z_{\alpha/(2\tau))}+z_{\beta})^2\sigma^{2}}{\epsilon ^{2}_{ij}}$。使用TrialSize包中的OneWayANOVA.pairwise()进行计算。
 
-例 试验药两剂量的降低收缩压的平均数分别30和35，对照的降低收缩压的平均数为20，两剂量降低收缩压的标准差分别是5.3和4.2,进行1：1：1的平行对照实验，在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量?
+例 试验药两剂量的降低收缩压的平均数分别30和35，对照的降低收缩压的平均数为20，两剂量降低收缩压的标准差分别是5.3和4.2,进行1：1：1的平行对照实验，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
 ```{r}
 n1 <- OneWayANOVA.pairwise(0.05, 0.1, 2, 5.3, (30-20))
 n2 <- OneWayANOVA.pairwise(0.05, 0.1, 2, 4.2, (35-20))
@@ -242,7 +240,7 @@ n
 ####显著性检验
 当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$,样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}p(1-p)}{\epsilon ^{2}}$。
 
-例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%，在$\alpha=0.05$,$\beta=0.2$，双侧显著性检验，问需要多大的样本容量？
+例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%，在$\alpha=0.05$,$\beta=0.1$，双侧显著性检验，问需要多大的样本容量？
 ```{r}
 OneSampleProportion.Equality(0.05,0.1,0.95,(0.95-0.85))  
 ```
@@ -251,7 +249,7 @@ OneSampleProportion.Equality(0.05,0.1,0.95,(0.95-0.85))
 ####非劣效/优效性检验
 当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，界值$\delta$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}p(1-p)}{(\epsilon-\delta ) ^{2}}$。
 
-例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.2$，双侧非劣效检验，问需要多大的样本容量？
+例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.1$，双侧非劣效检验，问需要多大的样本容量？
 
 ```{r}
 OneSampleProportion.NIS2 <- function (alpha, beta, p, delta, margin) 
@@ -266,7 +264,7 @@ OneSampleProportion.NIS2(0.05,0.1,0.95,-0.05,(0.95-0.85))
 #### 等效性检验
 当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，界值$\delta$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2})^{2}p(1-p)}{(\epsilon-|\delta|)^{2}}$。
 
-例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.2$，双侧等效性检验，问需要多大的样本容量？
+例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.1$，双侧等效性检验，问需要多大的样本容量？
 
 ```{r}
 OneSampleProportion.Equivalence2 <- function(alpha, beta, p, delta, margin) 
@@ -284,7 +282,7 @@ OneSampleProportion.Equivalence2(0.05,0.1,0.95,0.05,(0.95-0.85))
 ####显著性检验
 $p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，样本容量为$n_{2}=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{\epsilon ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
 
-例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1显著行性设计在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量？
+例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1显著行性设计在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
 ```{r}
 TwoSampleProportion.Equality(0.05,0.1,0.7,0.9,1,(0.7-0.9))
 ```
@@ -293,7 +291,7 @@ TwoSampleProportion.Equality(0.05,0.1,0.7,0.9,1,(0.7-0.9))
 ####非劣效/优效性检验
 $p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，$\delta$为界值，样本容量为$n_{2}=\frac{(z_{\alpha}+z_{\beta })^{2}}{(\epsilon-\delta ) ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
 
-例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1非劣效设计，界值为5%，在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量？
+例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1非劣效设计，界值为5%，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
 
 ```{r}
 TwoSampleProportion.NIS2 <- function (alpha, beta, p1, p2, k, delta, margin) 
@@ -310,7 +308,7 @@ TwoSampleProportion.NIS2(0.05,0.1,0.7,0.9,1,-0.05,(0.7-0.9))
 
 ####等效性检验
 $p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，$\delta$为界值，样本容量为$n_{2}=\frac{(z_{\alpha}+z_{\beta/2})^{2}}{(\delta- |\epsilon|) ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
-例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1等效性设计，界值为5%，在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量?
+例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1等效性设计，界值为5%，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
 
 ```{r}
 TwoSampleProportion.Equivalence2 <- function (alpha, beta, p1, p2, k, delta, margin) 
@@ -362,7 +360,7 @@ TwoSamplePropCrossOver.NIS(0.05,0.1,10,-0.1,0.2)
 ####等效性检验
 $\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{2(\delta-|\epsilon|)^{2}}$
 
-例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧非劣效检验，需要多少样本含量? 
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧等效性检验，需要多少样本含量? 
 
 ```{r}
 TwoSamplePropCrossOver.Equivalence <- function (alpha, beta, sigma, delta,margin) 
@@ -383,7 +381,7 @@ TwoSamplePropCrossOver.Equivalence(0.05,0.1,10,-0.1,0.2)
 试验组为2个或以上，且设有对照的试验设计，主要观察指标为计数资料。检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值，样本量为$n_{ij}=\frac{(z_{\alpha/(2\tau))}+z_{\beta})^2[p_{1}(1-p_{1})+p_{2}(1-p_{2})]}{\epsilon ^{2}_{ij}}$，$n=max{n_{ij}}$。上述公式适用了多组平行对照设计。
 
 例 试验药两剂量的有效率分别30%和35%，对照的有效率为20%，进行1：1：1的平行对照实验，在
-在$\alpha=0.05$,$\beta=0.2$，问需要多大的样本容量?
+在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
 
 ```{r}
 n1 <- OneWayANOVA.PairwiseComparison(0.05,0.1,2,0.3,0.2,(0.3-0.2))
@@ -395,5 +393,91 @@ n
 
 #### Williams设计
 
+####显著性检验
+$\sigma$为标准差，$a$为组数，$\epsilon$为率差，样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta })^{2}\sigma^2_{d}}{a\epsilon^{2}}$。
+
+例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，双侧差异性检验，需要多少样本？
+
+```{r}
+PorpWilliamsDesign.Equality <- function (alpha, beta, sigma, a, margin) 
+{
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/(a * 
+        margin^2)
+    n
+}
+
+PorpWilliamsDesign.Equality(0.05,0.1,0.5,6,(0.6-0.2))
+```
+每个研究需要至少3个病例。
+
+####非劣效/优效性检验
+$\sigma$为标准差，$a$为组数，$\epsilon$为率差，a为组数,样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}\sigma^2_{d}}{a(\epsilon-\delta)^{2}}$。
+
+例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，界值为5%，双侧非劣效检验，需要多少样本？
+
+```{r}
+PropWilliamsDesign.NIS <- function (alpha, beta, sigma, a, delta, margin) 
+{
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/(a * (margin - delta)^2)
+  n
+}
+
+PropWilliamsDesign.NIS (0.05,0.1,0.5,6,-0.05,(0.6-0.2))
+```
+每个研究需要至少2个病例。
+
+####等效性检验
+$\sigma$为标准差，$a$为组数，$\epsilon$为率差，a为组数,样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{a(\delta-|\epsilon|)^{2}}$。
+
+例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，界值为5%，双侧等效性检验，需要多少样本？
+
+```{r}
+PropWilliamsDesign.Equivalence <- function (alpha, beta, sigma, a, delta, margin) 
+{
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/(a * (delta-abs(margin ))^2)
+  n
+}
+
+PropWilliamsDesign.Equivalence (0.05,0.1,0.5,6,0.05,(0.6-0.2))
+```
+每个研究需要至少4个病例。
+
+### 相对危险度平行设计
+两样本(两组)平行对照设计，基于相对危险度，通常用比值比或优势比（odds radtio，OR）表示$OR=\frac{p_{t}/(1-p_{t})}{p_{c}/(1-p_{c})}$，t为试验组，c为对照组。比值比大于1说明对结局有影响，比值比等于1说明对结局的影响没有区别
+
+#### 显著性检验
+OR为比值比，$p_{T}$试验组率,$p_{C}$为对照粗率，样本量$n_{C}=\frac{(z_{\alpha/2}+z_{\beta})^{2}}{log^{2}(OR)}\begin{pmatrix}
+\frac{1}{\kappa p_{T}(1-p_{T})}+\frac{1}{\kappa p_{C}(1-p_{C})}
+\end{pmatrix}$,$\kappa=n_{T}/n_{C}$
+例 研究新型抗血小板药预防脑梗死再发的作用，和阿司匹林进行对照，以相对危险度OR=2.25为主要评价指标。预实验显示，新药能够预防20%的脑梗死再发，阿司匹林能够预防10%的脑梗死再发。在$\alpha=0.05$,$\beta=0.1$，1：1双侧显著性检验，需要多少病例？
+
+```{r}
+RelativeRisk.Equality(0.05,0.1,2.25,1,0.2,0.1)
+```
+试验组和对照组均需要277例。
 
 
+
+#### 非劣效/优效性检验
+OR为比值比，$p_{T}$试验组率,$p_{C}$为对照粗率，$\delta$为界值，样本量$n_{C}=\frac{(z_{\alpha}+z_{\beta})^{2}}{(log(OR)-\delta)^2}\begin{pmatrix}
+\frac{1}{\kappa p_{T}(1-p_{T})}+\frac{1}{p_{C}(1-p_{C})}
+\end{pmatrix}$
+例 研究新型抗血小板药预防脑梗死再发的作用，和阿司匹林进行对照，以相对危险度OR=2.25为主要评价指标。预实验显示，新药能够预防20%的脑梗死再发，阿司匹林能够预防10%的脑梗死再发。在$\alpha=0.05$,$\beta=0.1$，1：1双侧非劣效检验，界值为10%，需要多少病例？
+
+```{r}
+RelativeRisk.NIS(0.05,0.1,2.25,1,0.2,0.1,-0.1)
+```
+试验组和对照组均需要179例。
+
+
+#### 等效性检验
+OR为比值比，$p_{T}$试验组率,$p_{C}$为对照粗率，$\delta$为界值,样本量$n_{C}=\frac{(z_{\alpha}+z_{\beta/2})^{2}}{(\delta-log(OR))^2}\begin{pmatrix}
+\frac{1}{\kappa p_{T}(1-p_{T})}+\frac{1}{p_{C}(1-p_{C})}
+\end{pmatrix}^{-1}$
+
+例 研究新型抗血小板药预防脑梗死再发的作用，和阿司匹林进行对照，以相对危险度OR=2.25为主要评价指标。预实验显示，新药能够预防20%的脑梗死再发，阿司匹林能够预防10%的脑梗死再发。在$\alpha=0.05$,$\beta=0.1$，1：1双侧等效性检验，界值为10%，需要多少病例？
+
+```{r}
+RelativeRisk.Equivalence(0.05,0.1,2.25,1,0.2,0.1,0.1)
+```
+试验组和对照组均需要372例。
