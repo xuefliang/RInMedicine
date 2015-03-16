@@ -854,6 +854,10 @@ data <-c(0.05,0.05,0.05,0.1,0.1,0.1,0.2,0.2,0.2,0.3,0.3,0.3,0.4,
 
 z <- array(data,c(51,8),dimnames<-list(p,dim))
 
+z <- as.data.frame(z)
+z[z$p0==0.05,]%>>%
+ as.data.frame()
+
 OptimalTwoStageDesigns <- function(alpha,beta,p0,p1){
   
 }
