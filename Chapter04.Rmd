@@ -773,7 +773,7 @@ FisherTest(0.05,0.1,0.10,0.35)
 ```{r}
 data <- read.table("OptimalTwoStageDesigns",header = T)
 panderOptions('table.split.table',140)  #改变默认80的宽度
-panderOptions('digits', 5)
+panderOptions('digits', 2)
 pander(data)
 ```
 
@@ -793,3 +793,19 @@ OptimalTwoStageDesigns <- function(alphap,betap,p0p,p1p){
 OptimalTwoStageDesigns(0.05,0.1,0.20,0.40)
 ```
 第一阶段供需19例，其中4例有效，则可以进行第二阶段的试验。第二阶段需继续做5例，达到24例，如果至少5例有效，则可进行进一步的研究。
+
+```{r}
+data <- read.csv("OptimalFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+#panderOptions('table.alignment.default','left')
+#panderOptions('table.split.cells',40)
+pander(data,justify = c('center','center','center','center', 'center', 'center')) #调整对齐方式
+```
+
