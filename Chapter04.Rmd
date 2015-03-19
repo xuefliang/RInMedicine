@@ -872,3 +872,164 @@ for(i in 1:length(data$p0)){
 
 MinimaxFlexibleTwoStageDesigns(0.05,0.1,0.20,0.40)
 ```
+该研究第一阶段需要27-29个病例，如果至少5例有效，则可进行第二阶段试验。第二阶段继续做16个病例，总数达到43-45例。如果13例有效，则可进行进一步研究。
+
+####优化三阶段设计（Optimal Three-Stage Designs）
+该设计的基本模式和两阶段相同。其样本含量和临界值，Ensign等可查询下表
+
+```{r}
+data <- read.csv("OptimalThreeStageDesignsEnsign.csv",header=T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+Chen扩展的样本量和临床界值可查询下表
+
+```{r}
+data <- read.csv("OptimalThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化三阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+OptimalThreeStageDesignsEnsign<- function(alphap,betap,p0p,p1p){
+  data <- read.csv("OptimalThreeStageDesignsEnsign.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+  
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+
+OptimalThreeStageDesignsChen <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("OptimalThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+  
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+OptimalThreeStageDesignsEnsign(0.05,0.1,0.20,0.40)
+OptimalThreeStageDesignsChen(0.05,0.1,0.20,0.40)
+```
+依据Ensign法，该研究第一阶段需要9名病例，如果是少有1例有效，则可以进行第二阶段研究。第二阶段继续做14例，达到23例，如果至少4例有效，则可以进行第三阶段的研究。第三阶段继续做31例，达到54例，如果至少有15例有效，则可进行进一步研究。Chen法的结果解释类似。
+
+极小三阶段设计需要的样本两最小，其样本含量和临界值可查询下表
+```{r}
+data <- read.csv("MinimaxThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。极小三阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+MinimaxThreeStageDesignsChen <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("MinimaxThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+  
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+MinimaxThreeStageDesignsChen(0.05,0.1,0.20,0.40)
+```
+该研究第一阶段需要16名病例，如果是少有2例有效，则可以进行第二阶段研究。第二阶段继续做12例，达到28例，如果至少6例有效，则可以进行第三阶段的研究。第三阶段继续做17例，达到45例，如果至少有13例有效，则可进行进一步研究。
+
+####多组灵活设计（Flexible Designs for Multiple-Arm Trials）
+该设计需要事先规定一个有临床意义的界值$[-\delta,\delta]$，如果率的差值大于$\delta$
+，那么，率大的组被选择，如果率的差值小于或者等于$\delta$，在选择过长中就需要考虑其他因素。此种设计，不是比较各组之间和好坏，而是尽可能正确的选择出优势治疗的存在，以便进一步研究。两组灵活设计的样本量，在$\delta= 0.05\,  \rho= 0 \, or\,  \rho = 0.5$可查询下表，$\lambda$为预先指定的阈值。
+```{r}
+data <- read.csv("FlexibleDesignsforTwoArm.csv",header = T)
+pander(data)
+```
+
+例 一新型抗肿瘤药品与现有标准治疗对照进行二期临床试验，如果新型药品的有效率达35%，标准治疗有效率为20%，两组灵活设计，在$\delta=0.05$,$\rho=0$，$\lambda=0.90$需要多少病例？
+
+```{r}
+FlexibleDesignsforTwoArm <- function(p1p,p2p){
+  data <- read.csv("FlexibleDesignsforTwoArm.csv",header = T)
+  data%>>%
+    subset(p1==p1p)%>>%
+    subset(p2==p2p)%>>%
+    return()
+}
+
+FlexibleDesignsforTwoArm(0.20,0.35)
+```
+每组至少需要57例。
+
+多组灵活设计，在$\delta= 0.05\,  \lambda= 0.8 \, or\,  \lambda = 0.9$可查询下表，$\lambda$为预先指定的阈值
+```{r}
+data <- read.csv("FlexibleDesignsforMultipleArm.csv",header = T)
+pander(data)
+```
+例 一新型抗肿瘤药品与两个标准治疗对照进行二期临床试验，预计新型药品比对照的有效率高30%（$\epsilon=0.3$），三组灵活设计，在$\delta=0.05$,$\rho=0$，$\lambda=0.90$需要多少病例？
+
+```{r}
+FlexibleDesignsforMultipleArm<- function(lambdap,epsilonp){
+  data <- read.csv("FlexibleDesignsforMultipleArm.csv",header = T)
+  data%>>%
+    subset(lambda==lambdap)%>>%
+    subset(epsilon==epsilonp)%>>%
+    return()
+}
+
+FlexibleDesignsforMultipleArm(0.9,0.3)
+```
+每组至少需要77例。
