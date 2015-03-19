@@ -794,6 +794,9 @@ OptimalTwoStageDesigns(0.05,0.1,0.20,0.40)
 ```
 第一阶段供需19例，其中4例有效，则可以进行第二阶段的试验。第二阶段需继续做5例，达到24例，如果至少5例有效，则可进行进一步的研究。
 
+####灵活两阶段设计（Flexible Two-Stage Designs）
+该设计对两个阶段的病例数给出多个选择，优化灵活两阶段设计样本量和界值可查询下表。
+
 ```{r}
 data <- read.csv("OptimalFlexibleTwoStage.csv",header=T)
 for(i in 1:length(data$p0)){
@@ -809,3 +812,63 @@ panderOptions('table.split.table',500)
 pander(data,justify = c('center','center','center','center', 'center', 'center')) #调整对齐方式
 ```
 
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化灵活两阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+OptimalFlexibleTwoStageDesigns <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("OptimalFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+OptimalFlexibleTwoStageDesigns(0.05,0.1,0.20,0.40)
+```
+该研究第一阶段需要18-20个病例，如果至少4例有效，则可进行第二阶段试验。第二阶段继续做28～30个病例，总数达到48例。如果13例有效，则可进行进一步研究。
+
+极小灵活两阶段设计样本量和界值可查询下表。
+
+```{r}
+data <- read.csv("MinimaxFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data,justify = c('center','center','center',
+                        'center', 'center', 'center'))
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化灵活两阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+MinimaxFlexibleTwoStageDesigns <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("MinimaxFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+MinimaxFlexibleTwoStageDesigns(0.05,0.1,0.20,0.40)
+```
