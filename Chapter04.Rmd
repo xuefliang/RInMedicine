@@ -1033,3 +1033,77 @@ FlexibleDesignsforMultipleArm<- function(lambdap,epsilonp){
 FlexibleDesignsforMultipleArm(0.9,0.3)
 ```
 每组至少需要77例。
+
+##拟合优度和列联表检验的样本量估计（Tests for Goodness-of-Fit and Contingency Tables）
+临床试验中，当计数资料的指标有多个类别，而不是二分类时，适合的检验方法通常为拟合优度检验、独立性检验（也称列联表检验）和categorical shift检验。
+
+###拟合优度检验 (Tests for Goodness-of-Fit)，样本含量估算公式
+$$n=\delta _{\alpha ,\beta }  \begin{bmatrix}
+ \sum_{k=1}^{r}\frac{(p_{k}-p_{k,0})^{2}}{p_{k,0}}
+\end{bmatrix}^{-1}$$,$p_{k}$为实验组每个分类的率，$p_{k,0}$为文献中每个分类的的率，$\delta_{\alpha ,\beta }$,通过$\Gamma _{r-1}(\chi_{\alpha ,r-1}^{2}|\delta )=\beta$计算，r为分类的个数。
+
+例 一探索性临床试验（pilot study），研究一降压药的临床疗效。预试验表明该药治疗高血压的显效率、进步率和无效率分别玩儿20%，60%和20%。文献报道，现有降压药的显效率、进步率和无效率分别为25%，45%和30%。单组设计，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+
+```{r}
+gof.Pearson(0.05,0.2,c(0.2,0.6,0.2),c(0.25,0.45,0.30),3)
+```
+该研究需要104例。
+
+###单层独立性检验(Test for Independence—Single Stratum)
+对于没有分层的r×c列联表数据（two-way），即单程列连数据，在进行样本量估计常用以下两种方法。
+
+####Pearson’s Test
+Pearson检验的样本量计算公式如下，
+$$n=\delta _{\alpha ,\beta }\begin{bmatrix}
+\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{(p_{ij}-p_{i}p_{j})^{2}}{p_{i}p_{j}}
+\end{bmatrix}^{-1}$$，$\delta _{\alpha ,\beta }$ 通过$$ \Gamma_{(r-1)(c-1)}(\chi _{\alpha,(r-1)(c-1))}|\delta)=\beta $$计算,r代表横向分类数据的个数，c代表纵向分类数据的个数。
+
+例 一新型降压要与对照药进行探索行临床试验，其结果如下
+
+分组    无效    有效    显效  
+---     ---      ---     ---
+试验组  2        7       1
+对照组  2        5       3
+
+为验证差别的存在，设计较大规模的临床实验，两组平行1：1对照，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+
+```{r error=FALSE}
+gof.Pearson.twoway(0.05, 0.2, c(0.2,0.7,0.1), c(0.2,0.5,0.3), 2, 3)
+```
+该研究每组需要117例。
+
+####似然比检验(Likelihood Ratio Test)
+似然比检验的样本量计算公式等价于Pearson检验样本量计算公式。
+
+###多层独立性检验(Test for Independence—Multiple Strata)
+多中心临床实验不仅可以保障实验结果的可重复性和代表性，而且也有利于受试着在期望时间内入选。多中心临床实验属于多层列联表数据，当反映率是二分类资料时，CMH检验（Cochran-Mantel-Haenszel Test）是常用的检验方法。
+其样本含量估计公式：$$lim\begin{vmatrix}
+\frac{\sum _{H}^{h=1}\pi_{h} (p_{h,11}-p_{h,1}p_{h,1})}{\sqrt{\sum _{h=1}^{H}\pi_{h}p_{h,1}p_{h,2}p_{h,0}p_{h,1}}}
+\end{vmatrix}$$,$$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{\delta ^{2}}$$
+
+例 一新型抗肿瘤药与安慰剂对照进行小规模多中心探索性临床试验，主要目标是观察不良时间的发生率，其结果如下
+
+分层    分组    反应无    反应有    合计
+---     ---     ---        ---      ---
+1       试验组  0.35       0.15     0.50
+        对照组  0.25       0.25     0.50
+2       试验组  0.30       0.20     0.50
+        对照组  0.20       0.30     0.50
+3       试验组  0.40       0.10     0.50
+        对照组  0.20       0.30     0.50
+4       试验组  0.35       0.15     0.50
+        对照组  0.15       0.35     0.50
+        
+基于以上数据，研究者希望设计一个较大规模的临床实验，两组平行1：1对照设计，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+根据公式计算delta=0.3030
+
+```{r}
+CMH.Equality <- function(alpha,beta,delta){
+  n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 /(delta)^2
+  n
+}
+
+CMH.Equality(0.05,0.2,0.3030)
+```
+
+
