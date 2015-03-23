@@ -1125,3 +1125,16 @@ CMH.Equality(0.05,0.2,0.3030)
 ```
 该研究至少需要`r round(McNemar.Test(0.05, 0.2, c(0.2/0.5), c(0.5+0.2)),0)`患者。
 
+####Stuart-Maxwell检验
+McNemar检验适合于二分类变量前后的比较，对于多分类变量，需要使用Stuart-Maxwell检验。其样本量计算公式如下：$$n=\delta _{\alpha ,\beta }\begin{bmatrix}
+\sum_{i<j}\frac{(p_{ij}-p_{ji})^2}{p_{ij}+p_{ji}}
+\end{bmatrix}^{-1}$$,$p_{ij}=P(x_{k1}=i,x_{k2}=j)$，$\delta =\underset{n \to \infty}{lim}n\sum _{i<j}\frac{(p_{ij}-p_{ji})^2}{p_{ij}+p_{ji}}$。
+
+治疗前     治疗后1      治疗后2     ...     治疗后r     合计
+---        ---          ---         ---     ---
+1          $n_{11}$     $n_{12}$    ...     $n_{1r}$
+2          $n_{21}$     $n_{22}$    ...     $n_{22}$
+...
+r          $n_{r1}$     $n_{r2}$    ...     $n_{rr}$
+合计       $n_{.1}$     $n_{.2}$    ...     $n_{.r}$
+           
