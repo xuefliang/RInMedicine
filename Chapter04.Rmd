@@ -1138,3 +1138,31 @@ McNemar检验适合于二分类变量前后的比较，对于多分类变量，�
 r          $n_{r1}$     $n_{r2}$    ...     $n_{rr}$
 合计       $n_{.1}$     $n_{.2}$    ...     $n_{.r}$
            
+```{r}
+Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r){
+  b = 0
+  noncen = 0
+  for (i in 1:1000) {
+    b[i + 1] <- pchisq(qchisq(alpha, df = r * (r - 1)/2, ncp = 0, lower.tail = FALSE), df = r * (r - 1)/2, ncp = i/100)
+    noncen = rbind(noncen, c(i, b[i], b[i + 1]))
+  }
+  
+  delta = noncen[which(noncen[, 2] > beta & noncen[, 3] < beta)]/100
+  
+  n <- noncen * (for (j in 1:r) {
+    for (i in 1:j) {
+      sum = sum + (p.ij[i, j] - p.ji[j, i])^2/(p.ij[i, j] + p.ji[j, i])
+    }
+  })^-1
+}
+
+
+alpha <- 0.05
+beta <- 0.2
+p.ij <- rbind(c(3, 4, 4), c(2, 3, 3), c(1, 2, 3))/25
+p.ji <- rbind(c(3, 4, 4), c(2, 3, 3), c(1, 2, 3))/25
+r <- 3
+
+Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r)
+```
+
