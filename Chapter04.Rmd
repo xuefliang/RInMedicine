@@ -29,8 +29,8 @@ library(pander)
 
 随机对照临床试验（randomized clinical trial，RCT）是临床试验中比较重要的试验，根据设计方案，常分为平行设计、交叉设计、析因设计和序贯设计。除序贯设计不需事先估计样本含量外，其余设计均需要估计样本含量。(1) 平行设计(parallel design)：将研究对象随机分配到两组（或多组），分别接受不同的处理，两组同时开始进行研究，同时分析和比较研究结果。平行设计的双盲随机对照试验是临床试验的金标准。(2) 交叉设计（cross-over design）四队两组受试者使用两种不同的处理措施，然后将处理措施相互交换，最后将结果进行对比分析的方法。这种设计比平行设计检验效率更高，所需样本量也少。但第一阶段干预效应可能会对第二阶段有影响，产生遗留效应或其他交互效应，设计和分析比较复杂。还存在试验周期较长等不足。(3)析因设计（factorial design）是将两个或多个以上的处理因素的各水平进行组合，对各种可能的组合都进行实验，用以评价不同处理的单独作用和联合应用的交互效应。析因设计可以分析处理交互因素，但设计和分析也比较复杂。(4)序贯设计(sequential design)在试验前不规定样本，按照先后顺序用随机化方法分配进入实验组或对照组，每试验一个或一对受试者后，及时进行分析，一旦可以判定结果，即可停止试验。序贯设计符合临床患者陆续就医的实际，比较适合以单一指标做为结论依据的新药和老药或新药和安慰剂的配对比较，节省人力物力，但不适用于慢性病、多变量、长期随访等研究设计。
 
-##均数比较的样本量估计
-###单组设计
+##均数比较的样本量估计(Comparing Means)
+###单组设计(One-Sample Design)
 没有对照组的开放设计为单组设计，常用于治疗组数据与标准公认值比较或基线数据与治疗后数据的分析比较。
 ####显著性性检验
 当标准差为$\sigma^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值（样本均值与某参考值的差值,或者，在配对设计中，配对个体观察值之差的均数，或试验组终点与基线之差的均数）为$\epsilon$,样本容量为$n= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
@@ -75,7 +75,7 @@ OneSampleMean.NIS(0.05,0.1,18,8,-10)
 OneSampleMean.Equivalence(0.05,0.1,18,8,10)
 ```
 
-###两组设计(平行)
+###两组平行设计(Two-Sample Parallel Design)
 ####显著性性检验
 当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{\epsilon ^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
 
@@ -109,7 +109,7 @@ n
 ```
 每组样本量为53人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
 
-###两组设计(交叉)
+###两组交叉设计（Two-Sample Crossover Design）
 两组交叉设计的样本量估计公式也适用配对设计、交叉配对设计和随机区组配对设计。
 ####显著性性检验
 当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}_{m}}{2\epsilon ^{2}}$。
@@ -138,7 +138,7 @@ TwoSampleCrossOver.NIS(0.05,0.1,10,-1,5)
 TwoSampleCrossOver.Equivalence(0.05,0.1,10,1,5)
 ```
 
-###多组设计
+###多组设计(Multiple-Sample One-Way ANOVA)
 ####平行设计 
 该设计考察的试验因素只有一个，并且该因素的水平(组数)$k\geqslant 3$,用来考察各组观察指标总体均数之间的差别是否有统计学意义。$\Delta =\frac{1}{\sigma ^{2}}\sum_{i=1}^{k}(\mu _{i}-\bar{\mu})^{2},\bar{\mu}=\frac{1}{k}\sum_{j=1}^{k}\mu_{j}$,样本量$n=\lambda/\Delta$,其中$\sigma$为标准差，k为组数，$\mu_{1}$为各组的平均数，$\bar{\mu}$为各组平均数的平均数。$\lambda$需要查询下表。
 
@@ -206,7 +206,7 @@ n
 ```
 每组需要7个例。
 
-####Williams设计
+####Williams设计(Multiple-Sample Williams Design)
 当交叉试验可使用的时期数与处理数相同时，采用广义拉丁方以尽量少的受试者来均衡一阶延滞作用的交叉设计为Williams设计。常见的Williams设计有三组设计（一个6×3的交叉设计）和四组设计（一个4*4的交叉设计）。当试验组是奇数，设计结果是$2k×k$交叉设计，当试验组是偶数，设计结果$k×k$交叉设计。
 
 #####显著性检验
@@ -254,8 +254,8 @@ n
 ```
 研究的每个序列至少需要14例。
 
-##率比较的样本量估计
-###单组设计
+##率比较的样本量估计(Large Sample Tests for Proportions)
+###单组设计(One-Sample Design)
 ####显著性检验
 当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$,样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}p(1-p)}{\epsilon ^{2}}$。
 
@@ -297,7 +297,7 @@ OneSampleProportion.Equivalence2(0.05,0.1,0.95,0.05,(0.95-0.85))
 ```
 研究需要206例。TrialSize的作者在OneSampleProportion.NIS()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，但可以得到正确结果OneSampleProportion.Equivalence(0.05,0.1,0.95,(0.95-0.85),0.05) 
 
-###两组设计(平行设计)
+###两组平行设计(Two-Sample Parallel Design)
 ####显著性检验
 $p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，样本容量为$n_{2}=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{\epsilon ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
 
@@ -342,7 +342,7 @@ TwoSampleProportion.Equivalence2(0.05,0.1,0.7,0.9,1,0.05,(0.7-0.9))
 ```
 每组需要144例,TrialSize的作者在TwoSampleProportion.Equivalence()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，beta也未除以2.
 
-###两组设计(交叉设计)
+###两组交叉设计(Two-Sample Crossover Design)
 
 ####显著性检验
 $\sigma$为两组率的差的标准差,$\epsilon$为试验组率-对照组率，样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}\sigma^2_{d}}{2\epsilon ^{2}}$
@@ -392,7 +392,7 @@ TwoSamplePropCrossOver.Equivalence(0.05,0.1,10,-0.1,0.2)
 ```
 每组需要49例。
 
-###多组设计
+###多组设计(One-Way Analysis of Variance)
 
 在试验因素只有一个，且该因素的水平$k\geqslant 3$时，为多组平行对照设计，又称单因素多水平设计（ANOVA）。
 
@@ -410,7 +410,7 @@ n
 ```
 每组需要459例。
 
-#### Williams设计
+#### Williams设计(Williams Design)
 
 ####显著性检验
 $\sigma$为标准差，$a$为组数，$\epsilon$为率差，样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta })^{2}\sigma^2_{d}}{a\epsilon^{2}}$。
@@ -461,7 +461,7 @@ PropWilliamsDesign.Equivalence (0.05,0.1,0.5,6,0.05,(0.6-0.2))
 ```
 每个研究需要至少4个病例。
 
-### 相对危险度平行设计
+### 相对危险度平行设计(Relative Risk—Parallel Design)
 两样本(两组)平行对照设计，基于相对危险度，通常用比值比或优势比（odds radtio，OR）表示$OR=\frac{p_{t}/(1-p_{t})}{p_{c}/(1-p_{c})}$，t为试验组，c为对照组。比值比大于1说明对结局有影响，比值比等于1说明对结局的影响没有区别。
 
 #### 显著性检验
@@ -504,7 +504,7 @@ RelativeRisk.Equivalence(0.05,0.1,OR,1,0.2,0.1,0.1)
 ```
 试验组和对照组均需要372例。
 
-### 相对危险度交叉设计
+### 相对危险度交叉设计(Relative Risk—Crossover Design)
 交叉设计与随机平行对照设计相比，需要的样本量较少，但该设计的前提是所治疗疾病在停药后基本会回复到用药前的状态，中间停药时间（洗脱期）的长度基本清楚。
 
 ####显著性检验
@@ -555,9 +555,9 @@ RelativeRiskCrossOver.Equivalence(0.05,0.1,0.5,OR,0.1)
 ```
 每组至少需要3例，TrialSize包中RelativeRiskCrossOver.Equivalence()函数在sigma处有误，没有取平方。
 
-##计数资料的精确检验
+##计数资料的精确检验(Exact Tests for Proportions)
 
-###二项分布（Binomial distribution）
+###二项分布（Binomial Test）
 二项分布检验常用于但组设计情况，其样本量估计方法适合较小样本计数资料的精确检验。二项分布检验样本量和临界值（Critical Value r）的估算表如下，在$\alpha=0.05$,$P_{1}-P_{0}=0.15$时，查下表，$1-\beta=0.80$为第三和第四列，$1-\beta=0.90$为第五和第六列。
 
 $P_{0}$ $P_{1}$ r    n     r     n
@@ -672,7 +672,7 @@ BinProp(0.05,0.1,0.1,0.3)
 ```
 需要33个病例，临界值为6。
 
-###Fisher’s精确检验
+###Fisher’s精确检验(Fisher’s Exact Test)
 在两组平行对照设计中，当四格表中有理论数小于5,或者总观察数小于40时，需要Fisher‘s精确检验。样本含量的精确估计需要查询下表获得检验水平为0.05或为0.1,把握度为0.8或0.9时，不同率差的样本量。
 率差为0.25时，查询下表
 
@@ -766,6 +766,8 @@ FisherTest <- function(alpha,beta,p1,p2){
 FisherTest(0.05,0.1,0.10,0.35)
 ```
 每组是少需要52例。
+
+###单组优化多阶段设计(Optimal Multiple-Stage Designs for Single Arm Trials)
 
 ####最优化两阶段设计（Optimal Two-Stage Designs）
 该设计中，当出现了一定数量的失败后，容许实验结束。该设计的的样本量可以通过查询下表获得。
