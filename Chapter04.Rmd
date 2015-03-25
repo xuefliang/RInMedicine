@@ -1148,7 +1148,7 @@ CMH.Equality(0.05,0.2,p,4)
 ```
 该研究每组需要`r round(CMH.Equality(0.05,0.2,p,4))`例。
 
-###Categorical Shift检验
+###类别转换检验(Categorical Shift Test)
 临床试验中，研究试验先后二分类的数据的变化情况，通常采用McNemar检验和Stuart-Maxwell检验。
 
 ####McNemar检验
@@ -1224,3 +1224,14 @@ Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r)
 ```
 
 该研究至少需要`r round(Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r),0)`例。TrialSize包中Stuart.Maxwell.Test()方法对自由度计算有误。
+
+###残留效应检验(Carry-Over Effect Test)
+残留效应是由于上一阶段的处理由于效应除去时间不足或其他原因干扰了下一阶段的处理效果，产生残留效应主要是由于第一阶段导致耐药性而产生的撤退效应、心理效应和患者身体状况因用药而改变所导致的遗留效应。在一些时候，研究者需要知道药物残留效应。其样本量估计公式如下：$$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}(\sigma _{1}^{2}+\sigma _{2}^{2})}{\gamma ^{2}}$$ $\sigma _{1}$为AB顺序的标准差，$\sigma _{2}$为BA顺序的标准差，$\gamma$为AB和BA顺序残留效应的差值。
+
+例 根据预试验得到A、B两种药物交叉设计的参数，$\gamma$为0.89,$\sigma_{1}$为2.3,$\sigma_{2}$为2.4,为证实这一残留效应在，研究着设计一个临床试验，在$\alpha=0.05,\beta=0.2$时，需要多少样本量？
+```{r}
+(Carry.Over(0.05,0.2,2.3^2,2.4^2,0.89))
+```
+
+该研究至少需要`r round(Carry.Over(0.05,0.2,2.3^2,2.4^2,0.89))`例。
+
