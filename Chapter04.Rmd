@@ -1119,17 +1119,34 @@ gof.Pearson.twoway(0.05, 0.2, c(0.2,0.7,0.1), c(0.2,0.5,0.3), 2, 3)
 4       试验组  0.35       0.15     0.50
         对照组  0.15       0.35     0.50
         
-基于以上数据，研究者希望设计一个较大规模的临床实验，两组平行1：1对照设计，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
-根据公式计算delta=0.3030
+基于以上数据，研究者希望设计一个较大规模的临床实验，两组平行1：1对照设计，每个分层的样本数量相同，即$\pi=1/4$，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
 
 ```{r}
-CMH.Equality <- function(alpha,beta,delta){
+CMH.Equality <- function(alpha,beta,p,h){
+  pi <- 1/h
+  numerator <- function(p){
+    sum <- pi*(p[1,2]-rowSums(p)[1]*colSums(p)[2])
+  }
+  
+  denominator <- function(p){
+    sum <- pi*rowSums(p)[1]*rowSums(p)[2]*colSums(p)[1]*colSums(p)[2]
+  }
+  
+  delta <- abs(sum(sapply(p,numerator))/sqrt(sum(sapply(p,denominator))))
+  
   n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 /(delta)^2
   n
 }
 
-CMH.Equality(0.05,0.2,0.3030)
+p1 <- rbind(c(0.35,0.15),c(0.25,0.25))
+p2 <- rbind(c(0.30,0.20),c(0.20,0.30))
+p3 <- rbind(c(0.40,0.10),c(0.20,0.30))
+p4 <- rbind(c(0.35,0.15),c(0.15,0.35))
+p<-list(p1=p1,p2=p2,p3=p3,p4=p4)
+
+CMH.Equality(0.05,0.2,p,4)
 ```
+该研究每组需要`r round(CMH.Equality(0.05,0.2,p,4))`例。
 
 ###Categorical Shift检验
 临床试验中，研究试验先后二分类的数据的变化情况，通常采用McNemar检验和Stuart-Maxwell检验。
