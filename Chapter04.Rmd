@@ -1235,3 +1235,64 @@ Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r)
 
 该研究至少需要`r round(Carry.Over(0.05,0.2,2.3^2,2.4^2,0.89))`例。
 
+##生存分析的样本量计算(Time-to-Event)
+临床实验中，某些试验的结果并不是均数或率，而是某种医学事件的发生时间，如果某项治疗能够阻止或延缓这些事件的发生，便认为治疗是有效。从观察到事件发生的时间称为时间发生时间(time-to-event)，如果研究的是终点是死亡，那么事件发生时间成为生存时间 (survial time)。除了生存结局作为判定标准以外，只要能让病人存活时间延长，这种治疗也应当是被认为有效的。
+
+###基于指数模型的生存分析(Exponential Model)
+生存时间是指从某个起始事件开始到某个终点事件的发生(出现反应)所经历的时间。一般不服从正态分布，有时近似服从指数分布、Weibull分布、Gompertz分布等，多数情况下往往不服从任何规则的分布类型。
+
+####显著性检验
+在假定服从指数分布的情况下，显著性检验样本量计算公式为：$$n_{2}=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{(\lambda _{1}-\lambda _{2})^{2}}
+\begin{bmatrix}
+\frac{\sigma ^{2}(\lambda _{1})}{k}+\sigma ^{2}(\lambda _{2})
+\end{bmatrix}
+$$ 其中$k=\frac{n_{1}}{n_{2}}$，$$\sigma ^{2}(\lambda _{i})=\gamma _{i}^{2}\begin{bmatrix}
+1+\frac{\lambda e^{-\lambda _{i} T}(1-e^{(\lambda _{i}-\gamma) T_{0}})}{(\lambda _{i}-\gamma)(1-e^{-\lambda T_{0}})}
+\end{bmatrix}^{-1}$$ $n_{1}$为第一组样本量，$n_{2}$为第二组样本量，$k$为第一组样本量和第二组样本量的比值，$\lambda_{1}$为第一组风险率，$\lambda_{2}$为第二组风险率，
+$\sigma$为标准差，$T$代表观察时间，$T_{0}$代表增加的观察时间。
+
+例 假设研究两种移植方法对恶性淋巴瘤转化成白血病时间的影响。其中一组用同种异体移植，另一组用大剂量化疗后的自身骨髓移植。观察时间持续3年（$T=3，T_{0}=1$）。假设两组风险率分别为1（$\lambda_{1}$）和2($\lambda_{2}$)。在$\alpha=0.05,\beta=0.2$时，显著性检验，需要多少样本量？
+
+```{r}
+TwoSampleSurvival.Equality(0.05,0.2,1,2,1,3,1,0.00001)
+```
+每组至少需要`r round(TwoSampleSurvival.Equality(0.05,0.2,1,2,1,3,1,0.00001))`例。
+
+####非劣效/优效性检验
+在假定服从指数分布的情况下，非劣效/优效性检验样本量计算公式为：$$n_{2}=\frac{(z_{\alpha}+z_{\beta })^{2}}{(\epsilon -\delta )^{2}}
+\begin{bmatrix}
+\frac{\sigma ^{2}(\lambda _{1})}{k}+\sigma ^{2}(\lambda _{2})
+\end{bmatrix}
+$$ 其中$k=\frac{n_{1}}{n_{2}}$，$$\sigma ^{2}(\lambda _{i})=\gamma _{i}^{2}\begin{bmatrix}
+1+\frac{\lambda e^{-\lambda _{i} T}(1-e^{(\lambda _{i}-\gamma) T_{0}})}{(\lambda _{i}-\gamma)(1-e^{-\lambda T_{0}})}
+\end{bmatrix}^{-1}$$ $n_{1}$为第一组样本量，$n_{2}$为第二组样本量，$k$为第一组样本量和第二组样本量的比值，$\lambda_{1}$为第一组风险率，$\lambda_{2}$为第二组风险率，
+$\sigma$为标准差，$T$代表观察时间，$T_{0}$代表增加的观察时间。
+
+例 假设研究两种移植方法对恶性淋巴瘤转化成白血病时间的影响。其中一组用同种异体移植，另一组用大剂量化疗后的自身骨髓移植。观察时间持续3年（$T=3，T_{0}=1$）。假设两组风险率分别为1（$\lambda_{1}$）和2($\lambda_{2}$)。在$\alpha=0.05,\beta=0.2$时，优效性检验，界值0.2，需要多少样本量？
+
+```{r}
+TwoSampleSurvival.NIS(0.05,0.2,1,2,1,3,1,0.00001,0.2)
+```
+每组至少需要`r round(TwoSampleSurvival.NIS(0.05,0.2,1,2,1,3,1,0.00001,0.2))`例。
+
+####等效性检验
+在假定服从指数分布的情况下，等效性检验检验样本量计算公式为：$$n_{2}=\frac{(z_{\alpha}+z_{\beta/2 })^{2}}{(\delta-|\epsilon| )^{2}}
+\begin{bmatrix}
+\frac{\sigma ^{2}(\lambda _{1})}{k}+\sigma ^{2}(\lambda _{2})
+\end{bmatrix}
+$$ 其中$k=\frac{n_{1}}{n_{2}}$，$$\sigma ^{2}(\lambda _{i})=\gamma _{i}^{2}\begin{bmatrix}
+1+\frac{\lambda e^{-\lambda _{i} T}(1-e^{(\lambda _{i}-\gamma) T_{0}})}{(\lambda _{i}-\gamma)(1-e^{-\lambda T_{0}})}
+\end{bmatrix}^{-1}$$ $n_{1}$为第一组样本量，$n_{2}$为第二组样本量，$k$为第一组样本量和第二组样本量的比值，$\lambda_{1}$为第一组风险率，$\lambda_{2}$为第二组风险率，
+$\sigma$为标准差，$T$代表观察时间，$T_{0}$代表增加的观察时间。
+
+例 假设研究两种移植方法对恶性淋巴瘤转化成白血病时间的影响。其中一组用同种异体移植，另一组用大剂量化疗后的自身骨髓移植。观察时间持续3年（$T=3，T_{0}=1$）。假设两组风险率分别为1（$\lambda_{1}$）和2($\lambda_{2}$)。在$\alpha=0.05,\beta=0.2$时，等效性检验，界值0.5，需要多少样本量？
+
+```{r}
+TwoSampleSurvival.Equivalence(0.05,0.2,1,2,1,3,1,0.00001,0.5)
+```
+每组至少需要`r round(TwoSampleSurvival.Equivalence(0.05,0.2,1,2,1,3,1,0.00001,0.5))`例
+
+###基于Cox比例风险模型的生存分析
+
+###基于Logrank对数秩检验的生存分析
+
