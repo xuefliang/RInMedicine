@@ -34,7 +34,7 @@ $$\lim_{n\rightarrow \infty}P\left \{\right |\bar{X}-E(X)|\geq \varepsilon\}=0$$
 $$\lim_{n\rightarrow \infty}P\left \{  \right|\frac{1}{n}\sum_{i=1}^{n}X_{i}^{k}-E(X^{k})|\geq \varepsilon \}=0,k=1,2,...$$
 因此用样本矩估计总体矩，从而得到总体分布中参数的一种估计。如用样本均值估计总体均值。矩法的优点是简单易行，并不需要事先知道总体是什么分布，缺点是当总体类型已知时，没有充分利用分布提供的信息，且矩估计量不具有唯一性。
 
-例1 设某药厂一天中发生着火现象的次数X服从参数为$\lambda $的Poisson分布，$\lambda$未知，有以下样本值，试用矩法估计参数$\lambda$。
+例1 设某药厂一天中发生着火现象的次数X服从参数为$\lambda$的Poisson分布，$\lambda$未知，有以下样本值，试用矩法估计参数$\lambda$。
 
 着火的次数                 0  1  2  3  4  5  6
 ----                      -- -- -- -- -- -- --
@@ -42,7 +42,7 @@ $$\lim_{n\rightarrow \infty}P\left \{  \right|\frac{1}{n}\sum_{i=1}^{n}X_{i}^{k}
 
 解 $EX=\lambda,A_{1}=\frac{1}{n}\sum_{i=1}^{n}X_{i}=\bar{X}$,
 
-令$\bar{X}=\lambda $则$\bar{\lambda }=\bar{x}=\frac{1}{250}(0\times 57+1\times 90+...+6\times 1)=1.22$，
+令$\bar{X}=\lambda$则$\bar{\lambda }=\bar{x}=\frac{1}{250}(0\times 57+1\times 90+...+6\times 1)=1.22$，
 
 所以$\bar{X}=\lambda$,估计值$\hat{\lambda }=1.22$
 
@@ -169,9 +169,9 @@ $$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha $$
 1.选取一个合适的随机变量T,这个随机变量一方面包括了待估参数$\theta$，另一方面，它的分布是已知的；
 2.根据实际需要，选取合适的置信度$1-\alpha$；
 3.根据相应分布的分位数的概念，写出如下形式的概率表达式
-$P\left \{ T_{1}<T <T_{2}  \right \}=1-\alpha $
+$P\left \{ T_{1}<T <T_{2}  \right \}=1-\alpha$
 4.将上式表达形式变为
-$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha $
+$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha$
 5.写出参数$\theta$的置信区间$\hat{\theta }_{1},\hat{\theta }_{2}$
 
 ### 单正态总体参数的区间估计
