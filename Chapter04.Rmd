@@ -1416,6 +1416,18 @@ Logrank.test(0.05,0.2,10,2,0.03,1,0.5,0.04,0.05,0.627,0.837)
 ### Pocock’s Test
 要求将整个实验划分成N个连续的时间段，每个时间段内都有2n个受试者加入试验，并被随机分配到两个处理组，每个处理组均为n个。当i个阶段试验结束后，把1到i阶段实验结果累计进行统计分析，如果拒绝零假设即可结束试验，否则继续下一阶段试验。如果到最后第N个阶段结束后，仍不能拒绝零假设，则可接受零假设。成组序贯试验中需要多次重复的显著性检验，这种检验将增加$I$类错误的概率，使得总显著水平上升。为使得总显著水平等于期望的$\alpha$，需要将每个阶段的显著行水平进行调整，调整后的显著性水平成为名义性显著水平(norminal significance level)，用$\ {\alpha}'$ 表示。
 
+K期Pocock 检验的样本量计算，首先根据没有期中分析的设计计算最大样本量，然后乘以$R_{p}(K,\alpha ,\beta )$。最大样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{p}$可查询下表：
+
+```{r}
+data <- read.csv("Rp.csv",header = T)
+  
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} −\mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+
 ```{r}
 Pocock.Test <- function(alpha,beta,sigma1,sigma2,mu,k){
   nfixed <- (qnorm(1-alpha/2) + qnorm(1 - beta))^2*(sigma1^2+sigma2^2)/(mu)^2
