@@ -22,6 +22,7 @@ library(SampleSizeProportions)
 library(pipeR)
 library(pander)
 library(expm)
+library(koRpus)
 ```
 
 样本容量过小，信息不充分，所得指标不够稳定，抽样误差较大，结论的可靠性差，用于推断总体的精度差，检验效能低，会导致总体中存在的差异未能检验出来，出现假阴性的结果。样本容量过大，花费的人力、物力、财力和时间较大，还会增加工作中质量控制的难度，样本量过大还可能引入更多的混杂因素，对研究结果产生不良影响。常见样本容量的影响因素如下1.第一类错误的大小$\alpha$(或置信度为$1-\alpha$)，$\alpha$越小所需的样本容量越大。2.第二类错误的大小$\beta$，$\beta$越小，检验效能$1-\beta$越大，所需的样本量也越大，一般要求检验效能不低于0.8。在参数估计的样本容量估计中不设计$\beta$。3.容许误差d，是指研究者要求的或者客观存在的样本统计量和总体参数间或样本统计量间的差值，或专业上认为有意义的最小差值，容许误差越小，所需样本两越大。4.总体标准差s或者总体率p，常根据预实验以及既往资料进行估计，其值越大或远离0.5时，所需样本量越大。通常在抽样调查和临床试验的设计中，需要估算样本含量以保证结果的可靠。
@@ -1420,10 +1421,8 @@ K期Pocock 检验的样本量计算，首先根据没有期中分析的设计计
 
 ```{r}
 data <- read.csv("Rp.csv",header = T)
-  
-panderOptions('digits', 2)
-panderOptions('table.split.table',500)  
-pander(data)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
 例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} −\mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
@@ -1441,6 +1440,7 @@ Pocock.Test <- function(alpha,beta,sigma1,sigma2,mu,k){
   n
 }
 
-Pocock.Test(0.05,0.10,2,2,1,k)
+Pocock.Test(0.05,0.10,2,2,1,5)
 ```
+每期至少需要`r round(Pocock.Test(0.05,0.10,2,2,1,5))`例。
 
