@@ -1435,7 +1435,7 @@ panderOptions('digits', 4)
 pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
-例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} −\mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
 
 ```{r}
 Pocock.Test <- function(alpha,beta,sigma1,sigma2,mu,k){
@@ -1454,7 +1454,7 @@ Pocock.Test(0.05,0.10,2,2,1,5)
 ```
 每期至少需要`r round(Pocock.Test(0.05,0.10,2,2,1,5))`例。
 
-### O’Brien and Fleming’s Test
+### O’Brien and Fleming’s 检验
 该法对不同阶段采用不同的临界值，早期阶段临界值设定较高，越到后期临界值越低。该法早期阶段较为保守，除非P值特别小，否则早期通常难以拒绝$H_{0}$，但最后一个阶段P值接近总的检验水平。下表列出了每阶段最后一阶段的临界值，比如5阶段最后一阶段的临界值值为2.040,前4阶段可查询其他表，其值分别为4.562,3.226,2.634和2.281，5个阶段对应的名义显著水平可用2*(1-pnorm())方法求出。
 
 ```{r}
@@ -1471,7 +1471,7 @@ panderOptions('digits', 4)
 pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
-例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} −\mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
 
 ```{r}
 OBF.Test <- function(alpha,beta,sigma1,sigma2,mu,k){
@@ -1490,6 +1490,40 @@ OBF.Test(0.05,0.10,2,2,1,5)
 ```
 每期至少需要`r round(OBF.Test(0.05,0.10,2,2,1,5))`例。
 
-### Wang and Tsiatis’ Test
+### Wang and Tsiatis 检验
+该法是对Pocock和O’Brien and Fleming’s法的推广，其界值形状主要取决$\rho$和$\tau$参数，当$\rho=0,\tau=0$时，就是Pocock法，当$\rho=0.5,\tau=0$时,就是O’Brien and Fleming’s法。下表列出了每阶段的临界值
 
+```{r}
+data <- read.csv("Cwt.csv",header = T)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+```
 
+K期Wang and Tsiatis 检验的样本量计算，首先根据没有期中分析的设计计算最大样本量，然后乘以$R_{wt}(K,\alpha ,\beta )$。最大样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{wt}$可查询下表：
+
+```{r}
+data <- read.csv("Rwt.csv",header = T)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+
+```{r}
+WT.Test <- function(alpha,beta,sigma1,sigma2,mu,k,delta){
+  nfixed <- (qnorm(1-alpha/2) + qnorm(1 - beta))^2*(sigma1^2+sigma2^2)/(mu)^2
+  
+  data <- read.csv("Rwt.csv",header = T)
+  col <- paste(paste("delta",delta,sep=""),paste("beta",format(beta,nsmall=2),
+                                                 sep=""),sep="")
+  rwt <- as.matrix(data)[k,col]
+  nmax <-rwt*nfixed
+  n <- nmax/k
+  n
+}
+
+WT.Test(0.05,0.10,2,2,1,5,0.05)
+```
+每期至少需要`r round(WT.Test(0.05,0.10,2,2,1,5,0.05))`例。
+
+### Inner Wedge Test
