@@ -1435,7 +1435,7 @@ panderOptions('digits', 4)
 pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
-例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，Pocock设计，每期需要多少病例？
 
 ```{r}
 Pocock.Test <- function(alpha,beta,sigma1,sigma2,mu,k){
@@ -1471,7 +1471,7 @@ panderOptions('digits', 4)
 pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
-例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，O’Brien and Fleming’s设计，每期需要多少病例？
 
 ```{r}
 OBF.Test <- function(alpha,beta,sigma1,sigma2,mu,k){
@@ -1499,7 +1499,7 @@ panderOptions('digits', 4)
 pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
-K期Wang and Tsiatis 检验的样本量计算，首先根据没有期中分析的设计计算最大样本量，然后乘以$R_{wt}(K,\alpha ,\beta )$。最大样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{wt}$可查询下表：
+K期Wang and Tsiatis 检验的样本量计算，首先根据没有期中分析的设计计算最大样本量，然后乘以$R_{wt}(K,\alpha ,\beta,\Delta)$。最大样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{wt}$可查询下表：
 
 ```{r}
 data <- read.csv("Rwt.csv",header = T)
@@ -1507,7 +1507,7 @@ panderOptions('digits', 4)
 pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 ```
 
-例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，每期需要多少病例？
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} − \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，Wang and Tsiatis 设计，每期需要多少病例？
 
 ```{r}
 WT.Test <- function(alpha,beta,sigma1,sigma2,mu,k,delta){
@@ -1528,3 +1528,33 @@ WT.Test(0.05,0.10,2,2,1,5,0.05)
 
 ### Inner Wedge Test
 上述三种成组序贯方法均可以在拒绝$H_{0}$接受$H_{1}$时停止试验，也就是说试验药如果有效时即可停止试验。Inner Wedge方法是一种接受$H_{0}$时，停止试验，即试验药无效时即可停止试验的一种方法。
+
+K期Inner Wedge 检验的样本量计算，首先根据没有期中分析的设计计算最大样本量，然后乘以$R_{w}(K,\alpha ,\beta,\Delta )$。最大样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{w}$可查询下表：
+
+```{r}
+data <- read.csv("Rw.csv",header = T)
+panderOptions('digits', 4)
+pander(data)
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为1（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=1$），$\mu_{T} − \mu_{P} = 0.2$,$\Delta =0.25$,在$\alpha=0.05,\beta=0.20$时，Inner Wedge设计，每期需要多少病例？
+
+```{r}
+InnerWedge.Test <- function(alphap,betap,sigma1,sigma2,mu,kp,deltap){
+  nfixed <- (qnorm(1-alphap/2) + qnorm(1 - betap))^2*(sigma1^2+sigma2^2)/(mu)^2
+  
+  data <- read.csv("Rw.csv",header = T)
+  
+  data%>>%
+    subset(beta==betap)%>>%
+    subset(alpha==alphap)%>>%
+    subset(K==kp)%>>%
+    subset(delta==deltap)%>>%
+    subset(select=c(Rw))*nfixed/kp
+}
+
+InnerWedge.Test (0.05,0.20,1,1,0.2,5,0.25)
+```
+
+每期至少需要`r round(InnerWedge.Test (0.05,0.20,1,1,0.2,5,0.25))`例。
+
