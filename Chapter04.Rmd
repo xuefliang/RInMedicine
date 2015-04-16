@@ -1649,7 +1649,7 @@ $\alpha$消耗函数是随信息时间递增函数，当信息时间为0时，$\
 
 函数名             函数
 ---                ---
-O’Brien-Fleming    $\alpha _{1}(s)=2\begin{Bmatrix}1-\Phi (z_{\alpha /2}\sqrt{2})\end{Bmatrix}$
+O’Brien-Fleming    $\alpha _{1}(s)=2\begin{Bmatrix}1-\Phi (z_{\alpha /2}\sqrt{s})\end{Bmatrix}$
 Pocock             $\alpha _{2}(s)=\alpha log[1+(e-1)s]$
 Lan-DeMets-Kim     $\alpha _{3}(s)=\alpha s^{\rho },\rho>0$
 Hwang-Shih         $\alpha _{4}(s)=\alpha \begin{bmatrix}(1-e^{\zeta s})/(1-e^{-\zeta})\end{bmatrix},\zeta\neq 0$
