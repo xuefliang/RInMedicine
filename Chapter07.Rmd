@@ -36,6 +36,7 @@ library(sandwich)
 library(lmtest)
 library(pscl)
 library(mvtnorm)
+library(MASS)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
 
@@ -613,7 +614,70 @@ ziFitP <- zeroinfl(Y ~ X1 + X2 | 1, dist="poisson", data=dfCount)
 vglm(Y ~ X1 + X2, family=zipoissonff, data=dfCount)
 ```
 
-Quang Vuong（1989）认为，如果一个模型比另一个模型更接近真实的函数，那么从这个模型得到的每个个体的对数似然值也应该显著的大于从另一个模型得到的每个个体的对数似然值。
+###稳健Poisson回归
+influence.measures()对拟合的模型完成影响分析后，如存在离群点和强影响点，可用robust包中glmRob()方法拟合稳健广义线性模型。
+```{r}
+fit.rob <- glmRob(sumY~Base+Age+Trt, family = poisson(), data=breslow.dat)
+summary(fit.rob)
+```
 
+### 负二项回归(Negative binomial regression)
+Poisson回归假定因变量是均数和方差相等，如果出现方差比均数大，就会形成过度离散，Poisson回归会低估预测变量的标准误。当过度离散比较明显时，指定误差项服从负二项分布，得到的负二项回归系数与Poisson回归相同，但标准误更大，结果的解释与Poisson回归相同。
+
+例 epicalc包DHF99数据集是一实地调查的滋生蚊子幼虫的水容器的数据，因变量containers是有蚊子幼虫滋生的容器的频数，education 和viltype是可能对因变量有影响的自变量。
+
+```{r}
+data(DHF99,package="epicalc")
+opar <- par(no.readonly=T)
+par(mfrow = c(1,2))
+attach(DHF99)
+hist(containers,breaks = 20)
+boxplot(containers~viltype)
+par(opar)
+qcc.overdispersion.test(DHF99$containers,type = "poisson")
+```
+因变量的偏移特性比较明显,因变量有缺失值，Poisson回归的过度离散情况不能够检验。
+
+负二项回归拟合用MASS包中glm.nb()方法
+```{r}
+glmFitNB <- glm.nb(containers ~ education + viltype, data=DHF99)
+summary(glmFitNB)
+```
+VGAM包中vglm()方法如下
+```{r,eval=FALSE}
+vglmFitNB <- vglm(containers ~ education + viltype, family=negbinomial, data=DHF99)
+summary(vglmFitNB)
+```
+
+### 拟合优度检验
+检验建立负二项回归模型的拟合优度
+```{r}
+poisgof(glmFitNB)
+```
+P值较大，表明模型的拟合优度较好。
+
+###模型的系数及解释
+```{r}
+exp(coef(glmFitNB))
+```
+viltype的P值小于0.05,意义比较显著，结果解释与Poisson回归类似。对于自变量的选择可以采用step()和AIC值。
+
+###零膨胀的负二项回归回归
+与Poisson回归类似，因变量中0计数的频数较多时，应采用零膨胀的负二项回归回归
+```{r}
+ziFitNB <- zeroinfl(containers ~ education + viltype | 1, dist="negbin", data=DHF99)
+summary(ziFitNB)
+```
+VGAM包中vglm()方法如下，此方法的自变量不能为分类变量。
+```{r,eval=FALSE}
+vglm(containers ~ village, family=zinegbinomial, data=DHF99)
+```
+
+出用AIC比较模型外，Quang Vuong提出如果一个模型比另一个模型更接近真实的函数，那么从这个模型得到的每个个体的对数似然值也应该显著的大于从另一个模型得到的每个个体的对数似然值。pscl包vuong() 方法实现了Vuong检验。
+```{r}
+vuong(ziFitNB, glmFitNB)
+```
+
+Vuong 检验的统计量则成标准的N(0, 1)正态分布。Vuong 值大于1.96，则模型1好于模型2，小于-1.96，则结论相反。Vuong Test = -0.15表明两个模型同样地接近真实函数。
 
 
