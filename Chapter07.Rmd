@@ -30,6 +30,12 @@ library(mlogit)
 library(VGAM)
 library(nnet)
 library(ordinal)
+library(robust)
+library(qcc)
+library(sandwich)
+library(lmtest)
+library(pscl)
+library(mvtnorm)
 ```
 广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
 
@@ -512,6 +518,102 @@ summary(drug.elrm)
 ```
 
 ## Possion回归
-Poisson回归的因变量是计数型的变量，自变量是连续型变量。
+Poisson回归的因变量是计数型的变量，自变量是连续性或类别型变量。Poisson回归因变量通常局限在一个固定长度时间段内进行测量（如过去一年交通事故数），整个观测集中时间长度都是不变的。Poisson回归主要有两个假设，首先，具有相同特征和同时的不同对象的人时风险是同质的，其次，当样本量越来越大时，频数的均数趋近于方差。
+
+例 robust包中Breslow癫痫数据记录了治疗初期八周内，抗癫痫药物对癫痫发病数的影响，因变量sumY为随机后8周内癫痫发病数，自变量治疗Trt，年龄Age和治疗前8周的癫痫发病数Base。
+
+```{r}
+data(breslow.dat,package="robust")
+opar <- par(no.readonly=T)
+par(mfrow = c(1,2))
+attach(breslow.dat)
+hist(sumY,breaks = 20,xlab = "Seizure Count",main="Distribution of Seizure")
+boxplot(sumY~Trt,xlab="Treatment",main="Group Coomparisons")
+par(opar)
+```
+
+从图中可以清楚的看到因变量的偏移特性及可能的离群点。药物治疗下癫痫的发病数似乎变小，且方差也变小了。
+
+```{r}
+fit <- glm(sumY~Base+Age+Trt,data=breslow.dat,family = poisson())
+summary(fit)
+```
+
+VGAM包vglm()方法获得类似结果
+```{r,eval=FALSE}
+vglmFit <- vglm(sumY~Base+Age+Trt, family=poissonff, data=breslow.dat)
+summary(vglmFit)
+```
+
+结果输出了偏差、回归参数、标准误和参数为0的检验。
+
+###拟合优度检验
+检验建立Poisson模型的拟合优度
+```{r}
+poisgof(fit)
+```
+P值较小，表明模型的拟合优度较差。
+
+###模型的系数及解释
+```{r}
+exp(coef(fit))
+```
+Base、Age、Trt和截距项检验均显示有意义，在保持其他变量不变，年龄增加1岁，癫痫发病数将乘以1.023。一单位的Trt变化（从安慰剂到治疗组），癫痫发病数将乘以0.86,也就是说治疗组想对于安慰剂组发病数下降了。
+
+###过度离散
+与Logistic回归类似，如果残差的偏差和和残差的自由度之比大于1,那么表明存在过度离散。Poisson分布的方差和均数相等，当因变量的方差比预测方差大时，Poisson分布可能会发生过度离散。过度离散可能会对结果的解释造成影响，可能会得到很小的标准误和置信区间，并且显著性检验也比较宽松。发生过度离散可能是遗漏了某个重要变量或者是计数事件并不独立。过度离散检验可用qcc包的qcc.overdispersion.test()方法。
+
+```{r}
+qcc.overdispersion.test(breslow.dat$sumY,type = "poisson")
+```
+P值小于0.05,表明确实存在过度离散。通过用family="quasipoisson" 替换family="poisson",以完成对过度离散数据的拟合。
+
+```{r}
+fit.od <- glm(sumY~Base+Age+Trt,data=breslow.dat,family = quasipoisson())
+summary(fit.od)
+```
+
+VGAM包vglm()方法获得类似结果
+```{r,eval=FALSE}
+vglm <- vglm(sumY~Base+Age+Trt, family=quasipoissonff, data=breslow.dat)
+summary(vglm)
+```
+
+使用类Poisson方法估计的参数与Poisson相同，但标准误变大。当考虑过度离散，Base、Trt和Age均没有显著意义。
+
+###异方差一致的标准误差 
+可通过如下方法获得
+```{r}
+hcSE <- vcovHC(fit, type="HC0")
+coeftest(fit, vcov=hcSE)
+```
+
+###时间段变化的Poisson回归
+当观测时间长度不同时，可以拟合时间段变化的Poisson回归模型，次住假设结果变量是比率。为分析比率，数据中需包含一个记录每个观测时间长度的变量(如time)。然后模型将从$ln(\lambda )=\beta _{0}+\sum_{j=1}^{p}\beta _{j}X_{j}$修改为$ln\begin{pmatrix}\frac{\lambda}{time} \end{pmatrix}=\beta _{0}+\sum_{j=1}^{p}\beta _{j}X_{j}$。为拟合新模型，需要使用glm()函数中的offset选项。假设Breslow中有一个time变量，记录了病人随机分组后监测时间长度的变化，拟合模型如下
+
+```{r,eval=FALSE}
+fit <- glm(sumY~Base+Age+Trt,data=breslow.dat,offset=log(time),family = poisson())
+vglmFit <- vglm(sumY~Base+Age+Trt,offset=log(time), family=poissonff, data=breslow.dat)
+```
+
+###零膨胀的Poisson回归
+当因变量中，0计数的数目比Poisson回归预测的数据多时，即总体的一个子群体无任何被计数的行为时，就可能发生这种问题。
+
+```{r}
+set.seed(123)
+N     <- 200
+sigma <- matrix(c(4,2,-3, 2,16,-1, -3,-1,8), byrow=TRUE, ncol=3)
+mu    <- c(-3, 2, 4)
+XY    <- rmvnorm(N, mean=mu, sigma=sigma)
+Y     <- round(XY[ , 3] - 1.5)
+Y[Y < 0] <- 0
+dfCount <- data.frame(X1=XY[ , 1], X2=XY[ , 2], Y)
+
+ziFitP <- zeroinfl(Y ~ X1 + X2 | 1, dist="poisson", data=dfCount)
+vglm(Y ~ X1 + X2, family=zipoissonff, data=dfCount)
+```
+
+Quang Vuong（1989）认为，如果一个模型比另一个模型更接近真实的函数，那么从这个模型得到的每个个体的对数似然值也应该显著的大于从另一个模型得到的每个个体的对数似然值。
+
 
 
