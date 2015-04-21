@@ -1693,4 +1693,85 @@ GroupSeqReEstimation(0.05, 0.1, 0.3, 0.8)
 ```
 重新估计样本量后，共计所需`r 2*round(GroupSeqReEstimation(0.05, 0.1, 0.3, 0.8))`例。
 
+## 变异性比较的样本量估计
+变异性通常分为个体内变异和个体间变异两类，个体内变异指在相同的试验条件下，同一个体多次重复测量值之间存在的差异。个体间变异指不同个体间由于异质性而存在的差异。
+
+###重复平行对照设计
+####显著性检验
+显著性检验的样本量需从下面公式中，
+$$\frac{\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha /2 ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内方差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n。
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+ISV.Equality <- function (alpha, beta, sigma1, sigma2, m) 
+{
+  ratio = sigma1/sigma2
+  n =0
+  for (i in 1:1000) {
+    ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), 
+                 lower.tail = FALSE)/qf(alpha/2, i * (m - 1), i * 
+                                          (m - 1), lower.tail = FALSE)
+    if(round(ratio,digits = 2)==round(ratio.f,digits = 2)){
+      n=i
+    }
+  }
+  n
+}
+
+ISV.Equality(0.05,0.2,0.3,0.45,3)
+```
+每组需要`r round(ISV.Equality(0.05,0.2,0.3,0.45,3))`例。
+
+####非劣性/优效性
+非劣性/优效性检验的样本量需从下面公式中，
+$$\frac{\sigma ^{2}_{WT}}{\delta ^{2}\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内方差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，在界值为-1.1时需要多少样本量？
+
+```{r}
+ISV.NIS <- function (alpha, beta, sigma1, sigma2, m, margin) 
+{
+  ratio = sigma1/(sigma2 * margin^2)
+  n = 0
+  for (i in 1:1000) {
+    ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), 
+                 lower.tail = FALSE)/qf(alpha, i * (m - 1), i * (m - 
+                                                                   1), lower.tail = FALSE)
+    if(round(ratio,digits = 2)==round(ratio.f,digits = 2)){
+      n=i
+    }
+  }
+  n
+}
+
+ISV.NIS(0.05,0.2,0.3,0.45,3,-1.1)
+```
+每组需要`r round(ISV.NIS(0.05,0.2,0.3,0.45,3,1.1))`例。
+
+####等效性
+等效性检验的样本量需从下面公式中，
+$$\frac{\delta ^{2}\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{\beta/2 ,n(m-1),n(m-1)}}{F_{1-\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内方差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，在界值为2时需要多少样本量？
+
+```{r}
+ISV.Equivalence <- function (alpha, beta, sigma1, sigma2, m, margin) 
+{
+  ratio = margin^2 * sigma1/sigma2
+  n=0
+  for (i in 1:1000) {
+    ratio.f = qf(beta/2, i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(1 - 
+                                                                            alpha, i * (m - 1), i * (m - 1), lower.tail = FALSE)
+    if(round(ratio,digits = 1)==round(ratio.f,digits = 1)){
+      n=i
+    }
+  }
+  n
+}
+
+ISV.Equivalence(0.05,0.2,0.3,0.45,3,2) 
+```
+每组需要`r round(ISV.Equivalence(0.05,0.2,0.3,0.45,3,2))`例。
+
 
