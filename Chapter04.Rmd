@@ -1774,4 +1774,5 @@ ISV.Equivalence(0.05,0.2,0.3,0.45,3,2)
 ```
 每组需要`r round(ISV.Equivalence(0.05,0.2,0.3,0.45,3,2))`例。
 
-
+###简单随机效应模型
+Quan和Shih $\sigma _{i}^{*2}=\frac{1}{2m}\hat{CV_{i}^{2}}+\hat{CV_{i}^{4}}$
