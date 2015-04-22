@@ -1704,22 +1704,20 @@ $$\frac{\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_
 例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
-ISV.Equality <- function (alpha, beta, sigma1, sigma2, m) 
-{
-  ratio = sigma1/sigma2
-  n =0
-  for (i in 1:1000) {
-    ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), 
-                 lower.tail = FALSE)/qf(alpha/2, i * (m - 1), i * 
-                                          (m - 1), lower.tail = FALSE)
-    if(round(ratio,digits = 2)==round(ratio.f,digits = 2)){
-      n=i
+ISV.Equality <- function(alpha, beta, sigma1, sigma2, m) {
+    ratio = sigma1/sigma2
+    n = 0
+    for (i in 1:1000) {
+        ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(alpha/2, 
+            i * (m - 1), i * (m - 1), lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
     }
-  }
-  n
+    n
 }
 
-ISV.Equality(0.05,0.2,0.3,0.45,3)
+ISV.Equality(0.05, 0.2, 0.3, 0.45, 3)
 ```
 每组需要`r round(ISV.Equality(0.05,0.2,0.3,0.45,3))`例。
 
@@ -1730,22 +1728,20 @@ $$\frac{\sigma ^{2}_{WT}}{\delta ^{2}\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),
 例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，在界值为-1.1时需要多少样本量？
 
 ```{r}
-ISV.NIS <- function (alpha, beta, sigma1, sigma2, m, margin) 
-{
-  ratio = sigma1/(sigma2 * margin^2)
-  n = 0
-  for (i in 1:1000) {
-    ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), 
-                 lower.tail = FALSE)/qf(alpha, i * (m - 1), i * (m - 
-                                                                   1), lower.tail = FALSE)
-    if(round(ratio,digits = 2)==round(ratio.f,digits = 2)){
-      n=i
+ISV.NIS <- function(alpha, beta, sigma1, sigma2, m, margin) {
+    ratio = sigma1/(sigma2 * margin^2)
+    n = 0
+    for (i in 1:1000) {
+        ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(alpha, 
+            i * (m - 1), i * (m - 1), lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
     }
-  }
-  n
+    n
 }
 
-ISV.NIS(0.05,0.2,0.3,0.45,3,-1.1)
+ISV.NIS(0.05, 0.2, 0.3, 0.45, 3, -1.1)
 ```
 每组需要`r round(ISV.NIS(0.05,0.2,0.3,0.45,3,1.1))`例。
 
@@ -1756,23 +1752,76 @@ $$\frac{\delta ^{2}\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{\beta/2 ,n(m-1),
 例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，在界值为2时需要多少样本量？
 
 ```{r}
-ISV.Equivalence <- function (alpha, beta, sigma1, sigma2, m, margin) 
-{
-  ratio = margin^2 * sigma1/sigma2
-  n=0
-  for (i in 1:1000) {
-    ratio.f = qf(beta/2, i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(1 - 
-                                                                            alpha, i * (m - 1), i * (m - 1), lower.tail = FALSE)
-    if(round(ratio,digits = 1)==round(ratio.f,digits = 1)){
-      n=i
+ISV.Equivalence <- function(alpha, beta, sigma1, sigma2, m, margin) {
+    ratio = margin^2 * sigma1/sigma2
+    n = 0
+    for (i in 1:1000) {
+        ratio.f = qf(beta/2, i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(1 - 
+            alpha, i * (m - 1), i * (m - 1), lower.tail = FALSE)
+        if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
+            n = i
+        }
     }
-  }
-  n
+    n
 }
 
-ISV.Equivalence(0.05,0.2,0.3,0.45,3,2) 
+ISV.Equivalence(0.05, 0.2, 0.3, 0.45, 3, 2)
 ```
 每组需要`r round(ISV.Equivalence(0.05,0.2,0.3,0.45,3,2))`例。
 
 ###简单随机效应模型
-Quan和Shih $\sigma _{i}^{*2}=\frac{1}{2m}\hat{CV_{i}^{2}}+\hat{CV_{i}^{4}}$
+根据Quan和Shih提出的随机效应模型，可以到处方差的估计公式 $\sigma _{i}^{*2}=\frac{1}{2m}\hat{CV_{i}^{2}}+\hat{CV_{i}^{4}}$
+
+####显著性检验
+显著性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R})^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差。
+
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异系数为50%,对照组变异系数70%,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+ISCV.Equality <- function(alpha, beta, CVt, CVr, m) {
+    sigma1 = 1/(2 * m) * CVt^2 + CVt^4
+    sigma2 = 1/(2 * m) * CVr^2 + CVr^4
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(CVt - 
+        CVr)^2
+    n
+}
+
+ISCV.Equality(0.05, 0.2, 0.7, 0.5, 2)
+```
+每组需要`r round(ISCV.Equality(0.05,0.2,0.7,0.5,2))`例。
+
+####非劣性/优效性检验
+非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R}-\delta)^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
+
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异系数为50%,对照组变异系数70%,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，界值为0.1，需要多少样本量？
+
+```{r}
+ISCV.NIS <- function(alpha, beta, CVt, CVr, m, margin) {
+    sigma1 = 1/(2 * m) * CVt^2 + CVt^4
+    sigma2 = 1/(2 * m) * CVr^2 + CVr^4
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(CVt - 
+        CVr - margin)^2
+    n
+}
+
+ISCV.NIS(0.05, 0.2, 0.7, 0.5, 2, -0.1)
+```
+每组需要`r round(ISCV.NIS(0.05,0.2,0.7,0.5,2,-0.1))`例。
+
+####等效性检验
+非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(\delta-|CV_{T}-CV_{R}|)^{2} }$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
+
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异系数为50%,对照组变异系数70%,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，界值为0.1，需要多少样本量？
+
+```{r}
+ISCV.Equivalence <- function(alpha, beta, CVt, CVr, m, margin) {
+    sigma1 = 1/(2 * m) * CVt^2 + CVt^4
+    sigma2 = 1/(2 * m) * CVr^2 + CVr^4
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(margin - 
+        abs(CVt - CVr))^2
+    n
+}
+
+ISCV.Equivalence(0.05, 0.2, 0.7, 0.5, 2, 0.1)
+```
+每组需要`r round(ISCV.Equivalence(0.05,0.2,0.7,0.5,2,0.1))`例。
