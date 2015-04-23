@@ -7,7 +7,7 @@ output:
     fig_caption: yes
     latex_engine: xelatex
     number_sections: yes
-    template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.1/rticles/rmarkdown/templates/ctex/resources/default.latex
+    template: !expr rticles::ctex_template()
     toc: yes
 documentclass: ctexart
 classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
