@@ -1719,7 +1719,7 @@ ISV.Equality <- function(alpha, beta, sigma1, sigma2, m) {
 
 ISV.Equality(0.05, 0.2, 0.3, 0.45, 3)
 ```
-每组需要`r round(ISV.Equality(0.05,0.2,0.3,0.45,3))`例。
+需要`r round(ISV.Equality(0.05,0.2,0.3,0.45,3))`例。
 
 ####非劣性/优效性
 非劣性/优效性检验的样本量需从下面公式中，
@@ -1743,7 +1743,7 @@ ISV.NIS <- function(alpha, beta, sigma1, sigma2, m, margin) {
 
 ISV.NIS(0.05, 0.2, 0.3, 0.45, 3, -1.1)
 ```
-每组需要`r round(ISV.NIS(0.05,0.2,0.3,0.45,3,1.1))`例。
+需要`r round(ISV.NIS(0.05,0.2,0.3,0.45,3,1.1))`例。
 
 ####等效性
 等效性检验的样本量需从下面公式中，
@@ -1767,7 +1767,7 @@ ISV.Equivalence <- function(alpha, beta, sigma1, sigma2, m, margin) {
 
 ISV.Equivalence(0.05, 0.2, 0.3, 0.45, 3, 2)
 ```
-每组需要`r round(ISV.Equivalence(0.05,0.2,0.3,0.45,3,2))`例。
+需要`r round(ISV.Equivalence(0.05,0.2,0.3,0.45,3,2))`例。
 
 ###简单随机效应模型
 根据Quan和Shih提出的随机效应模型，可以到处方差的估计公式 $\sigma _{i}^{*2}=\frac{1}{2m}\hat{CV_{i}^{2}}+\hat{CV_{i}^{4}}$
@@ -1788,7 +1788,7 @@ ISCV.Equality <- function(alpha, beta, CVt, CVr, m) {
 
 ISCV.Equality(0.05, 0.2, 0.7, 0.5, 2)
 ```
-每组需要`r round(ISCV.Equality(0.05,0.2,0.7,0.5,2))`例。
+需要`r round(ISCV.Equality(0.05,0.2,0.7,0.5,2))`例。
 
 ####非劣性/优效性检验
 非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R}-\delta)^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
@@ -1806,7 +1806,7 @@ ISCV.NIS <- function(alpha, beta, CVt, CVr, m, margin) {
 
 ISCV.NIS(0.05, 0.2, 0.7, 0.5, 2, -0.1)
 ```
-每组需要`r round(ISCV.NIS(0.05,0.2,0.7,0.5,2,-0.1))`例。
+需要`r round(ISCV.NIS(0.05,0.2,0.7,0.5,2,-0.1))`例。
 
 ####等效性检验
 非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(\delta-|CV_{T}-CV_{R}|)^{2} }$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
@@ -1824,4 +1824,48 @@ ISCV.Equivalence <- function(alpha, beta, CVt, CVr, m, margin) {
 
 ISCV.Equivalence(0.05, 0.2, 0.7, 0.5, 2, 0.1)
 ```
-每组需要`r round(ISCV.Equivalence(0.05,0.2,0.7,0.5,2,0.1))`例。
+需要`r round(ISCV.Equivalence(0.05,0.2,0.7,0.5,2,0.1))`例。
+
+###个体间变异的比较
+除了比较个体内变异和变异系数外，实际工作中也需要比较个体间的变异。临床试验中，对个体进行重复测量通常难以实施，但测量不同处理的个体间变异和总变异却有实际应用价值。平行对照设计中估计变异的方法为修正大样本方法(modified large sample, MLS) ，交叉设计中，由于不满足独立性的要求，需要对MLS方法进行扩展。
+
+#### 平行可重复设计
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+InterSV.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m) {
+    sigma = 2 * (vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 + vwt^4/(m^2 * 
+        (m - 1)) + vwr^4/(m^2 * (m - 1))
+    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 - vbr^2)^2
+    n
+}
+
+InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
+```
+
+需要`r round(InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3))`例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
+
+
+```{r}
+InterSV.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 + 
+        vwt^4/(m^2 * (m - 1)) + margin^4 * vwr^4/(m^2 * (m - 1)))
+    n = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - margin^2 * 
+        vbr^2)^2
+    n
+}
+
+InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
+```
+
+需要`r round(InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1))`例。
