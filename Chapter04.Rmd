@@ -1851,7 +1851,7 @@ InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
 
 ####非劣性/优效性检验
 样本量计算公式如下
-非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
 例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
 
@@ -1869,3 +1869,46 @@ InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
 ```
 
 需要`r round(InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1))`例。
+
+#### 交叉可重复设计
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n_{s}=\frac{\sigma^{*2}(z_{1-\alpha /2}+z_{1-\beta })^{2}}{(\sigma_{BT}^{2}-\sigma_{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+InterSV.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 - 2 * rho^2 * 
+        vbt^2 * vbr^2 + vwt^4/(m^2 * (m - 1)) + vwr^4/(m^2 * (m - 1)))
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - vbr^2)^2
+    ns
+}
+
+InterSV.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
+```
+总计需要`r round(InterSV.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2,0.75))`例，由于$n_{s}=n_{1}+n_{2}-2$，每组大约需要52例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta ^{2}\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+
+```{r}
+InterSV.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 - 
+        2 * margin^2 * rho^2 * vbt^2 * vbr^2 + vwt^4/(m^2 * (m - 1)) + 
+        margin^4 * vwr^4/(m^2 * (m - 1)))
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - margin^2 * 
+        vbr^2)^2
+    ns
+}
+
+InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
+```
+
+总计需要`r round(InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2,-1.1,0.75))`例，由于$n_{s}=n_{1}+n_{2}-2$，每组大约需要29例。
+
