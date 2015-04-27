@@ -1875,7 +1875,7 @@ InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
 显著性检验样本量计算公式如下，
 $$n_{s}=\frac{\sigma^{*2}(z_{1-\alpha /2}+z_{1-\beta })^{2}}{(\sigma_{BT}^{2}-\sigma_{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
-例 设计一个2组每个个体重复2次的交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 InterSV.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m, 
@@ -1894,7 +1894,7 @@ InterSV.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
 样本量计算公式如下
 非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta ^{2}\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
-例 设计一个2组每个个体重复2次的交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
 
 ```{r}
 InterSV.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin, 
@@ -1911,4 +1911,59 @@ InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
 ```
 
 总计需要`r round(InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2,-1.1,0.75))`例，由于$n_{s}=n_{1}+n_{2}-2$，每组大约需要29例。
+
+###总体变异的比较
+总体变异的估计可从标准的2×2交叉/平行设计或者重复的2×2m的交叉/平行设计中获得。
+
+####无重复的平行对照试验
+
+```{r}
+Variabilities.Parallel.Equality<- function(alpha, beta, vtt, vtr) {
+  ratio = vtt^2/vtr^2
+  n = 0
+  for (i in 2:1000) {
+    ratio.f = qf(p = (1 - beta), i-1, i-1, lower.tail = FALSE)/qf(alpha/2, i-1, i-1,, lower.tail = FALSE)
+    if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+      n = i
+    }
+  }
+  n
+}
+
+Variabilities.Parallel.Equality(0.05, 0.2, 0.55, 0.75)
+```
+
+
+```{r}
+Variabilities.Parallel.NIS<- function(alpha, beta, vtt, vtr, margin) {
+  ratio = vtt^2/margin^2*vtr^2
+  n = 0
+  for (i in 2:1000) {
+    ratio.f = qf(p = (1 - beta), i-1, i-1, lower.tail = FALSE)/qf(alpha, i-1, i-1,, lower.tail = FALSE)
+    if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+      n = i
+    }
+  }
+  n
+}
+
+Variabilities.Parallel.NIS(0.05, 0.2, 0.55, 0.75, -1.1)
+```
+
+```{r}
+Variabilities.Parallel.Equivalence<- function(alpha, beta, vtt, vtr,margin) {
+  ratio = margin^2*vtt^2/vtr^2
+  n = 0
+  for (i in 2:1000) {
+    ratio.f = qf(beta/2, i-1, i-1, lower.tail = FALSE)/qf(p=(1-alpha), i-1, i-1,, lower.tail = FALSE)
+    if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
+      n = i
+    }
+  }
+  n
+}
+
+Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75,1.8)
+```
+
 
