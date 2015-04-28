@@ -1917,53 +1917,114 @@ InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
 
 ####无重复的平行对照试验
 
+#####显著性检验
+显著性检验样本量计算公式需要解下公式$$\frac{\sigma _{TT}^{2}}{\sigma _{TR}^{2}}=\frac{F_{1-\beta,n-1,n-1}}{F_{\alpha /2,n-1,n-1}}$$，其中$\sigma _{TT}$和$\sigma _{TR}$为T组和R组的方差。
+
+例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，显著性设计需要多少样本量？
+
 ```{r}
-Variabilities.Parallel.Equality<- function(alpha, beta, vtt, vtr) {
-  ratio = vtt^2/vtr^2
-  n = 0
-  for (i in 2:1000) {
-    ratio.f = qf(p = (1 - beta), i-1, i-1, lower.tail = FALSE)/qf(alpha/2, i-1, i-1,, lower.tail = FALSE)
-    if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
-      n = i
+Variabilities.Parallel.Equality <- function(alpha, beta, vtt, vtr) {
+    ratio = vtt^2/vtr^2
+    n = 0
+    for (i in 2:1000) {
+        ratio.f = qf(p = (1 - beta), i - 1, i - 1, lower.tail = FALSE)/qf(alpha/2, 
+            i - 1, i - 1, , lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
     }
-  }
-  n
+    n
 }
 
 Variabilities.Parallel.Equality(0.05, 0.2, 0.55, 0.75)
 ```
+每组需要`r round(Variabilities.Parallel.Equality(0.05, 0.2, 0.55, 0.75))`例。
 
+#####非劣性/优效性检验
+非劣性/优效性检验样本量计算公式需要解下公式$$\frac{\sigma _{TT}^{2}}{\delta ^{2}\sigma _{TR}^{2}}=\frac{F_{1-\beta,n-1,n-1}}{F_{\alpha ,n-1,n-1}}$$，其中$\sigma _{TT}$和$\sigma _{TR}$为T组和R组的方差，$delta$为界值。                                                                                                                                                                                                             
 
+例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，非劣性设计，在界值为1.1时，需要多少样本量？
 ```{r}
-Variabilities.Parallel.NIS<- function(alpha, beta, vtt, vtr, margin) {
-  ratio = vtt^2/margin^2*vtr^2
-  n = 0
-  for (i in 2:1000) {
-    ratio.f = qf(p = (1 - beta), i-1, i-1, lower.tail = FALSE)/qf(alpha, i-1, i-1,, lower.tail = FALSE)
-    if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
-      n = i
+Variabilities.Parallel.NIS <- function(alpha, beta, vtt, vtr, margin) {
+    ratio = vtt^2/margin^2 * vtr^2
+    n = 0
+    for (i in 2:1000) {
+        ratio.f = qf(p = (1 - beta), i - 1, i - 1, lower.tail = FALSE)/qf(alpha, 
+            i - 1, i - 1, , lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
     }
-  }
-  n
+    n
 }
 
 Variabilities.Parallel.NIS(0.05, 0.2, 0.55, 0.75, -1.1)
 ```
+每组需要`r round(Variabilities.Parallel.NIS(0.05, 0.2, 0.55, 0.75, -1.1))`例。
 
+#####等效性检验
+等效性检验样本量计算公式需要解下公式$$\frac{\delta ^{2}\sigma _{TT}^{2}}{\sigma _{TR}^{2}}=\frac{F_{\beta/2,n-1,n-1}}{F_{1-\alpha ,n-1,n-1}}$$，其中$\sigma _{TT}$和$\sigma _{TR}$为T组和R组的方差，$delta$为界值。                                                                                                                                                                                                             
+
+例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，等效性设计，在界值为1.8时，需要多少样本量？
 ```{r}
-Variabilities.Parallel.Equivalence<- function(alpha, beta, vtt, vtr,margin) {
-  ratio = margin^2*vtt^2/vtr^2
-  n = 0
-  for (i in 2:1000) {
-    ratio.f = qf(beta/2, i-1, i-1, lower.tail = FALSE)/qf(p=(1-alpha), i-1, i-1,, lower.tail = FALSE)
-    if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
-      n = i
+Variabilities.Parallel.Equivalence <- function(alpha, beta, vtt, vtr, margin) {
+    ratio = margin^2 * vtt^2/vtr^2
+    n = 0
+    for (i in 2:1000) {
+        ratio.f = qf(beta/2, i - 1, i - 1, lower.tail = FALSE)/qf(p = (1 - 
+            alpha), i - 1, i - 1, , lower.tail = FALSE)
+        if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
+            n = i
+        }
     }
-  }
-  n
+    n
 }
 
-Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75,1.8)
+Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75, 1.8)
+```
+每组需要`r round(Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75,1.8))`例。
+
+####重复的平行对照试验
+
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+Variabilities.Parallel.Rep.Equality <- function(alpha, beta, vbt, vwt, 
+    vbr, vwr, m) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 + (m - 1) * 
+        vwt^4/m^2 + (m - 1) * vwr^4/m^2)
+    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        (vbr^2 + vwr^2))^2
+    n
+}
+
+Variabilities.Parallel.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
 ```
 
+需要`r round(Variabilities.Parallel.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3))`例。
 
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\delta ^{4}\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
+
+
+```{r}
+Variabilities.Parallel.Rep.NIS <- function(alpha, beta, vbt, vwt, vbr, 
+    vwr, m, margin) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 + 
+        (m - 1) * vwt^4/(m^2) + margin^4 * (m - 1) * vwr^4/(m^2))
+    n = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        margin^2 * (vbr^2 + vwr^2))^2
+    n
+}
+
+Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
+```
+
+需要`r round(Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1))`例。
