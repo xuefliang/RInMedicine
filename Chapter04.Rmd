@@ -2028,3 +2028,88 @@ Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
 ```
 
 需要`r round(Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1))`例。
+
+####标准2×2交叉设计
+
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2(\sigma _{TT}^{4}+\sigma _{TR}^{4}-2\rho^{2}\sigma _{BT}^{2}\sigma_{BR} ^{2})$
+
+例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1显著性检验设计，需要多少样本量？
+
+```{r}
+Variabilities.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2)^2 + (vbr^2 + vwr^2)^2 - 2 * rho^2 * vbt^2 * 
+        vbr^2)
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 1)
+```
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r round((Variabilities.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 1)+2)/2)`例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2(\sigma _{TT}^{4}+\delta ^{4}\sigma _{TR}^{4}-2\delta ^{2}\rho^{2}\sigma _{BT}^{2}\sigma_{BR} ^{2})$
+
+例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1非劣性检验设计，在界值为1.1的情况下需要多少样本量？
+
+```{r}
+Variabilities.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, margin, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2)^2 + margin^4 * (vbr^2 + vwr^2)^2 - 2 * 
+        margin^2 * rho^2 * vbt^2 * vbr^2)
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        margin^2 * (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, -1.1, 1)
+```
+
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r round((Variabilities.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, -1.1, 1)+2)/2)`例。
+
+####重复2×2m交叉设计
+#####显著性检验
+$$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho^2\sigma _{BT}^{2}\sigma _{BR}^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+Variabilities.Cross.Rep.Equality <- function(alpha, beta, vbt, vwt, vbr, 
+    vwr, m, rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 - 2 * rho^2 * 
+        vbt^2 * vbr^2 + (m - 1) * vwt^4/m^2 + (m - 1) * vwr^4/m^2)
+    ns = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
+```
+
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r (round(Variabilities.Cross.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75))+2)/2`例。
+
+####非劣性/优效性检验
+非劣性/优效性检验样本量计算公式如下$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta^{2}\rho^{2}\sigma_{BT}^{2}\sigma_{BR}^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\delta ^{4}\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+
+```{r}
+Variabilities.Cross.Rep.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, 
+    m, margin, rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 - 
+        2 * margin^2 * rho^2 * vbt^2 * vbr^2 + (m - 1) * vwt^4/(m^2) + 
+        margin^4 * (m - 1) * vwr^4/(m^2))
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        margin^2 * (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
+```
+
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r (round(Variabilities.Cross.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75))+2)/2`例。
