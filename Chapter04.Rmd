@@ -2142,7 +2142,7 @@ PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966)
 每组需要`r round(PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966))`例。
 
 ###个体生物等效性
-个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式进行估计$\sigma_{WT}^{2},sigma_{WR}^{2}$分别为T、R效应的个体内方差，$\sigma_{D}^{2}$为个体与药物的交互作用。
+个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式$$U=\begin{bmatrix}(|\hat{\delta}|+t_{0.05,n_{1}+n_{2}-2}\frac{\hat{\sigma} _{0.5,0.5}}{2}\sqrt{\frac{1}{n_{1}}+\frac{1}{n_{2}}})^{2}-\hat{\delta}^{2}\end{bmatrix}^{2}+\hat{\sigma} _{0.5,0.5}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}+0.5^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}+(1.5+\theta _{IBE})^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.05,n_{1}+n_{2}-2} ^{2}}-1)^{2}$$进行估计$\sigma_{WT}^{2},sigma_{WR}^{2}$分别为T、R效应的个体内方差，$\sigma_{D}^{2}$为个体与药物的交互作用。
 
 ```{r}
 IBE <- function (alpha, beta, delta, sigmaBT,sigmaBR, sigmaWT, sigmaWR, a, b, thetaIBE,rho) {
@@ -2151,15 +2151,19 @@ IBE <- function (alpha, beta, delta, sigmaBT,sigmaBR, sigmaWT, sigmaWR, a, b, th
     Sigma = sigmaD^2 + a * sigmaWT^2 + b * sigmaWR^2
   }
   U <- function(n, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE) {
-    U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5) * sqrt(2/n)/2)^2 - delta^2)^2+Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+(1.5 + thetaIBE)^2 * sigmaWR^4 * ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
+    U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5)/2* sqrt(2/n))^2 - delta^2)^2+Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+(1.5 + thetaIBE)^2 * sigmaWR^4 * ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
   }
-  gamma = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
+  lambda = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
+  n <- 9
   for (i in 2:1000) {
-    bound = gamma + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))+sqrt(U(i, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))
-    print(c(i, bound))
+    bound = lambda + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))+sqrt(U(i, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))
+    if (round(bound, digits = 2) == 0) {
+      n = i
+    }
   }
+  n
 }
 
-IBE(0.05, 0.2, 0, 0.1,0.4,0.6,0.4,0.5,0.5,2.5,0.75)
+IBE(0.05, 0.2, 0, 0.1,0.4,0.6,0.4,0.5,0.5,5.11,0.75)
 ```
 
