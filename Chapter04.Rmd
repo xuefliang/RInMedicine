@@ -1699,9 +1699,9 @@ GroupSeqReEstimation(0.05, 0.1, 0.3, 0.8)
 ###重复平行对照设计
 ####显著性检验
 显著性检验的样本量需从下面公式中，
-$$\frac{\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha /2 ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内方差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n。
+$$\frac{\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha /2 ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内标准差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n。
 
-例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内标准差为0.3,R组个体内标准差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 ISV.Equality <- function(alpha, beta, sigma1, sigma2, m) {
@@ -1723,9 +1723,9 @@ ISV.Equality(0.05, 0.2, 0.3, 0.45, 3)
 
 ####非劣性/优效性
 非劣性/优效性检验的样本量需从下面公式中，
-$$\frac{\sigma ^{2}_{WT}}{\delta ^{2}\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内方差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
+$$\frac{\sigma ^{2}_{WT}}{\delta ^{2}\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内标准差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
 
-例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，在界值为-1.1时需要多少样本量？
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内标准差为0.3,R组个体内标准差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，在界值为-1.1时需要多少样本量？
 
 ```{r}
 ISV.NIS <- function(alpha, beta, sigma1, sigma2, m, margin) {
@@ -1747,9 +1747,9 @@ ISV.NIS(0.05, 0.2, 0.3, 0.45, 3, -1.1)
 
 ####等效性
 等效性检验的样本量需从下面公式中，
-$$\frac{\delta ^{2}\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{\beta/2 ,n(m-1),n(m-1)}}{F_{1-\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内方差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
+$$\frac{\delta ^{2}\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{\beta/2 ,n(m-1),n(m-1)}}{F_{1-\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内标准差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
 
-例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内方差为0.3,R组个体内方差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，在界值为2时需要多少样本量？
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内标准差为0.3,R组个体内标准差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，在界值为2时需要多少样本量？
 
 ```{r}
 ISV.Equivalence <- function(alpha, beta, sigma1, sigma2, m, margin) {
@@ -1773,9 +1773,9 @@ ISV.Equivalence(0.05, 0.2, 0.3, 0.45, 3, 2)
 根据Quan和Shih提出的随机效应模型，可以到处方差的估计公式 $\sigma _{i}^{*2}=\frac{1}{2m}\hat{CV_{i}^{2}}+\hat{CV_{i}^{4}}$
 
 ####显著性检验
-显著性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R})^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差。
+显著性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R})^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异度，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差。
 
-例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异系数为50%,对照组变异系数70%,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异度为50%,对照组变异度70%,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 ISCV.Equality <- function(alpha, beta, CVt, CVr, m) {
@@ -1791,9 +1791,9 @@ ISCV.Equality(0.05, 0.2, 0.7, 0.5, 2)
 需要`r round(ISCV.Equality(0.05,0.2,0.7,0.5,2))`例。
 
 ####非劣性/优效性检验
-非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R}-\delta)^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
+非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R}-\delta)^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异度，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
 
-例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异系数为50%,对照组变异系数70%,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，界值为0.1，需要多少样本量？
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异度为50%,对照组变异度70%,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，界值为0.1，需要多少样本量？
 
 ```{r}
 ISCV.NIS <- function(alpha, beta, CVt, CVr, m, margin) {
@@ -1809,9 +1809,9 @@ ISCV.NIS(0.05, 0.2, 0.7, 0.5, 2, -0.1)
 需要`r round(ISCV.NIS(0.05,0.2,0.7,0.5,2,-0.1))`例。
 
 ####等效性检验
-非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(\delta-|CV_{T}-CV_{R}|)^{2} }$$,$CV_{T},CV_{R}$分别为T和R组的变异系数，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
+非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(\delta-|CV_{T}-CV_{R}|)^{2} }$$,$CV_{T},CV_{R}$分别为T和R组的变异度，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
 
-例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异系数为50%,对照组变异系数70%,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，界值为0.1，需要多少样本量？
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异度为50%,对照组变异度70%,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，界值为0.1，需要多少样本量？
 
 ```{r}
 ISCV.Equivalence <- function(alpha, beta, CVt, CVr, m, margin) {
@@ -1827,14 +1827,14 @@ ISCV.Equivalence(0.05, 0.2, 0.7, 0.5, 2, 0.1)
 需要`r round(ISCV.Equivalence(0.05,0.2,0.7,0.5,2,0.1))`例。
 
 ###个体间变异的比较
-除了比较个体内变异和变异系数外，实际工作中也需要比较个体间的变异。临床试验中，对个体进行重复测量通常难以实施，但测量不同处理的个体间变异和总变异却有实际应用价值。平行对照设计中估计变异的方法为修正大样本方法(modified large sample, MLS) ，交叉设计中，由于不满足独立性的要求，需要对MLS方法进行扩展。
+除了比较个体内变异和变异度外，实际工作中也需要比较个体间的变异。临床试验中，对个体进行重复测量通常难以实施，但测量不同处理的个体间变异和总变异却有实际应用价值。平行对照设计中估计变异的方法为修正大样本方法(modified large sample, MLS) ，交叉设计中，由于不满足独立性的要求，需要对MLS方法进行扩展。
 
 #### 平行可重复设计
 #####显著性检验
 显著性检验样本量计算公式如下，
 $$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
-例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 InterSV.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m) {
@@ -1853,7 +1853,7 @@ InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
 样本量计算公式如下
 非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
-例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
 
 
 ```{r}
@@ -1875,7 +1875,7 @@ InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
 显著性检验样本量计算公式如下，
 $$n_{s}=\frac{\sigma^{*2}(z_{1-\alpha /2}+z_{1-\beta })^{2}}{(\sigma_{BT}^{2}-\sigma_{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
-例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 InterSV.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m, 
@@ -1894,7 +1894,7 @@ InterSV.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
 样本量计算公式如下
 非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta ^{2}\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
 
-例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
 
 ```{r}
 InterSV.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin, 
@@ -1990,7 +1990,7 @@ Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75, 1.8)
 显著性检验样本量计算公式如下，
 $$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
 
-例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 Variabilities.Parallel.Rep.Equality <- function(alpha, beta, vbt, vwt, 
@@ -2011,7 +2011,7 @@ Variabilities.Parallel.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
 样本量计算公式如下
 非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\delta ^{4}\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
 
-例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
+例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
 
 
 ```{r}
@@ -2035,7 +2035,7 @@ Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
 显著性检验样本量计算公式如下，
 $$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2(\sigma _{TT}^{4}+\sigma _{TR}^{4}-2\rho^{2}\sigma _{BT}^{2}\sigma_{BR} ^{2})$
 
-例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1显著性检验设计，需要多少样本量？
+例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1显著性检验设计，需要多少样本量？
 
 ```{r}
 Variabilities.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, 
@@ -2055,7 +2055,7 @@ Variabilities.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 1)
 样本量计算公式如下
 非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2(\sigma _{TT}^{4}+\delta ^{4}\sigma _{TR}^{4}-2\delta ^{2}\rho^{2}\sigma _{BT}^{2}\sigma_{BR} ^{2})$
 
-例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1非劣性检验设计，在界值为1.1的情况下需要多少样本量？
+例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1非劣性检验设计，在界值为1.1的情况下需要多少样本量？
 
 ```{r}
 Variabilities.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, margin, 
@@ -2076,7 +2076,7 @@ Variabilities.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, -1.1, 1)
 #####显著性检验
 $$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho^2\sigma _{BT}^{2}\sigma _{BR}^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
 
-例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
 
 ```{r}
 Variabilities.Cross.Rep.Equality <- function(alpha, beta, vbt, vwt, vbr, 
@@ -2096,7 +2096,7 @@ Variabilities.Cross.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
 ####非劣性/优效性检验
 非劣性/优效性检验样本量计算公式如下$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta^{2}\rho^{2}\sigma_{BT}^{2}\sigma_{BR}^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\delta ^{4}\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
 
-例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间方差分别为0.3,0.4,T组和R组的个体内方差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
 
 ```{r}
 Variabilities.Cross.Rep.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, 
@@ -2122,9 +2122,9 @@ Variabilities.Cross.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
 生物等效性与药剂等效性(pharmaceutical eqivalents)不同，药剂等效性是指统一药物相同剂量制成同一剂型，但非活性成分不一定相同，在含量、纯度、均度等符合同一规定标准的制剂。药剂等效性没有反映药物制剂在体内的情况。生物等效性均以试验品与参考品作比较, 二者应有相似的剂量形式, 并且它们在生物体内吸收的速率和延缓(吸收率和吸收度)没有显著的差别。目前关于生物等效性的实验设计与分析是基于以下假设的：两药物的吸收率和吸收度相同即认为生物等效, 它们的治疗效果也应是相同的。吸收率和吸收度是通过测量药代动力学响应, 如AUC和$C_{max}$而得到的。因此生物等效性应该是对于这些观测值所在总体分布而言的, 当它是正态分布或对数正态分布时 , 只要比较均数和变异就可以了。也就是说, 要看生物利用度是否是等效的, 需要把这些利用度数值作为总体参数在两种配方中的样本作统计推断 。1996年Chinchilli给出3个关于生物等效性定义群体生物等效性(population bioequivalence, PBE): 对于两药物有关的概率分布函数而言是生物等效性 ;平均生物等效性(average bioequivalence, ABE): 对于两药物有关的概率分布函数的均数或中位数而言是生物等效性 ;个体生物等效性(individual bioequivalence, IBE): 对于总体中大部分个体而言是生物等效性。ABE虽然保证平均效应相同，但不一定保证效应的变异度相同，即两总体的均值相同，但方差不一定相同。PBE能保证使用T药物和使用R药物所得效应，不仅其平均值相同，而且效应的变异度相同，即两总体的边缘分布相同。PBE虽保证其边缘分布相同，但对每个个体而言，使用T药物和使用R药物所得效应不一定相同。即个体与药物可能存在交互作用。IBE对每个个体而言，使用T药物和使用R药物所得效应值接近。从等效的程度看，IBE>PBE>ABE。从应用角度看，两个具有个体生物等效性的药物，具有药物可交替性(switchability),即某患者在服用某药物一段时间后，如果改用另一个与之具有个体等效性的药物，可以得到相同的效果。具有群体生物等效性的药物，具有处方可选择性(prescribability),即医生在给患者初次开药时可以任意选用，这对该类患者的群体来说效应是相同的。基于以上考虑，美国FDA较为提倡PBE和IBE。
 
 ###平均生物等效性
-标准2(顺序)×2(时期) 交叉试验，即两种处理T和R, 则将受试对象随机分为两组, 第一组在第一时期接受T处理,在第二时期接受R处理,实验顺序为TR;第二组则相反,在第一时期接受R处理,在第二时期接受T处理, 实验顺序为 RT。平均生物等效性基于2×2交叉设计的样本量可用如下公式进行估计$$n=\frac{(z_{1-\alpha }+z_{1-\beta /2})^{2}\sigma _{1,1}^{2}}{2(\delta -|\epsilon |)^{2}}$$,其中$\delta$为等效界值约为0.2231，$\sigma _{1,1}$为个体内标准差，$\epsilon$为T和R的差值。
+标准2(顺序)×2(时期) 交叉试验，即两种处理T和R, 则将受试对象随机分为两组, 第一组在第一时期接受T处理,在第二时期接受R处理,实验顺序为TR;第二组则相反,在第一时期接受R处理,在第二时期接受T处理, 实验顺序为 RT。平均生物等效性基于2×2交叉设计的样本量可用如下公式进行估计$$n=\frac{(z_{1-\alpha }+z_{1-\beta /2})^{2}\sigma _{1,1}^{2}}{2(\delta -|\epsilon |)^{2}}$$,其中$\delta$为平均等效界值在ln(8/10)到ln(10/8)之间，$\sigma _{1,1}$为个体内标准差，$\epsilon$为T和R的差值。
 
-例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的平均生物等效性试验，根据药代动力学的预试验，个体内标准差为0.4，差值为0.05,$\sigma=0.4$,，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的平均生物等效性试验，根据药代动力学的预试验，个体内标准差为0.4，平均等效界值为ln(10/8)约为0.2231，差值为0.05,$\sigma=0.4$,，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
 
 ```{r}
 (ABE(0.05,0.2,0.4,0.223,0.05))
@@ -2142,11 +2142,24 @@ PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966)
 每组需要`r round(PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966))`例。
 
 ###个体生物等效性
-个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式进行估计$$n=\frac{\zeta (z_{1-\alpha}+z_{\beta })^{2}}{\lambda ^{2}}$$,其中$\zeta =2\delta ^{2}\sigma _{1,1}^{2}+\sigma _{TT}^{4}+(1+a)^{2}\sigma_{TR}^{4}-2(1+a)\rho ^{2}\sigma _{TT}^{2}\sigma_{TR}^{2}$,$\delta$为界值，$\sigma_{a,b}^{2}=\sigma_{D}^{2}+a\sigma _{WT}^{2}+b\sigma _{WT}^{2}$，$\rho$为个体间相关系数，a为1.74,$\delta$为AUC值的平均差。
-
-例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的平均生物等效性试验，根据药代动力学的预试验，$\sigma _{1,1}=0.2,\sigma _{tt}=\sqrt{0.17},\sigma_{tr}=sqrt(0.17),\sigma _{bt}=0.4,\sigma_{br}=0.4,\rho=0.75,a=1.74,\delta=0.00,\lamda=-0.2966$,，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式进行估计$\sigma_{WT}^{2},sigma_{WR}^{2}$分别为T、R效应的个体内方差，$\sigma_{D}^{2}$为个体与药物的交互作用。
 
 ```{r}
-IBE(0.05, 0.2, 0, 0.2,0.3,0.3,0.5,0.5,2.5)
+IBE <- function (alpha, beta, delta, sigmaBT,sigmaBR, sigmaWT, sigmaWR, a, b, thetaIBE,rho) {
+  sigmaD <- sqrt(sigmaBT^2+sigmaBR^2-2*rho*sigmaBT*sigmaBR)
+  Sigma <- function(sigmaD, sigmaWT, sigmaWR, a, b) {
+    Sigma = sigmaD^2 + a * sigmaWT^2 + b * sigmaWR^2
+  }
+  U <- function(n, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE) {
+    U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5) * sqrt(2/n)/2)^2 - delta^2)^2+Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+(1.5 + thetaIBE)^2 * sigmaWR^4 * ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
+  }
+  gamma = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
+  for (i in 2:1000) {
+    bound = gamma + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))+sqrt(U(i, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))
+    print(c(i, bound))
+  }
+}
+
+IBE(0.05, 0.2, 0, 0.1,0.4,0.6,0.4,0.5,0.5,2.5,0.75)
 ```
-每组需要`r round(IBE(0.05, 0.2, 0, 0.2,0.3,0.3,0.5,0.5,2.5))`例。
+
