@@ -2134,7 +2134,7 @@ Variabilities.Cross.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
 ###群体生物等效性
 群体生物等效性基于2×2交叉设计的样本量可用如下公式进行估计$$n=\frac{\zeta (z_{1-\alpha}+z_{\beta })^{2}}{\lambda ^{2}}$$,其中$\zeta =2\delta ^{2}\sigma _{1,1}^{2}+\sigma _{TT}^{4}+(1+a)^{2}\sigma_{TR}^{4}-2(1+a)\rho ^{2}\sigma _{TT}^{2}\sigma_{TR}^{2}$,$\delta$为界值，$\sigma_{a,b}^{2}=\sigma_{D}^{2}+a\sigma _{WT}^{2}+b\sigma _{WT}^{2}$，$\rho$为个体间相关系数，a为1.74,$\delta$为AUC值的平均差。
 
-例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的平均生物等效性试验，根据药代动力学的预试验，$\sigma _{1,1}=0.2,\sigma _{tt}=\sqrt{0.17},\sigma_{tr}=sqrt(0.17),\sigma _{bt}=0.4,\sigma_{br}=0.4,\rho=0.75,a=1.74,\delta=0.00,\lamda=-0.2966$,，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的群体生物等效性试验，根据药代动力学的预试验 $\sigma _{1,1}=0.2,\sigma _{tt}=\sqrt{0.17},\sigma_{tr}=\sqrt{0.17},\sigma _{bt}=0.4,\sigma_{br}=0.4,\rho=0.75,a=1.74,\delta=0.00,\lambda =-0.2966$ ,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
 
 ```{r}
 PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966)
@@ -2142,28 +2142,41 @@ PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966)
 每组需要`r round(PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966))`例。
 
 ###个体生物等效性
-个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式$$U=\begin{bmatrix}(|\hat{\delta}|+t_{0.05,n_{1}+n_{2}-2}\frac{\hat{\sigma} _{0.5,0.5}}{2}\sqrt{\frac{1}{n_{1}}+\frac{1}{n_{2}}})^{2}-\hat{\delta}^{2}\end{bmatrix}^{2}+\hat{\sigma} _{0.5,0.5}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}+0.5^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}+(1.5+\theta _{IBE})^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.05,n_{1}+n_{2}-2} ^{2}}-1)^{2}$$进行估计$\sigma_{WT}^{2},sigma_{WR}^{2}$分别为T、R效应的个体内方差，$\sigma_{D}^{2}$为个体与药物的交互作用。
+个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式$$\hat{\gamma }+\sqrt{\hat{U}}+\sqrt{\hat{U_{1-\beta }}}\leq 0$$进行估算,其中$$U=\begin{bmatrix}(|\hat{\delta}|+t_{0.05,n_{1}+n_{2}-2}\frac{\hat{\sigma} _{0.5,0.5}}{2}\sqrt{\frac{1}{n_{1}}+\frac{1}{n_{2}}})^{2}-\hat{\delta}^{2}\end{bmatrix}^{2}+\hat{\sigma} _{0.5,0.5}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}+0.5^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}+(1.5+\theta _{IBE})^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.05,n_{1}+n_{2}-2} ^{2}}-1)^{2}$$，$$\gamma =\delta ^{2}+\sigma _{D}^{2}+\sigma _{WT}^{2}-\sigma _{WR}^{2}-\theta_{IBE}max\begin{Bmatrix}\sigma _{0},\sigma _{WR}^{2}\end{Bmatrix}$$，$$\sigma _{a,b}^{2}=\sigma _{D}^{2}+a\sigma _{WT}^{2}+b\sigma _{WR}^{2}$$，进行估计$\sigma_{WT}^{2},sigma_{WR}^{2}$分别为T、R效应的个体内方差，$\sigma_{D}^{2}$为个体与药物的交互作用。
+
+例 某研究者预设计一个2×4交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的个体生物等效性试验，根据药代动力学的预试验 $\sigma _{BT}=0.1,\sigma _{BR}=0.4,\sigma _{WT}=0.6,\sigma _{WR}=0.4,\delta=0,a=b=0.5,\theta_{IBE}=5.11,\rho=0.75$ ,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
 
 ```{r}
-IBE <- function (alpha, beta, delta, sigmaBT,sigmaBR, sigmaWT, sigmaWR, a, b, thetaIBE,rho) {
-  sigmaD <- sqrt(sigmaBT^2+sigmaBR^2-2*rho*sigmaBT*sigmaBR)
-  Sigma <- function(sigmaD, sigmaWT, sigmaWR, a, b) {
-    Sigma = sigmaD^2 + a * sigmaWT^2 + b * sigmaWR^2
-  }
-  U <- function(n, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE) {
-    U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5)/2* sqrt(2/n))^2 - delta^2)^2+Sigma(sigmaD, sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - alpha, 2 * n - 2) - 1)^2+(1.5 + thetaIBE)^2 * sigmaWR^4 * ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
-  }
-  lambda = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
-  n <- 9
-  for (i in 2:1000) {
-    bound = lambda + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))+sqrt(U(i, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, thetaIBE))
-    if (round(bound, digits = 2) == 0) {
-      n = i
+IBE <- function(alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR, 
+    a, b, thetaIBE, rho) {
+    sigmaD <- sqrt(sigmaBT^2 + sigmaBR^2 - 2 * rho * sigmaBT * sigmaBR)
+    Sigma <- function(sigmaD, sigmaWT, sigmaWR, a, b) {
+        Sigma = sigmaD^2 + a * sigmaWT^2 + b * sigmaWR^2
     }
-  }
-  n
+    U <- function(n, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, 
+        thetaIBE) {
+        U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, 
+            sigmaWR, 0.5, 0.5)/2 * sqrt(2/n))^2 - delta^2)^2 + Sigma(sigmaD, 
+            sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 
+            2 * n - 2) - 1)^2 + 0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - 
+            alpha, 2 * n - 2) - 1)^2 + (1.5 + thetaIBE)^2 * sigmaWR^4 * 
+            ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
+    }
+    gamma = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
+    n <- 9
+    for (i in 2:1000) {
+        bound = gamma + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, 
+            sigmaWR, a, b, thetaIBE)) + sqrt(U(i, alpha, beta, delta, sigmaD, 
+            sigmaWT, sigmaWR, a, b, thetaIBE))
+        if (round(bound, digits = 2) == 0) {
+            n = i
+        }
+    }
+    n
 }
 
-IBE(0.05, 0.2, 0, 0.1,0.4,0.6,0.4,0.5,0.5,5.11,0.75)
+IBE(0.05, 0.2, 0, 0.1, 0.4, 0.6, 0.4, 0.5, 0.5, 5.11, 0.75)
 ```
+
+每组需要`r round(IBE(0.05, 0.2, 0, 0.1, 0.4, 0.6, 0.4, 0.5, 0.5, 5.11, 0.75))`例，与Sample Size Calculation in Clinical Research书中的计算结果有差异。
 
