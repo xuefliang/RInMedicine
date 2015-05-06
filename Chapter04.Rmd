@@ -2243,3 +2243,29 @@ ci=c(-6,1,2,3);
 (Dose.Response.binary(alpha=0.05,beta=0.2,pi=pi,ci=ci,fi=1/4))
 ```
 每组需要`r round((Dose.Response.binary(alpha=0.05,beta=0.2,pi=pi,ci=ci,fi=1/4)))/4`例。
+
+###时间事件数据（Time-to-Event Endpoint）
+分析结果为时间事件样本量可根据$$N\geq \begin{bmatrix}\frac{z_{1-\alpha }\sigma _{0}\sqrt{\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}}+z_{1-\beta}\sqrt{\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}\sigma _{i}}}{\varepsilon }\end{bmatrix}^{2}$$进行估计，其中$\sigma ^{2}(\lambda _{i})=\lambda _{i}^{2}\begin{bmatrix}1+\frac{e^{-\lambda _{i}T}(1-e^{\lambda _{i}T_{0}})}{T_{0}\lambda _{i}}\end{bmatrix}^{-1}$,
+$T_{0}$为试验的纳入时间，$T$为整个试验时间，$c_{i}$为分组情况，但应使得$\sum c_{i}=0$。
+
+例 某抗肿瘤药物进行II期临床实验，设计1个对照组，1个低剂量组，1个高剂量组和1个联合治疗组，研究结果为患者的生存时间。假定试验的纳入时间为9个月，总实验时间为16个月，估计四组的中位生存时间为14,20,22和24个月（相应的风险率为0.0495/月,0.0347/月,0.0315/月和0.0289/月）。在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+Ti=c(14,20,22,24);
+ci=c(-6,1,2,3);
+(Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,T=16,Ti=Ti,ci=ci,fi=1/4))
+```
+
+每组需要`r round((Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,T=16,Ti=Ti,ci=ci,fi=1/4)))/4`例。
+
+###最小有效剂量（MED）
+基于Williams检验的最小有效剂量样本量可根据$$n=\frac{2\sigma ^{2}[t_{k}(\alpha )+z\beta ]^{2}}{\Delta ^{2}}$$进行计算，$t_{k}(\alpha )$ 依赖于自由度。
+
+例 某研究者设计一个哦那个Williams方法检测最小有效计量的剂量反映实验，根据预试验$\sigma=0.22,t_{3}(\alpha)=1.75,\Delta=0.11$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(Dose.Min.Effect(0.05,0.2,1.75,0.22,0.11))
+```
+
+每组需要`r round(Dose.Min.Effect(0.05,0.2,1.75,0.22,0.11))`例。
+
