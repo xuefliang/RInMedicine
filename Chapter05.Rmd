@@ -293,7 +293,7 @@ P值大于0.05，可认为给药前后无显著差异。
 ###秩相关检验
 秩相关检验是在成对观测数据的符号检验基础上发展起来的，比传统的单独用正负号的检验更加有效。在R软件中，使用rank()函数计算秩统计量。Pearson相关检验，适用于正态分布总体打数据，如果总体不服从正态分布，可用秩相关检验。
 ####Spearman秩相关检验
-当X和Y相互独立时，$r_{i}$为X产生的秩统计量，$R_{i}$为Y产生的秩统计量，Spearman秩相关系数为$r_{s}=[\frac{1}{n}\sum r_{i}R_{i}-(\frac{n+1}{x})^{2}]/(\frac{n^{2}-1}{12})
+当X和Y相互独立时，$r_{i}$为X产生的秩统计量，$R_{i}$为Y产生的秩统计量，Spearman秩相关系数为$r_{s}=[\frac{1}{n}\sum r_{i}R_{i}-(\frac{n+1}{x})^{2}]/(\frac{n^{2}-1}{12})$
 $。
 
 例17 两位评分员对新出生的5名新生儿进行Apgar评分，甲：6  7  8  9 10，乙：5  6  7  8 10。试用Spearman秩相关检验方法检验两个评分员对等级评定有无相关关系。
@@ -477,5 +477,68 @@ fligner.test(x)
 ```
 P值大于0.05，接受原假设，认为三名病例的智力测验稳定性一样。
 
+###趋势检验
 
+####Cox-Stuart趋势检验
+是一种不依赖与趋势结构的快速判断趋势是否存在的方法，它将数据一分为二，形成前后数对，根据数对差值的符号进行判断，如果负值较多，说明数据有增大趋势，如果正值较多，说明数据有减小的趋势。
 
+例 某医院传染病门诊15天的门诊量如下：5 9 12 18 17 16 19 20 4 3 18 16 17 15 14，试问该15天内的门诊量是否有下降的趋势？
+
+```{r}
+cox.stuart.test <- function(x) {
+    method = "Cox-Stuart test for trend analysis"
+    leng = length(x)
+    apross = round(leng)%%2
+    if (apross == 1) {
+        delete = (length(x) + 1)/2
+        x = x[-delete]
+    }
+    half = length(x)/2
+    x1 = x[1:half]
+    x2 = x[(half + 1):(length(x))]
+    difference = x1 - x2
+    signs = sign(difference)
+    signcorr = signs[signs != 0]
+    pos = signs[signs > 0]
+    neg = signs[signs < 0]
+    if (length(pos) < length(neg)) {
+        prop = pbinom(length(pos), length(signcorr), 0.5)
+        names(prop) = "Increasing trend, p-value"
+        rval <- list(method = method, statistic = prop)
+        class(rval) = "htest"
+        return(rval)
+    } else {
+        prop = pbinom(length(neg), length(signcorr), 0.5)
+        names(prop) = "Decreasing trend, p-value"
+        rval <- list(method = method, statistic = prop)
+        class(rval) = "htest"
+        return(rval)
+    }
+}
+
+customers = c(5, 9, 12, 18, 17, 16, 19, 20, 4, 3, 18, 16, 17, 15, 14)
+
+cox.stuart.test(customers)
+```
+
+P值大于0.05，接受原假设，可以认为该15天内的门诊量是没有下降的趋势。
+
+####Cochran Armitage 趋势检验
+Cochran Armitage 趋势检验也称R*2列联表资料线性趋势检验，其目的是说明某一事件发生率是否随着原因变量不同水平的变化而呈线性趋势。
+
+例 下表表示不同年龄血液病患者真菌感染发生情况
+年龄   发生   未发生
+---    ---    ---
+<=29   18     131
+30~59  52     232
+>=60   26     82
+
+现欲比较患者年龄与真菌感染发生率之间是否存在线性趋势?
+
+```{r}
+s1 <- c(18, 52, 26)
+s2 <- c(131, 232, 82)
+tot = s1 + s2
+prop.trend.test(s1, tot)
+```
+P值小于0.05,拒绝原假设，可以认为血液病患者年龄与真菌感染发生率之间存在线性变化趋势。
