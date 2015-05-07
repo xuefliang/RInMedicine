@@ -2261,7 +2261,7 @@ ci=c(-6,1,2,3);
 ###最小有效剂量（MED）
 基于Williams检验的最小有效剂量样本量可根据$$n=\frac{2\sigma ^{2}[t_{k}(\alpha )+z\beta ]^{2}}{\Delta ^{2}}$$进行计算，$t_{k}(\alpha )$ 依赖于自由度。
 
-例 某研究者设计一个哦那个Williams方法检测最小有效计量的剂量反映实验，根据预试验$\sigma=0.22,t_{3}(\alpha)=1.75,\Delta=0.11$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+例 某研究者设计一个Williams方法检测最小有效计量的剂量反映实验，根据预试验$\sigma=0.22,t_{3}(\alpha)=1.75,\Delta=0.11$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
 
 ```{r}
 (Dose.Min.Effect(0.05,0.2,1.75,0.22,0.11))
@@ -2269,3 +2269,17 @@ ci=c(-6,1,2,3);
 
 每组需要`r round(Dose.Min.Effect(0.05,0.2,1.75,0.22,0.11))`例。
 
+###Cochran-Armitage 趋势检验
+Cochran-Armitage 趋势检验样本量可根据$$n=\frac{n^{*}}{4}\begin{bmatrix}1+\sqrt{1+\frac{2\Delta}{An_{0}^{*}}}\end{bmatrix}^{2}$$进行计算，其中$$n^{*}\begin{Bmatrix}z_{1-\alpha }\sqrt{k(k^{2}-1)pd}+z_{1-\beta }\sqrt{\sum b_{i}^{2}p_{i}q_{i}}\end{Bmatrix}^{2}$$,$b_{i}=i-0.5k,D=\sum b_{i}p_{i}$。
+
+例 某研究者设计一个Cochran-Armitage趋势检测的剂量反映实验，根据预试验$p_{1}=0.1,p_{2}=0.3,p_{3}=0.5,p_{4}=0.7,d_{1}=1,d_{2}=2,d_{3}=3,d_{4}=4,n_{1}=n_{2}=n_{3}=n_{4}=10$,在$\alpha=0.05,\beta=0.20，\Delta=1$时，需要多少样本量？
+
+```{r}
+pi=c(0.1,0.3,0.5,0.7)
+di=c(1,2,3,4)
+ni=c(10,10,10,10)
+
+Cochran.Armitage.Trend(alpha=0.05,beta=0.2,pi=pi,di=di,ni=ni,delta=1)
+```
+
+每组需要`r round(Cochran.Armitage.Trend(alpha=0.05,beta=0.2,pi=pi,di=di,ni=ni,delta=1))`例。
