@@ -23,6 +23,7 @@ library(lmtest)
 library(leaps) 
 library(plyr) 
 library(bootstrap) 
+library(rJava)
 ```
 因变量是分类的，则为分类分析，因变量是连续的，称为回归分析。回归分析通过建立函数表达式，用一个或者多个自变量的变化解释或预测因变量，常用于描述、探索和检验自变量和因变量之间因果关系，根据自变量的变化预测因变量的取值。通常按照自变量的个数划分为一元回归和多元回归。按照函数表达式的形式，分为线性回归和非线性回归。
 
@@ -493,6 +494,35 @@ relweights(fit,col="lightgrey")
 ```
 
 可以看到x2解释了56.7%的R平方，x1解释了43.2的平方，x2相比x1更为重要。
+
+##以最大信息为基础的非参数探索 (MINE，Maximal Information-base Nonparametric Exploration)
+该方法用网格判断数据的集中程度，集中程度用最大信息系数(MIC，the Maximal Information Coefficient)表示，传统的相关系数得到结果用MIC值同样可以得到。该方法适用于任何分布的数据类型，不要求成两变量成直线关系。如果MIC值趋进于0,则两变量之间无关，如果MIC趋进于1,则两变量之间有关。
+
+例 WHO数据集中有每10万人的HIV病人死亡率和医生的数量，试分析两变量是否有关?
+
+```{r}
+who <- read.csv("WHO.csv", header = T)
+plot(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., who$Medical_Doctors)
+cor.test(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., 
+    who$Medical_Doctors, method = "pearson")
+```
+由于两变量不是线性关系，从线性相关的结果来看，相关性较差。
+
+```{r eval=FALSE}
+which(names(who) == "Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.")
+which(names(who) == "Medical_Doctors")
+
+source("MINE.r")
+MINE("WHO.csv", c(119, 290))
+MINE("WHO.csv", "all.pairs")  #两两比较所有变量
+```
+```{r}
+whoresult <- read.csv("WHO.csv,119-vs-290,cv=0.0,B=n^0.6,Results.csv", 
+    header = T)
+whoresult$MIC..strength.
+```
+MIC值大于0.5,说明两变量有一定的相关性，结合绘图的结果，两变量有如下关系：随着医生数量的增加，HIV的死亡率降低，但降低到一定程度后不再继续降低。
+
 
 
 
