@@ -2300,3 +2300,7 @@ AB.withoutDescalation(A=3,B=3,C=1,D=1,E=1,DLT=DLT)
 # 3+3 STER策略设计
 AB.withDescalation(A=3,B=3,C=1,D=1,E=1,DLT=DLT)
 ```
+
+##微阵列研究(Microarray Studies)
+微阵列数据样本含量较小，而变量数非常多，传统的t检验和Wilcoxon检验在应用时需要进行调整，为克服多重比较的问题，按控制指标可分为控制FWER(family-wise error rate ,族错误率), 控制FDR(fasle discover rate , “错误发现率”) 等;按控制的操作程序可分为:单步(single-step)法 , 逐步(step-wise)法,基于再抽样(resampling -based)的方法等;按学派主要分为频率学派方法和Bayes学派的方法等。
+
