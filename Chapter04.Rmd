@@ -2304,3 +2304,15 @@ AB.withDescalation(A=3,B=3,C=1,D=1,E=1,DLT=DLT)
 ##微阵列研究(Microarray Studies)
 微阵列数据样本含量较小，而变量数非常多，传统的t检验和Wilcoxon检验在应用时需要进行调整，为克服多重比较的问题，按控制指标可分为控制FWER(family-wise error rate ,族错误率), 控制FDR(fasle discover rate , “错误发现率”) 等;按控制的操作程序可分为:单步(single-step)法 , 逐步(step-wise)法,基于再抽样(resampling -based)的方法等;按学派主要分为频率学派方法和Bayes学派的方法等。
 
+多重检验是传统的多重比较概念的推广，通过对同一问题的多变量反复检验来验证$H_{0}$假设，该假设是一系列的假设(a family of hypotheses),并非单一假设，如任意基因的组间表达无差异。
+
+###错误发现率(False Discovery Rate)
+设同时对m个假设进行检验，其中$m_{0}$个是正确的，R表示检验结果为阳性的假设个数，具体如下表
+
+              不拒绝$H_{0}$      拒绝$H_{0}$      合计
+---           ---                 ---             ---
+$H_{0}$为真   U                   V               $m_{0}$
+$H_{1}$为真   T                   S               $m-m_{0}$
+合计          m-R                 R               m
+
+其中，m在假设检验前已知，R是可观察的随机变量，而U、V、S、T是不可观察的随机变量，FDR的定义为$$FDR= \begin{cases}E(V/R) & \text{if } R \neq \\0 & \text{if } R=0\end{cases}$$,即为拒绝$H_{0}$的结果中错误这所占的比例。
