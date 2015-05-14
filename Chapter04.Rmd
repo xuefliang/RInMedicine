@@ -15,10 +15,6 @@ classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
 
 ```{r include=FALSE}
 library(TrialSize)
-library(Sample.Size)
-library(samplesize4surveys)
-library(SampleSizeMeans)
-library(SampleSizeProportions)
 library(pipeR)
 library(pander)
 library(expm)
@@ -2381,3 +2377,48 @@ TwoSide.varyEffect(s1=100,s2=200,m=4000,m1=40,delta=delta,a1=0.5,r1=24,fdr=0.01)
 (Nonpara.Independ(0.05,0.2,0.6,0.7))
 ```
 需要`r round(((Nonpara.Independ(0.05,0.2,0.6,0.7))))`例。
+
+##其他研究
+
+###QT/QTc
+QT间期是指心室去极化和复极化的时程，即QRS波群的起点到T波恢复到基线时终点的时程。心脏复极化延迟将产生特殊的心脏电生理环境，这种环境下，容易发生心律失常，最常见的是引发尖端扭转型室性心动过速（TdP），但也可发生其它类型室性快速心律失常。由于QT间期延长的程度可被看作是一个致心律失常危险性的相对的生物标记，通常QT间期延长与TdP之间存在一种定性关系，对于那些可能引发QT间期延长的药物更是如此。由于QT间期与心率呈负相关，因此，常规通过各种公式将测得的QT间期校正为较少心率依赖的QTc间期。然而，尚不明确心律失常的发生与QT间期或QTc绝对值增加之间是否存在必然联系。大多数引发TdP的药物都可明显引起QT/QTc间期的延长（后称作QT/QTc）。由于QT/QTc间期延长是与提高发现心律失常敏感性有关的心电图表现，因此，新药在上市前进行充分的安全性评价应包括详细描述其对QT/QTc间期影响的特点。 
+
+####平行对照设计
+平行对照设计样本量估计公式为$$n=\frac{2(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异(between subject variance),$\sigma _{e}$，$\sigma _{e}$为个体内变异(between subject variance),d为临床差异。
+
+例 某非抗心律失常药物进行全面的心电图平行对照研究，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5$,每个个体重复3次，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.parallel(0.05,0.2,0.8,3,0.5)
+```
+每组需要`r round(QT.parallel(0.05,0.2,0.8,3,0.5))`例。
+
+####交叉对照设计
+交叉对照设计样本两估计公式为$$n=\frac{(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}-\gamma (z_{1-\alpha}+z_{1-\beta})^{2}}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异,$\sigma _{e}$，$\sigma _{e}$为个体内变异,d为临床差异，$\gamma =\sigma_{p}^{2}/(\sigma_{s}^{2}+\sigma_{e}^{2})$,$\sigma_{p}^{2}$为交叉设计的额外变异。
+
+例 某非抗心律失常药物进行全面的心电图交叉对照研究，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5，\gamma=0.002$,每个个体重复3次，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.crossover(0.05,0.2,0.8,3,0.5,0.002)
+```
+每组需要`r round(QT.crossover(0.05,0.2,0.8,3,0.5,0.002))`例。
+
+####有协变量平行对照设计
+有协变量平行对照设计样本量估计公式为$$n=\frac{(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}}\begin{bmatrix}\frac{(v_{1}-v_{2})^{2}}{\tau_{1} ^{2}+\tau_{2} ^{2}}+2\end{bmatrix}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异,$\sigma _{e}$，$\sigma _{e}$为个体内变异,d为临床差异，$v_{1},v_{2}$分别为第一组和第二组的均数，$\tau_{1},\tau_{2}$分别为第一组和第二组的方差。
+
+例 某非抗心律失常药物进行全面的心电图平行对照研究，已知该药$C_{max}$对QT/QTc间期有影响，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5$,每个个体重复3次,第一组和第二的均数均为1,方差分别为4,5，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.PK.parallel(0.05,0.2,0.8,3,0.5,1,1,4,5)
+```
+每组需要`r round(QT.PK.parallel(0.05,0.2,0.8,3,0.5,1,1,4,5))`例。
+
+####有协变量交叉对照设计
+有协变量交叉对照设计样本量估计公式为$$n=\frac{(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}-\gamma (z_{1-\alpha}+z_{1-\beta})^{2}}\begin{bmatrix}\frac{(v_{1}-v_{2})^{2}}{\tau_{1} ^{2}+\tau_{2} ^{2}}+1\end{bmatrix}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异,$\sigma _{e}$，$\sigma _{e}$为个体内变异,d为临床差异，$\gamma =\sigma_{p}^{2}/(\sigma_{s}^{2}+\sigma_{e}^{2})$,$\sigma_{p}^{2}$为交叉设计的额外变异，$v_{1},v_{2}$分别为第一组和第二组的均数，$\tau_{1},\tau_{2}$分别为第一组和第二组的方差。
+
+例 某非抗心律失常药物进行全面的心电图交叉对照研究，已知该药$C_{max}$对QT/QTc间期有影响，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5，\gamma=0.002$,每个个体重复3次,第一组和第二的均数均为1,方差分别为4,5，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.PK.crossover(0.05,0.2,0.8,3,0.5,0.002,1,1,4,5)
+```
+每组需要`r round(QT.PK.crossover(0.05,0.2,0.8,3,0.5,0.002,1,1,4,5))`例。
