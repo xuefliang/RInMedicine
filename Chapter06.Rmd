@@ -509,11 +509,12 @@ cor.test(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.,
 由于两变量不是线性关系，从线性相关的结果来看，相关性较差。
 
 ```{r eval=FALSE}
-which(names(who) == "Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.")
-which(names(who) == "Medical_Doctors")
+#调用MINE.jar，Java中列以0开始
+col1 <- which(names(who) == "Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.")-1
+col2 <- which(names(who) == "Medical_Doctors")-1
 
 source("MINE.r")
-MINE("WHO.csv", c(119, 290))
+MINE("WHO.csv", c(col1, col2))
 MINE("WHO.csv", "all.pairs")  #两两比较所有变量
 ```
 ```{r}

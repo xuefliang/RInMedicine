@@ -2468,7 +2468,7 @@ p1=c(0.5,0.6,0.7,0.8,0.9)
 ###生存质量(Quality of Life,QOL)
 由于慢性非传染病较难治愈，很难采用治愈率来评价治疗效果，生存率的作用也有限（明显提高其生存时间较为困难），因此采用生存质量作为新药的评价的项目。生存质量分析样本量估计公式为$$n_{\delta }=\frac{c(z_{1-\alpha /2}+z\delta )}{\epsilon ^{2}}$$,$$n_{\phi }=\frac{c}{\Delta -\eta }(z_{1/2+1/2\phi }+z_{1-1/2\alpha })$$，取两个样本量计算公式计算结果的最大值，其中$\epsilon$差值，c为常数。
 
-例 某抗癌药进行以生存质量为结果进行临床试验，，根据预试验$c=0.5,\epsilon=0.25,phi=0.1,eta=0.5$，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+例 某抗癌药进行以生存质量为结果进行临床试验，根据预试验$c=0.5,\epsilon=0.25,phi=0.1,eta=0.5$，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
 
 ```{r}
 QOL <- function (alpha, beta, c, epsilon,phi,eta) 
@@ -2483,5 +2483,45 @@ QOL(0.05,0.1,0.5,0.25,0.1,0.5)
 ```
 需要`r round(QOL(0.05,0.1,0.5,0.25,0.1,0.5))`例。
 
+###衔接性设计(Bridging Studies)
+该设计主要评估“族群因素”（ethnic factors）对药品的影响，提供相关药动/药效学或疗效、安全、用法用量等临床试验数据，使得一国的临床实验数据能够外推至其他国家，减少重复的临床试验，迅速提供病患药品，以保障其权益。族群因素一般定义为与种族或与一群有共同特质和习性的人相关的因素，通常分为内因性（如遗传、生理等）和外因性（如文化、环境）。Chow等提出以敏感性指数（Sensitivity Index）作为指标，以外推安慰剂平行对照试验设计的试验结果。以敏感性指数设计的样本量估计公式为$$\tilde{P_{\Delta }}=E_{\delta,u}\begin{bmatrix}1-\tau _{n-2}(t_{n-2}|\frac{\Delta \delta }{u})-\tau_{n-2}(-t_{n-2}|\frac{\Delta \delta }{u})
+\end{bmatrix}$$，$Delta$为不同族群之间的敏感性指数。
+
+例 某药厂欲将某药推广至A国，进行平行对照的衔接性设计，以敏感性指数作为族群因素的考核指标，根据预试验$\Delta =2.92,SI=0.80$，在$\alpha=0.05$时，需要多少样本量？
+
+```{r}
+Sensitivity.Index <- function (alpha, deltaT,SI) 
+{
+  n = 3
+  for (i in 3:1000) {
+    t = qt(1 - alpha/2, i - 2)
+    p = 1 - pt(t, i - 2, deltaT) + pt(-t, i - 2, deltaT)
+    if (round(p, digits = 2) == round(SI, digits = 2)) {
+      n = i
+    }
+  }
+  n
+}
+
+Sensitivity.Index(0.05,2.92,0.80)
+```
+
+###疫苗临床试验(Vaccine Clinical Trials)
+评价疫苗最重要的目标就是它的预防疾病的能力，通常需要大样本的安慰剂对照设计。相对发病减少率(ralative reduction in disease incidence,$pi$)被认为是疫苗有效性评价的重要指标，$\pi =\frac{p_{C}-p_{T}}{P_{C}}$,其中$p_{C}$和$p_{T}$分别代表试验组和对照组的发病率。
+#### 发病率较高的试验(Reduction in Disease Incidence)
+
+```{r}
+Vaccine.RDI(0.05,0.2,0.01,0.02)
+```
+
+####发病率极低的试验(The Evaluation of Vaccine Efficacy with Extremely Low Disease Incidence)
+```{r}
+Vaccine.ELDI(0.05,0.2,0.5,1/3,0.001,0.002)
+```
+
+####疫苗疗效(Relative Vaccine Efficacy)
+```{r}
+Vaccine.CEM(0.05,0.2,0.2,0.3,sqrt(0.15),sqrt(0.15),0.1,0.2)
+```
 
 
