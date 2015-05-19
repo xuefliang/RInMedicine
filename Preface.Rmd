@@ -14,7 +14,59 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
 R目前仍然不为大众所了解，但并不能妨碍其流行趋势，越来越多的人和行业开始使用R做为数据统计工具。相对于R在其他行业的流行，医学领域R应用更加少见，医学领域目前仍然以SPSS和SAS为主，本书主要目的在于将R应用引入到医学领域。
 
-我在撰写这本书之前，有几个一直困惑我的问题，使得本书的写作迟迟未能开始。问题一：就是如何使得写作更加关注内容，而不是将大部分是时间浪费在排版之上。问题二：如何解决写作过程中从R到Word一遍又一遍复制、粘贴工作。问题三：如何做好良好的版本控制，避免从v1，v2，v3到v20等版本。庆幸的是这三个问题，已经有了完美的解决途径，所以我才能完成此书，不然工作量之大难以想象。本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，Markdown是一种非常简洁的标记语言，足以使写作关注于内容而不是形式。knitr包完美的解决了自动报告的问题，使得Markdown和R代码混排，复制和粘贴工作几乎不存在了，代码和结果完美混排。Git用来实现版本控制，GitHub用来进行代码托管，再也不用一个Word又一个Word进行版本控制了。上述问题的解决，使得本书的编排相对容易，不得不感谢前辈们的辛勤付出。
+本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，Markdown是一种非常简洁的标记语言，足以使写作关注于内容而不是形式。本书是在Linux Mint系统上安装R的，需要在shell中安装如下的库文件
+
+```{r eval=FALSE}
+sudo apt-get install build-essential gfortran libxml2-dev libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  libpcre++-dev  r-base-dev  liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-jre
+#Step 1: Update Sources.List File
+#- Edit the sources.list file
+sudo gedit /etc/apt/sources.list
+#- Add following entry
+deb http://cran.rstudio.com/bin/linux/ubuntu utopic/
+#Step 2: Add the Public Keys
+gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
+gpg -a --export E084DAB9 | sudo apt-key add -
+#Step 3: Install R-base
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install r-base
+```
+
+升级
+```{r eval=FALSE}
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install r-base
+cp -r ~/R/x86_64-pc-linux-gnu-library/3.1/* ~/R/x86_64-pc-linux-gnu-library/3.2 # at the shell prompt
+update.packages(checkBuilt=TRUE, ask=FALSE) #at the R prompt 
+```
+
+
+本书涉及的R语言包较多，CRAN中包可通过下列方式一次性完成安装。
+```{r eval=FALSE}
+wants <- c("knitr","rmarkdown","devtools","epicalc","mosaic","showtext","pander","PerformanceAnalytics","fitdistrplus","CircStats","MASS","mixtools","boot","TrialSize","vcd","ggplot2","pspearman","gvlma","car","lmtest","leaps","plyr","bootstrap","elrm","rms","Deducer","bestglm","survival","robust","mlogit", "nnet", "VGAM","ordinal","Sample.Size","samplesize4surveys","SampleSizeMeans","SampleSizeProportions","mosaic","XML","pipeR")
+
+has   <- wants %in% rownames(installed.packages())
+
+if(any(!has)) install.packages(wants[!has])
+```
+GitHub中R包通过以下方式进行安装
+```{r eval=FALSE}
+devtools::install_github("rstudio/rticles")
+devtools::install_github("rstudio/rmarkdown")
+```
+bioconductor中R包通过以下方式进行安装
+```{r eval=FALSE}
+source("http://bioconductor.org/biocLite.R")
+biocLite(c("GenomicFeatures", "AnnotationDbi"))
+```
+R-Forge等其它第三方源中的包，通过以下方式进行安装
+```{r eval=FALSE}
+install.packages("blotter", repos="http://R-Forge.R-project.org")
+```
+
+
+样本量计算，由于水平有限对微阵列数据基于族错误率(FWER)样本量计算和基于贝叶斯统计的样本量计算未能实现，留有遗憾。
 
 本书定位于对R有简单了解读者，如果读者对基本的语法和相关内容不熟悉，本书不做详细介绍，还请读者参考其他教程。本书假定读者对R、Rmd、Git等相关知识有初步的了解，源代码和书中使用相关数据文件会公布于GitHub（https://github.com/xuefliang/RInMedicine）， 请读者clone在本地进行学习。本书以实际案例分析为主要内容，细致讲解案例所涉及统计学和R语言的相关内容，解决实际工作中存在的问题，也可以本书Rmd为模板，学习如何使数据分析的过程可重复。如何利用R进行实验设计尚不在本书介绍范围。
 
