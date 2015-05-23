@@ -2516,9 +2516,10 @@ Sensitivity.Index(0.05,2.92,0.80)
 例 一研究者计划实施一个疫苗临床试验，与安慰剂对照，主要指标选择相对发病减少率，根据预试验，疫苗组发病率为1%，安慰剂组发病率为2%，在$\alpha=0.05,\beta=0.2$时，两组1：1平行对照，双侧差异性检验需要多少样本量？
 
 ```{r}
+options(scipen=200) #取消科学计数
 (Vaccine.RDI(0.05,0.2,0.01,0.02))
 ```
-每组需要14213 例。
+每组需要`r round((Vaccine.RDI(0.05,0.2,0.01,0.02)))` 例。
 
 ####发病率极低的试验(The Evaluation of Vaccine Efficacy with Extremely Low Disease Incidence)
 发病率极低的疫苗试验样本量可根据$$n=\frac{[z_{1-\alpha }\sqrt{\theta_{0}(1-\theta _{0})}+z_{1-\beta}\sqrt{\theta(1-\theta )}]^{2}}{(p_{T}+p_{C})(\theta -\theta _{0})^{2}}$$进行估计,其中$\theta =\frac{1-\pi}{1-\pi+n_{C}/n_{T}}$,$\theta_{0} =\frac{1-\pi_{0}}{1-\pi_{0}+n_{C}/n_{T}}$。
@@ -2526,9 +2527,10 @@ Sensitivity.Index(0.05,2.92,0.80)
 例 一研究者计划实施一个疫苗临床试验，与安慰剂对照，主要指标选择相对发病减少率，根据预试验，疫苗组发病率为0.1%，安慰剂组发病率为0.2%，$\theta_{0}=0.5,\theta=1/3$，在$\alpha=0.05,\beta=0.2$时，两组1：1平行对照，双侧差异性检验需要多少样本量？
 
 ```{r}
+options(scipen=200)
 (Vaccine.ELDI(0.05,0.2,0.5,1/3,0.001,0.002))
 ```
-每组需要17836例。
+每组需要`r round((Vaccine.ELDI(0.05,0.2,0.5,1/3,0.001,0.002)))`例。
 
 ####综合疗效评价(Composite Efficacy Measure)
 疫苗不仅能预防针对疾病的发生，也能预防针对疾病引起的感染。综合疗效评价指标既包含了对疾病发生的评价，也包含了疾病的感染的评价。综合疗效评价的样本量可根据$$n=\frac{1}{\mu _{T}p_{T}-\mu_{R}p_{R}}$$$$\begin{bmatrix}z_{1-\alpha /2}\sqrt{2\mu_{*}^{2}p_{*}(1-p_{*})+2p_{*}(\sigma _{T}^{2}+\sigma _{C}^{2})}+z_{1-\beta}\sqrt{p_{T}(\sigma _{T}^{2}+\mu_{T}^{2}(1-p_{T}))+p_{R}(\sigma _{R}^{2}+\mu_{R}^{2}(1-p_{R}))}\end{bmatrix}^{2}$$进行估计,其中$\mu_{T},\mu_{C}$分别为试验组和对照组的均数，$\sigma _{T},\sigma _{C}$分别为试验组和对照组标准差。
