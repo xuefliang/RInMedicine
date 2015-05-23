@@ -1,0 +1,27 @@
+---
+title: "参考文献"
+author: "梁雪枫"
+date: "2015年5月23日"
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+documentclass: ctexart
+classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
+---
+
+1.Chow SC, Shao J, Wang H. Sample Size Calculation in Clinical Research[M]. New York: Marcel
+Dekker, 2003
+
+2.汤银才.R语言与统计分析[M]. 北京.高等教育出版社, 2008.
+
+3.薛毅, 陈立萍. 统计建模与R软件[M] 清华大学出版社,2006.
+
+4.徐俊晓. 统计学与 R 读书笔记 (第六版)[EB/OL].PhD diss.
+
+5.Kabacoff, Robert. R in Action[M]. Manning Publications Co., 2011.
+
+6.李明.R语言与网站分析[M].机械工业出版社,2014
