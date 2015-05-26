@@ -23,6 +23,8 @@ library(pastecs)
 library(psych)
 library(plyr)
 library(doBy)
+library(vcd)
+library(gmodels)
 ```
 
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
@@ -253,7 +255,7 @@ scale(Student[,1:3],center = T,scale = F) #数据中心化
 scale(Student[,1:3],center = F,scale = T) #数据标准化
 ```
 
-apply()函数或sapply()函数计算所选择的任意描述性统计量。对于sapply()函数，其使用格式为：sapply(x,FUN,options)其中的x是输入的数据框（或矩阵），FUN为一个任意的函数。如果指定了options，它们将被传递给FUN。你可以在这里插入的典型函数有mean、sd、var、min、max、median、length、range和quantile。可以根据需要自定义需要的统计量。
+apply()函数或sapply()函数计算所选择的任意描述性统计量。对于sapply()函数，其使用格式为：sapply(x,FUN,options)其中的x是输入的数据框（或矩阵），FUN为一个任意的函数。如果指定了options，它们将被传递给FUN。你可以在这里插入的典型函数有mean、sd、var、min、max、median、length、range和quantile。可以根据需要自定义需要的统计量，如下
 ```{r}
 mystats <- function(x, na.omit = FALSE) {
   if (na.omit) 
@@ -265,7 +267,12 @@ mystats <- function(x, na.omit = FALSE) {
   kurt <- sum((x - m)^4/s^4)/n - 3
   return(c(n = n, mean = m, stdev = s, skew = skew, kurtosis = kurt))
 }
+
+data(drugDat,package = "elrm")
+sapply(drugDat,mystats)
 ```
+
+
 Hmisc包中的describe()函数可返回变量和观测的数量、缺失值和唯一值的数目、平均值、分位数，以及五个最大的值和五个最小的值。pastecs包中有一个名为stat.desc()的函数，它可以计算种类繁多的描述性统计量。使用格式为：stat.desc(x,basic=TRUE,desc=TRUE,norm=FALSE,p=0.95)其中的x是一个数据框或时间序列。若basic=TRUE（默认值），则计算其中所有值、空值、缺失值的数量，以及最小值、最大值、值域，还有总和。若desc=TRUE（同样也是默认值），则计算中位数、平均数、平均数的标准误、平均数置信度为95%的置信区间、方差、标准差以及变异系数。最后，若norm=TRUE（不是默认的），则返回正态分布统计量，包括偏度和峰度（以及它们的统计显著程度）和Shapiro–Wilk正态检验结果。这里使用了p值来计算平均数的置信区间（默认置信度为0.95）。psych包也拥有一个名为describe()的函数，它可以计算非缺失值的数量、平均数、标准差、中位数、截尾均值、绝对中位差、最小值、最大值、值域、偏度、峰度和平均值的标准误。
 
 ##分类汇总
@@ -276,28 +283,90 @@ Hmisc包中的describe()函数可返回变量和观测的数量、缺失值和�
 使用aggregate()分组获取描述性统计量
 ```{r}
 data(HW93,package = "epicalc")
-aggregate(HW93$epg,by=list(epg=HW93$age),mean)
+aggregate(HW93$epg,by=list(epg=HW93$agegr),mean)
 ```
-注意list(epg=HW93$age)的使用。如果使用的是list(HW93$age)，则age列将被标注为Group.1而不是age。如果有多个分组变量，可以使用by=list(name1=groupvar1, name2=groupvar2, ... , groupvarN)这样的语句。aggregate()仅允许在每次调用中使用平均数、标准差这样的单返回值函数。需要使用复杂函数则需要plyr包中的*ply族函数。该函数由Hadley Wickham创建，将这类任务以“分割-应用-结合”这种三步方式进行处理：通过一种或多种factor将数据集进行分割，而后应用某项函数，最后将结果整合回数据集当中。Plyr包中囊括了一整套“ply”函数，其第一个字母表示输入的类型，第二个字母表示输出的类型，输入:array,dataframe,list三种格式，输出: array,dataframe,list,discareded四种格式。plyr包中的ddply()可以得到相同结果。summarize不会提供来自原始数据框中其它列中的任何信息，如果大家需要列出其它column数据，则可以把“summarize”替换为“transform”，请且允许一次应用多个函数。
+注意list(epg=HW93$age)的使用。如果使用的是list(HW93$age)，则age列将被标注为Group.1而不是age。如果有多个分组变量，可以使用by=list(name1=groupvar1, name2=groupvar2, ... , groupvarN)这样的语句。aggregate()仅允许在每次调用中使用平均数、标准差这样的单返回值函数。
+doBy包和psych包也提供了分组计算描述性统计量的函数，doBy包中summaryBy()函数的使用格式为：summaryBy(formula,data=dataframe,FUN=function) 其中的formula接受以下的格式：var1+var2+…+varN~grounpvar1+goupvar2+…+groupvarN,在~左侧的变量是需要分析的数值型变量，而右侧的变量是类别型的分组变量。function可为任何内建或用户自编的R函数。psych包中的describe.by()函数可计算和describe相同的描述性统计量，只是按照一个或多个分组变量分层，使用psych包中的describe.by()和使用doBy包中的summaryBy()分组计算概述统计量如下，describe.by()函数不允许指定任意函数，所以它的使用范围较窄。若存在一个以上的分组变量，你可以使用list(groupvar1, groupvar2, ... , groupvarN)来表示它们。但这仅在分组变量交叉后不出现空白单元时有效。
+
+```{r}
+summaryBy(epg~agegr,data=HW93,FUN=max)
+describe.by(HW93$epg,HW93$agegr)
+```
+
+需要使用复杂函数则需要plyr包中的*ply族函数。该函数由Hadley Wickham创建，将这类任务以“分割-应用-结合”这种三步方式进行处理：通过一种或多种factor将数据集进行分割，而后应用某项函数，最后将结果整合回数据集当中。Plyr包中囊括了一整套“ply”函数，其第一个字母表示输入的类型，第二个字母表示输出的类型，输入:array,dataframe,list三种格式，输出: array,dataframe,list,discareded四种格式。plyr包中的ddply()可以得到相同结果。summarize不会提供来自原始数据框中其它列中的任何信息，如果大家需要列出其它column数据，则可以把“summarize”替换为“transform”，请且允许一次应用多个函数。
 ```{r eval=FALSE}
-ddply(.data = HW93,.(age),summarize,mean=mean(epg),max=max(epg),min=min(epg))
+ddply(.data = HW93,.(agegr),summarize,mean=mean(epg),max=max(epg),min=min(epg))
 
 rate <- function(x){
   return(sum(x,na.rm = T)/length(x))
 }
-ddply(.data = HW93,.(age),.fun = function(x){rate(x$epg)})
+ddply(.data = HW93,.(agegr),.fun = function(x){rate(x$epg)})
 ```
 
-doBy包和psych包也提供了分组计算描述性统计量的函数，doBy包中summaryBy()函数的使用格式为：summaryBy(formula,data=dataframe,FUN=function) 其中的formula接受以下的格式：var1+var2+…+varN~grounpvar1+goupvar2+…+groupvarN,在~左侧的变量是需要分析的数值型变量，而右侧的变量是类别型的分组变量。function
-可为任何内建或用户自编的R函数。psych包中的describe.by()函数可计算和describe相同的描述性统计量，只是按照一个或多个分组变量分层，使用psych包中的describe.by()和使用doBy包中的summaryBy()分组计算概述统计量如下，describe.by()函数不允许指定任意函数，所以它的使用范围较窄。若存在一个以上的分组变量，你可以使用list(groupvar1, groupvar2, ... , groupvarN)来表示它们。但这仅在分组变量交叉后不出现空白单元时有效。
+##频数表和列联表
+table(var1, var2, …, varN) 使用 N 个类别型变量（因子）创建一个 N 维列联表。xtabs(formula, data) 根据一个公式和一个矩阵或数据框创建一个 N 维列联表。prop.table(table, margins) 依margins定义的边际列表将表中条目表示为分数形式。margin.table(table, margins) 依margins定义的边际列表计算表中条目的和addmargins(table, margins) 将概述边margins（默认是求和结果）放入表中。ftable(table) 创建一个紧凑的“平铺”式列联表
+
+###一维列联表
+```{r}
+data(Arthritis,package = "vcd")
+pander(head(Arthritis))
+mytable<-with(Arthritis,table(Improved))
+mytable
+```
+可以用prop.table()将这些频数转化为比例值
+```{r}
+prop.table(mytable)
+```
+
+###二维列联表
+对于二维列联表，table()函数的使用格式为：table(A,B),其中的A是行变量，B是列变量。xtabs()函数还可使用公式风格的输入创建列联表，格式为：xtabs(\~A+B,data=mydata)，其中的mydata是一个矩阵或数据框，要进行交叉分类的变量应出现在公式的右侧（即\~符号的右方），以+作为分隔符。若某个变量写在公式的左侧，则其为一个频数向量（在数据已经被表格化时很有用）。
 
 ```{r}
-summaryBy(epg~age,data=HW93,FUN=max)
-describe.by(HW93$epg,HW93$age)
+mytable<-xtabs(~Treatment+Improved,data=Arthritis)
+mytable
 ```
 
+可以使用margin.table()和prop.table()函数分别生成边际频数(行和)和比例(行比)。
+```{r}
+margin.table(mytable,1)
+prop.table(mytable,1)
+```
+列和与列比例可以这样计算
+```{r}
+margin.table(mytable,2)
+prop.table(mytable,2)
+```
+各单元格所占比例可用如下语句获取
+```{r}
+prop.table(mytable)
+```
+可以使用addmargins()函数为这些表格添加边际和
+```{r}
+addmargins(mytable)
+addmargins(prop.table(mytable))
+```
+在使用addmargins()时，默认是表中所有的变量创建边际和
+```{r}
+addmargins(prop.table(mytable,1),2)
+```
+注意 table()函数默认忽略缺失值（NA）。要在频数统计中将NA视为一个有效的类别，请设定参数useNA="ifany"。
+```{r}
+table(Arthritis$Treatment,Arthritis$Improved,useNA = "ifany")
+```
+使用gmodels包中的CrossTable()函数生成二维列联表
+```{r}
+CrossTable(Arthritis$Treatment,Arthritis$Improved)
+```
+CrossTable()函数有很多选项计算（行、列、单元格）的百分比；指定小数位数；进行卡方、Fisher和McNemar独立性检验；计算期望和（皮尔逊、标准化、调整的标准化）残差；将缺失值作为一种有效值；进行行和列标题的标注;
 
+###多维列联表
+table()和xtabs()都可以基于三个或更多的类别型变量生成多维列联margin.table()、prop.table()和addmargins()函数也可以推广到多维的情况。另外，ftable()函数可以以一种紧凑而吸引人的方式输出多维列联表
 
-
+```{r}
+mytable<-xtabs(~Treatment+Sex+Improved,data=Arthritis)
+mytable
+ftable(mytable)
+margin.table(mytable,c(1,3))#治疗情况（Treatment） × 改善情况（Improved）的边际频数
+```
 
 
