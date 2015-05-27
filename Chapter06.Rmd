@@ -495,34 +495,6 @@ relweights(fit,col="lightgrey")
 
 可以看到x2解释了56.7%的R平方，x1解释了43.2的平方，x2相比x1更为重要。
 
-##以最大信息为基础的非参数探索 (MINE，Maximal Information-base Nonparametric Exploration)
-该方法用网格判断数据的集中程度，集中程度用最大信息系数(MIC，the Maximal Information Coefficient)表示，传统的相关系数得到结果用MIC值同样可以得到。该方法适用于任何分布的数据类型，不要求成两变量成直线关系。如果MIC值趋进于0,则两变量之间无关，如果MIC趋进于1,则两变量之间有关。
-
-例 WHO数据集中有每10万人的HIV病人死亡率和医生的数量，试分析两变量是否有关?
-
-```{r}
-who <- read.csv("WHO.csv", header = T)
-plot(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., who$Medical_Doctors)
-cor.test(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., 
-    who$Medical_Doctors, method = "pearson")
-```
-由于两变量不是线性关系，从线性相关的结果来看，相关性较差。
-
-```{r eval=FALSE}
-#调用MINE.jar，Java中列以0开始
-col1 <- which(names(who) == "Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.")-1
-col2 <- which(names(who) == "Medical_Doctors")-1
-
-source("MINE.r")
-MINE("WHO.csv", c(col1, col2))
-MINE("WHO.csv", "all.pairs")  #两两比较所有变量
-```
-```{r}
-whoresult <- read.csv("WHO.csv,119-vs-290,cv=0.0,B=n^0.6,Results.csv", 
-    header = T)
-whoresult$MIC..strength.
-```
-MIC值大于0.5,说明两变量有一定的相关性，结合绘图的结果，两变量有如下关系：随着医生数量的增加，HIV的死亡率降低，但降低到一定程度后不再继续降低。
 
 
 
