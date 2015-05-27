@@ -1,0 +1,25 @@
+---
+title: "方差分析"
+author: "梁雪枫"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+
+```{r include=FALSE}
+library(car)
+library(DescTools)
+library(multcomp)
+```
+
+##单因素方差分析（one-way ANOVA）
+
+##双因素方差分析（Two-way ANOVA）
+
+##重复测量方差分析
