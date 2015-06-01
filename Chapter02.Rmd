@@ -1,7 +1,7 @@
 ---
 title: "常用数据分布"
 author: "梁雪枫"
-date: "2014年11月02日"
+documentclass: ctexart
 output:
   pdf_document:
     fig_caption: yes
@@ -413,6 +413,7 @@ ks.test(S, "pbeta",1,2)
 结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合shape1=1, shape2=2的Beta分布！
 
 ## $\chi^2$(卡方)分布
+总体$X\sim N(\mu,\sigma^{2})$,则样本的统计量$\frac{1}{\sigma ^{2}}\sum_{i=1}^{n}(X_{i}-\mu)$,服从自由度为n的$\chi^2$分布。样本统计量$\frac{1}{\sigma ^{2}}\sum_{i=1}^{n}(X_{i}-\bar{X})$,服从自由度为n-1的$\chi^2$分布。
 若n个相互独立的随机变量$\varepsilon _{1},\varepsilon _{2},...,\varepsilon _{n}$ ，均服从标准正态分布（也称独立同分布于标准正态分布），则这n个服从标准正态分布的随机变量的平方和构成一新的随机变量，其分布规律称为$\chi^2$分布（chi-square distribution）。其中参数n称为自由度，自由度不同就是另一个$\chi^2$分布，正如正态分布中均值或方差不同就是另一个正态分布一样。
 概率密度函数
 $$f_{k}(x)=\frac{(1/2)^{k/2}}{\Gamma (k/2)}x^{k/2-1}e^{-x/2}$$
