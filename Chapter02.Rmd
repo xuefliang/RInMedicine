@@ -514,6 +514,12 @@ ks.test(S, "punif")
 ```
 结论: D值很小, p-value>0.05，不能拒绝原假设，所以数据集S符合均匀分布！
 
+例 某年级医学生解剖学考试成绩X(分)近似服从$N(65,10^{2})$，问解剖学成绩在85分以上的考生的概率是多少？
+```{r}
+pnorm(85,65,10,lower.tail = F) #pnorm()函数是正态分布的分布函数，用来计算对应分布下的概率，lower.tail = F默认为T计算小于x的概率，F表示计算大于x的概率
+```
+解剖学成绩在85分以上的考生概率为`r round(pnorm(85,65,10,lower.tail = F) ,2)`
+
 ##数据分布直接的关系
 
 ![常见数据分布之间的关系](./distribution_chart.jpg)
@@ -525,7 +531,7 @@ $$F_{n}^{x}=\frac{m(x)}{n}$$
 
 ![数据分布探索决策树](./distribution.jpg)
 
-例1 探索fitdistrplus中groundbeef的数据分布。
+例 探索fitdistrplus中groundbeef的数据分布。
 思路：首先判断数据的特点选择较为可能的分布，然后利用fitdist()获得可能分布的参数估计，再利用gofstat()选择较优的分布，最后可用ks.test()进行验证。
 ```{r}
 data(groundbeef)
