@@ -79,7 +79,7 @@ bartlett.test(length ~ site,data = dfCRp) #Fligner-Killeen(fligner.test()函数)
 aovCRp =aov(length ~ site, data = dfCRp)
 summary(aovCRp)
 #oneway.test(length ~ site, data=dfCRp, var.equal=TRUE)，与aov()结果基本相同。
-plotmeans(length ~ site,data =dfCRp ) #绘制嗲有置信区间的组均值图
+plotmeans(length ~ site,data =dfCRp ) #绘制有置信区间的组均值图
 plot(aovCRp)
 ```
 用aov函数建立单因子方差模型，从结果的P值可看到各组均值有显著不同。Sum Sq = deviance (within groups, and residual)，总方差和（分别有groups和residual的），Mean Sq = variance (within groups, and residual)，平均方差和（分别有groups和residual的）。单因子方差分析结果显示F value = 3.24 ，Pr(>F) = 0.045，因此拒绝原假设，即认为三组组家兔血清ACE浓度在统计学上有显著差异。
@@ -167,7 +167,7 @@ leveneTest(aovCRp)
 ```
 对模型的残差进行组间方差齐性检验，P值大于0.05满足残差方差齐性的要求。
 
-##单因素协方差分析
+##单因素协方差分析(Analysis of covariance ,ANCOVA)
 单因素协方差分析在单因素方差分析的基础上包含一个或多个定量的协变量。
 
 例 multcomp包中litter数据集是怀孕小白鼠被分为四个小组，每个小组接受不同剂量（0、5、50和500）的药物处理dose为自变量，产下幼崽的体重weigth均值为因变量，怀孕时间gesttime为协变量。
@@ -211,6 +211,58 @@ library(HH)
 ancova(weight~gesttime+dose,data = litter)
 ```
 用怀孕时间预测出生体重的回归线相互平行，只是截距不同。随着怀孕时间的增加，出生体重也会增加。若用ancova(weight~gesttime*dose,data = litter)生成的图形将允许斜率和截距依据组别发生变化，对违背回归斜率同质性的实例比较有用。
+
+###I类型的平方和(Type I sum of squares)单因素协方差分析
+I类型的平方和效应根据表达式中先出现的效应做调整。A不做调整,B根据A调整,A:B交互项根据A和B调整。
+```{r}
+fitFull <- lm(weight~gesttime+dose,data = litter)
+fitGrp  <- lm(weight ~ dose,         data=litter)
+fitRegr <- lm(weight ~      gesttime, data=litter)
+anova(fitFull)
+```
+
+###II/III类型的平方和(Type II/III sum of squares)单因素协方差分析
+II类型的平方和效应根据同水平或低水平的效应做调整。A根据B调整,B依据A调整,A:B交互项同时根
+据A和B调整。III类型的平方和每个效应根据模型其他各效应做相应调整。A根据B和A:B做调整,A:B交互项根据A和B
+调整。
+```{r}
+fitFiii <- lm(weight~gesttime+dose,contrasts=list(dose=contr.sum), data=litter)
+Anova(fitFiii, type="III")
+```
+
+###基于II类型的平方和的模型比较
+```{r}
+anova(fitRegr, fitFull)
+anova(fitGrp,  fitFull)
+```
+RSS值较小的模型较好，以怀孕时间gesttime为协变量的单因素模型比仅含有药物剂量dose和怀孕时间gesttime的模型校好。
+
+###回归系数(Test individual regression coefficients)
+```{r}
+(sumRes <- summary(fitFull))
+confint(fitFull) #95%置信区间
+```
+
+###效果大小(Effect size)
+$\omega^{2}$基于II类型的平方和
+```{r}
+anRes <- anova(fitRegr, fitFull)
+dfGrp <- anRes[2, "Df"]
+dfE   <- anRes[2, "Res.Df"]
+MSgrp <- anRes[2, "Sum of Sq"] / dfGrp
+MSE   <- anRes[2, "RSS"] / dfE
+SST   <- sum(anova(fitFull)[ , "Sum Sq"])
+
+(omegaSqHat <- dfGrp*(MSgrp - MSE) / (SST + MSE))
+```
+效应$\omega^{2}$值如上。
+
+###调整的组均值
+```{r}
+aovAncova <- aov(weight~gesttime+dose,data = litter)
+YMjAdj <- effect("dose", aovAncova)
+summary(YMjAdj)
+```
 
 ##双因素方差分析（Two-way ANOVA）
 研究两个因素的不同水平对试验结果的影响是否显著的问题就称作双因素方差分析，分别对两个因素进行检验，考察各自的作用，同时分析两个因素（因素A和因素 B）对试验结果的影响。如果因素A和因素B对试验结果的影响是相互独立的，则可以分别考察各自的影响，这种双因素方差分析称为无交互作用的双因素方差分析，也叫无重复双因素方差分析。无交互作用的双因素方差分析，相当于对每个因素分别进行单因素方差分析。如果因素A和因素B除了各自对试验结果的影响外，还产生额外的新影响，这种额外的影响称为交互作用，这时的双因素方差分析则称为有交互作用的双因素方差分析，也叫有重复双因素方差分析。可用于随机区组实验设计，用来分析两个因素的不同水平对结果是否有显著影响，以及两因素之间是否存在交互效应。SST=SSA+SSB+SSE
