@@ -7,9 +7,11 @@ output:
     fig_caption: yes
     latex_engine: xelatex
     number_sections: yes
-    template: !expr rticles::ctex_template()
+    template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.2/rticles/rmarkdown/templates/ctex/resources/default.latex
     toc: yes
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+  html_document:
+    toc: yes
+classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
 ---
 
 ```{r include=FALSE}
@@ -20,6 +22,7 @@ library(pander)
 library(gplots)
 library(plyr)
 library(effects)
+library(phia)
 ```
 
 方差分析（analysis of variation,简写为ANOVA）又称变异数分析或F检验,用于两个及两个以上样本均值差别的显著性检验,从函数的形式看，方差分析和回归都是广义线性模型的特例，回归分析lm()也能作方差分析。其目的是推断两组或多组数据的总体均值是否相同，检验两个或多个样本均值的差异是否有统计学意义。方差分析的基本思路为：将试验数据的总变异分解为来源于不同因素的相应变异，并作出数量估计，从而明确各个变异因素在总变异中所占的重要程度；也就是将试验数据的总变异方差分解成各变因方差，并以其中的误差方差作为和其他变因方差比较的标准，以推断其它变因所引起的变异量是否真实的一种统计分析方法。把对试验结果发生影响和起作用的自变量称为因素（factor），即我们所要检验的对象。如果方差分析研究的是一个因素对于试验结果的影响和作用，就称为单因素方差分析。因素的不同选择方案称之为因素的水平(level of factor)或处理(treatment)。因素的水平实际上就是因素的取值或者是因素的分组。样本数据之间差异如果是由于抽样的随机性造成的，称之为随机误差；如果是由于因素水平本身不同引起的差异，称之为系统误差。
@@ -80,7 +83,9 @@ aovCRp =aov(length ~ site, data = dfCRp)
 summary(aovCRp)
 #oneway.test(length ~ site, data=dfCRp, var.equal=TRUE)，与aov()结果基本相同。
 plotmeans(length ~ site,data =dfCRp ) #绘制有置信区间的组均值图
+par(mfrow=c(2,2))
 plot(aovCRp)
+par(mfrow=c(2,2))
 ```
 用aov函数建立单因子方差模型，从结果的P值可看到各组均值有显著不同。Sum Sq = deviance (within groups, and residual)，总方差和（分别有groups和residual的），Mean Sq = variance (within groups, and residual)，平均方差和（分别有groups和residual的）。单因子方差分析结果显示F value = 3.24 ，Pr(>F) = 0.045，因此拒绝原假设，即认为三组组家兔血清ACE浓度在统计学上有显著差异。
 
@@ -265,15 +270,130 @@ summary(YMjAdj)
 ```
 
 ##双因素方差分析（Two-way ANOVA）
-研究两个因素的不同水平对试验结果的影响是否显著的问题就称作双因素方差分析，分别对两个因素进行检验，考察各自的作用，同时分析两个因素（因素A和因素 B）对试验结果的影响。如果因素A和因素B对试验结果的影响是相互独立的，则可以分别考察各自的影响，这种双因素方差分析称为无交互作用的双因素方差分析，也叫无重复双因素方差分析。无交互作用的双因素方差分析，相当于对每个因素分别进行单因素方差分析。如果因素A和因素B除了各自对试验结果的影响外，还产生额外的新影响，这种额外的影响称为交互作用，这时的双因素方差分析则称为有交互作用的双因素方差分析，也叫有重复双因素方差分析。可用于随机区组实验设计，用来分析两个因素的不同水平对结果是否有显著影响，以及两因素之间是否存在交互效应。SST=SSA+SSB+SSE
+研究两个因素的不同水平对试验结果的影响是否显著的问题就称作双因素方差分析，分别对两个因素进行检验，考察各自的作用，同时分析两个因素（因素A和因素 B）对试验结果的影响。如果因素A和因素B对试验结果的影响是相互独立的，则可以分别考察各自的影响，这种双因素方差分析称为无交互作用的双因素方差分析，也叫无重复双因素方差分析。无交互作用的双因素方差分析，相当于对每个因素分别进行单因素方差分析。如果因素A和因素B除了各自对试验结果的影响外，还产生额外的新影响，这种额外的影响称为交互作用，这时的双因素方差分析则称为有交互作用的双因素方差分析，也叫有重复双因素方差分析。可用于随机区组实验设计，用来分析两个因素的不同水平对结果是否有显著影响，以及两因素之间是否存在交互效应。
 
-例 关于检验毒品强弱的试验，给48只老鼠注射I, II, III三种毒药(因素A)，同时有A, B, C, D4种治疗方案(因素B)，这样的试验在每一种因素组合下都重复四次测试老鼠的存活时间（年）。试分析毒药和治疗方案以及它们的交互作用对老鼠存活时间有无显著影响。
+例 基础安装中的ToothGrowth数据集是随机分配60只豚鼠,分别采用两种喂食方法supp(橙汁或维生素C),各喂食方法中抗坏血酸含量有三种水平dose(0.5mg、1mg或2mg),每种处理方式组合都被分配10只豚鼠,牙齿长度len为因变量。
 
 ```{r}
-rats <- read.csv("rats.csv",header = T)
-pander(rats)
+pander(head(ToothGrowth))
+attach(ToothGrowth)
+table(supp,dose)
+ddply(.data = ToothGrowth,.(supp,dose),summarise,mean=mean(len))
+ddply(.data = ToothGrowth,.(supp,dose),summarise,sd=sd(len))
+```
+table语句的预处理表明该设计是均衡设计(各设计单元中样本大小都相同),ddply语句处理可获得各单元的均值和标准差。
+
+###I型双因素方差分析(SS type I)
+```{r}
+aovCRFpq <- aov(len~ supp*dose, data=ToothGrowth)
+summary(aovCRFpq)
+par(mfrow=c(2,2))
+plot(aovCRFpq)
+par(mfrow=c(2,2))
+```
+得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
+
+###II/III型双因素方差分析(SS type II or III)
+```{r}
+ToothGrowth$supp <- as.factor(ToothGrowth$supp) #转为因子
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+fitIII <- lm(len ~ supp + dose + supp:dose, data=ToothGrowth,contrasts=list(supp=contr.sum, dose=contr.sum))
+Anova(fitIII, type="III")
+```
+得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
+
+###绘制边际均数及格均数图
+```{r}
+plot.design(len ~ supp*dose, data=ToothGrowth, main="Marginal means")
+interaction.plot(ToothGrowth$dose, ToothGrowth$supp,ToothGrowth$len,main="Cell means", col=c("red", "blue", "green"), lwd=2) #interaction.plot(f1, f2, y)展示双因素方差分析的交互效应，如果f1和f2是因子,作y的均值图,以f1的不同值作为x轴,而f2的不同值对应不同曲线;可以用选项fun指定y的其他的统计量(缺省计算均值,fun=mean)
+```
+
+gplots包中的plotmeans()函数来展示交互效应，HH包中interaction2wt()函数来展示交互效应
+```{r}
+plotmeans(len ~ interaction(supp, dose, sep = " "), 
+    connect = list(c(1, 3, 5), c(2, 4, 6)), 
+    col = c("red", "darkgreen"), 
+    main = "Interaction Plot with 95% CIs", 
+    xlab = "Treatment and Dose Combination")
+```
+
+```{r eval=F}
+library(HH)
+interaction2wt(len ~ supp * dose) #interaction2wt() 函数,因为它能展示任意复杂度设计(双因素方差分析、三因素方差分析等)的主效应(箱线图)和交互效应
+```
+
+###效果大小(Effect size estimate)
+```{r}
+EtaSq(aovCRFpq, type=1)
+```
+$\eta_{p}^{2}$值如上。
+
+###简单效应(Simple effects)
+简单效应指一个因素的不同水平在另一个因素的某个水平上的变异。phia包中testInteractions()可计算简单效应。
+```{r}
+testInteractions(aovCRFpq, fixed="dose", across="supp", adjustment="none")
+#testInteractions(aovCRFpq, fixed="supp", across="dose", adjustment="none")
+```
+喂食方法supp在剂量dose的0.5mg和1mg水平上的变异显著。同样的交换dose变量和supp变量后，剂量dose在喂食方法OJ和VC的水平上变异显著。
+
+###多重比较
+####计划好的主效应(Main effects)多重比较,计划比较(0.5mg、1mg)和2mg剂量，0.5mg和2mg剂量之间是否有差别
+```{r warning=FALSE}
+cMat <- rbind("c1"=c(1/2, 1/2,-1),"c2"=c(-1,0,1)) 
+aovCRFpq <- aov(len~ supp*dose, data=ToothGrowth)
+summary(glht(aovCRFpq), linfct=mcp(dose=cMat), alternative="two.sided",test=adjusted("bonferroni"))
+```
+结果显示0.5mg、1mg和2mg剂量，0.5mg和2mg剂量之间的差异显著。
+
+####非计划的多重比较
+非计划好的主效应多重比较,dose变量的两两比较。
+```{r}
+aovCRF <- aov(len~ supp*dose, data=ToothGrowth)
+TukeyHSD(aovCRF, which="dose")
+```
+
+multcomp包中的glht()函数
+```{r}
+tukey <- glht(aovCRF, linfct=mcp(dose="Tukey"))
+summary(tukey)
+confint(tukey) #95%置信区间
+```
+结果显示0.5mg和1mg剂量，0.5mg和2mg剂量之间的差异显著。
+
+###格多重比较(Cell comparisons using the associated one-way ANOVA)
+```{r}
+ToothGrowth$comb <- interaction(ToothGrowth$dose, ToothGrowth$supp)
+aovCRFpqA <- aov(len ~ comb, data=ToothGrowth)
+cntrMat <- rbind("c1"=c(-1/2,  1/4, -1/2, 1/4, 1/4, 1/4),
+                 "c2"=c(   0,    0,   -1,   0,   1,   0),
+                 "c3"=c(-1/2, -1/2,  1/4, 1/4, 1/4, 1/4))
+summary(glht(aovCRFpqA, linfct=mcp(comb=cntrMat), alternative="greater"),
+        test=adjusted("none"))
+```
+计划的格的多重比较中，未发现显著的差异。
+
+###非计划Scheffe检验
+```{r}
+ScheffeTest(aovCRFpqA, which="comb", contrasts=t(cntrMat)) #Post-hoc Scheffe tests using the associated one-way ANOVA
+ScheffeTest(aovCRFpq, which="dose", contrasts=c(-1, 1/2, 1/2)) #Post-hoc Scheffe tests for marginal means
+```
+
+###残差的相关检验
+
+###正态性检验
+```{r}
+Estud <- rstudent(aovCRFpq)
+qqnorm(Estud, pch=20, cex=2)
+qqline(Estud, col="gray60", lwd=2)
+shapiro.test(Estud)
+```
+P值大于0.05，可以认为残差满足正态性。
+
+```{r}
+plot(Estud ~ ToothGrowth$comb, main="Residuals per group")
+leveneTest(aovCRFpq)
 ```
 
 
-
 ##重复测量方差分析
+
