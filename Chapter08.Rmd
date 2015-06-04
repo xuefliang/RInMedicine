@@ -393,7 +393,7 @@ P值大于0.05，可以认为残差满足正态性。
 plot(Estud ~ ToothGrowth$comb, main="Residuals per group")
 leveneTest(aovCRFpq)
 ```
-
+P值大于0.05，可以认为残差满足方差齐性。
 
 ##重复测量方差分析
 
