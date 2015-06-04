@@ -31,7 +31,7 @@ sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install r-base
 ```
-安装Java的jdk时 sudo apt-get install openjdk-7-* sudo R CMD javareconf
+安装Java的jdk时，在shell中运行 sudo apt-get install openjdk-7-*和 sudo R CMD javareconf命令，解决jdk安装问题。
 
 升级
 ```{r eval=FALSE}
