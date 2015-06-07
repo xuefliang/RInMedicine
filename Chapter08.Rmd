@@ -60,12 +60,16 @@ aov()函数的语法为aov(formula,data=dataframe),formula可使用的特殊符�
 例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组组家兔血清ACE浓度是否相同？
 
 ```{r}
-a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 46, 45, 43, 44)
-b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 45, 46, 44, 45, 46, 44, 43, 42, 45)
-c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48, 47, 44, 45, 46, 45, 43, 44, 45, 46, 43, 42)
-dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20), rep("2", 25), rep("3", 23))))
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
+    46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
+    45, 46, 44, 45, 46, 44, 43, 42, 45)
+c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48, 47, 44, 45, 46, 
+    45, 43, 44, 45, 46, 43, 42)
+dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20), 
+    rep("2", 25), rep("3", 23))))
 boxplot(length ~ site, data = dfCRp, xlab = "Sites", ylab = "Length")
-plot.design(length ~ site, fun=mean, data=dfCRp, main="Group means")
+plot.design(length ~ site, fun = mean, data = dfCRp, main = "Group means")
 ```
 箱形图中可观察到不同的因素对于因变量的影响。
 
@@ -85,7 +89,7 @@ summary(aovCRp)
 plotmeans(length ~ site,data =dfCRp ) #绘制有置信区间的组均值图
 par(mfrow=c(2,2))
 plot(aovCRp)
-par(mfrow=c(2,2))
+par(mfrow=c(1,1))
 ```
 用aov函数建立单因子方差模型，从结果的P值可看到各组均值有显著不同。Sum Sq = deviance (within groups, and residual)，总方差和（分别有groups和residual的），Mean Sq = variance (within groups, and residual)，平均方差和（分别有groups和residual的）。单因子方差分析结果显示F value = 3.24 ，Pr(>F) = 0.045，因此拒绝原假设，即认为三组组家兔血清ACE浓度在统计学上有显著差异。
 
@@ -289,7 +293,7 @@ aovCRFpq <- aov(len~ supp*dose, data=ToothGrowth)
 summary(aovCRFpq)
 par(mfrow=c(2,2))
 plot(aovCRFpq)
-par(mfrow=c(2,2))
+par(mfrow=c(1,1))
 ```
 得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
 
