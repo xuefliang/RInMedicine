@@ -400,4 +400,60 @@ leveneTest(aovCRFpq)
 P值大于0.05，可以认为残差满足方差齐性。
 
 ##重复测量方差分析
+重复测量数据的方差分析是对同一因变量进行重复测量的一种试验设计技术。在给予一种或多种处理后，分别在不同的时间点上通过重复测量同一个受试对象获得的指标的观察值，或者是通过重复测量同一个个体的不同部位（或组织）获得的指标的观察值。重复测量数据在科学研究中十分常见，常用来分析该观察指标在不同时间点上的变化特点。分析前要对重复测量数据之间是否存在相关性进行球形检验。如果该检验结果为P﹥0.05，则说明重复测量数据之间不存在相关性，测量数据符合Huynh-Feldt条件，可以用单因素方差分析的方法来处理；如果检验结果P﹤0.05，则说明重复测量数据之间是存在相关性的，所以不能用单因素方差分析的方法处理数据。球形条件不满足时常有两种方法可供选择：（1）采用MANOVA（多变量方差分析方法）；（2）对重复测量ANOVA检验结果中与时间有关的F值的自由度进行调整。 
+
+###单因素方差分析(One-way repeated measures ANOVA)
+
+例 将42名诊断为胎粪吸入综合症的新生儿患儿随机分为肺表面活性物质治疗组（PS组）和常规治疗组（对照组），每组各21例。PS组和对照组两组所有患儿均给予除用药外的其他相应的对症治疗。PS组患儿给予牛肺表面活性剂70mg/kg治疗。采集PS组及对照组患儿0小时，治疗后24小时和72小时静脉血2ml，离心并提取上清液后保存备用并记录血清中VEGF的含量变化情况。在治疗组，不同时间的记录的VEGF是否有差异？
+
+```{r}
+MAS <- read.csv("MAS.csv",header = T)
+pander(head(MAS))
+```
+
+####传统的重复测量方差分析(Traditional univariate approach)
+```{r}
+dfRBpL <- subset(MAS,treatment=="ps")
+aovRBp <- aov(value ~ time + Error(id/time), data=dfRBpL)
+summary(aovRBp)
+```
+
+####效果大小(Effect size estimate)
+```{r}
+EtaSq(aovRBp, type=1)
+```
+
+####Using Anova() from package car with data in wide format
+```{r}
+dfRBpW <- reshape(dfRBpL, v.names="value", timevar="time", idvar="id",
+                  direction="wide")
+fitRBp   <- lm(cbind(value.time0, value.time24, value.time72) ~ 1, data=dfRBpW)
+inRBp    <- data.frame(time=gl(length(levels(dfRBpL$time)), 1))
+AnovaRBp <- Anova(fitRBp, idata=inRBp, idesign=~time)
+summary(AnovaRBp, multivariate=FALSE, univariate=TRUE)
+```
+
+####Using anova.mlm() and mauchly.test() with data in wide format
+
+```{r}
+anova(fitRBp, M=~time, X=~1, idata=inRBp, test="Spherical")
+mauchly.test(fitRBp, M=~time, X=~1, idata=inRBp)
+```
+
+####Multivariate approach
+```{r}
+DVw     <- data.matrix(subset(dfRBpW,select=c("value.time0", "value.time24", "value.time72")))
+diffMat <- combn(1:length(levels(dfRBpL$time)), 2, function(x) { DVw[ , x[1]] - DVw[ , x[2]] } )
+DVdiff  <- diffMat[ , 1:(length(levels(dfRBpL$time))-1), drop=FALSE]
+muH0    <- rep(0, ncol(DVdiff))
+HotellingsT2Test(DVdiff, mu=muH0)
+```
+
+####Using Anova() from package car
+```{r}
+summary(AnovaRBp, multivariate=TRUE, univariate=FALSE)
+```
+
+
+
 
