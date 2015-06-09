@@ -416,7 +416,7 @@ aov()函数在处理重复测量设计时,需要有长格式(long format)数据�
 ```{r}
 dfRBpL <- subset(MAS,treatment=="ps")
 dfRBpL$id <- as.factor(dfRBpL$id)
-aovRBp <- aov(value ~ time + Error(id/time), data=dfRBpL)
+aovRBp <- aov(value ~ time + Error(id/time), data=dfRBpL) #id和time需为因子
 summary(aovRBp)
 ```
 在治疗组，不同时间记录的VEGF差异显著。
@@ -440,7 +440,7 @@ summary(AnovaRBp, multivariate=FALSE, univariate=TRUE)
 ```
 在治疗组，不同时间记录的VEGF差异显著。
 
-####球形检验(Using anova.mlm() and mauchly.test() with data in wide format)
+####球形检验和校正(Using anova.mlm() and mauchly.test() with data in wide format)
 传统的重复测量方差分析假设任意组内因子的协方差矩阵为球形,并且任意组内因子两水平间的方差之差都相等.
 ```{r}
 mauchly.test(fitRBp, M=~time, X=~1, idata=inRBp) #Mauchly球形检验
@@ -448,19 +448,23 @@ anova(fitRBp, M=~time, X=~1, idata=inRBp, test="Spherical") ## 如果不满足�
 ```
 P大于0.05，符合球形假设。
 
-####多变量方差分析Multivariate approach
+####重复测量的多变量方差分析(Multivariate approach)
+$Hotelling's T^{2}$检验是单变量检验的推广，常用于两组均向量的比较。
 ```{r}
-DVw     <- data.matrix(subset(dfRBpW,select=c("value.time0", "value.time24", "value.time72")))
-diffMat <- combn(1:length(levels(dfRBpL$time)), 2, function(x) { DVw[ , x[1]] - DVw[ , x[2]] } )
-DVdiff  <- diffMat[ , 1:(length(levels(dfRBpL$time))-1), drop=FALSE]
-muH0    <- rep(0, ncol(DVdiff))
+DVw<- data.matrix(subset(dfRBpW,select=c("value.time0", "value.time24", "value.time72")))
+diffMat <- combn(1:length(levels(dfRBpL$time)), 2, function(x) {DVw[ , x[1]] - DVw[ , x[2]]})
+DVdiff<- diffMat[ , 1:(length(levels(dfRBpL$time))-1), drop=FALSE]
+muH0 <- rep(0, ncol(DVdiff))
 HotellingsT2Test(DVdiff, mu=muH0)
 ```
+P值小于0.05，可以认为不同时间记录的VEGF差异显著。
 
-####Using Anova() from package car
+####car包Anova()函数进行多变量方差分析
+多元方差分析(multivariate analysis of variance, MANOVA)是单变量方差分析和$Hotelling's T^{2}$检验的推广，用于多组均向量间的比较。
 ```{r}
 summary(AnovaRBp, multivariate=TRUE, univariate=FALSE)
 ```
+P值小于0.05，可以认为不同时间记录(time)的VEGF差异显著，截距(Intercept)差异显著，但无实际意义。
 
 
 
