@@ -17,7 +17,8 @@ R目前仍然不为大众所了解，但并不能妨碍其流行趋势，越来�
 本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，Markdown是一种非常简洁的标记语言，足以使写作关注于内容而不是形式。本书是在Linux Mint系统上安装R的，需要在shell中安装如下的库文件
 
 ```{r eval=FALSE}
-sudo apt-get install build-essential gfortran libxml2-dev libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  libpcre++-dev  r-base-dev  liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-* libgmp3-dev  
+sudo apt-get install build-essential gfortran libxml2-dev libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  libpcre++-dev  r-base-dev  liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-* libgmp3-dev libmysql++-dev 
+
 #Step 1: Update Sources.List File
 #- Edit the sources.list file
 sudo gedit /etc/apt/sources.list
@@ -29,7 +30,7 @@ gpg -a --export E084DAB9 | sudo apt-key add -
 #Step 3: Install R-base
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install r-base
+sudo apt-get install r-base r-base-dev
 ```
 安装Java的jdk时，在shell中运行 sudo R CMD javareconf命令，解决jdk安装问题。
 
@@ -45,7 +46,7 @@ update.packages(checkBuilt=TRUE, ask=FALSE) #at the R prompt
 
 本书涉及的R语言包较多，CRAN中包可通过下列方式一次性完成安装。
 ```{r eval=FALSE}
-wants <- c("knitr","rmarkdown","devtools","epicalc","mosaic","showtext","pander","PerformanceAnalytics","fitdistrplus","CircStats","MASS","mixtools","boot","TrialSize","vcd","ggplot2","pspearman","gvlma","car","lmtest","leaps","plyr","bootstrap","elrm","rms","Deducer","bestglm","survival","robust","mlogit", "nnet", "VGAM","ordinal","Sample.Size","samplesize4surveys","SampleSizeMeans","SampleSizeProportions","mosaic","XML","pipeR")
+wants <- c("knitr","rmarkdown","devtools","epicalc","mosaic","showtext","pander","PerformanceAnalytics","fitdistrplus","CircStats","MASS","mixtools","boot","TrialSize","vcd","ggplot2","pspearman","gvlma","car","lmtest","leaps","plyr","bootstrap","elrm","rms","Deducer","bestglm","survival","robust","mlogit", "nnet","VGAM","ordinal","Sample.Size","phia","mvtnorm","pscl","mosaic","XML","pipeR","Rcmdr","rgl","HH","DescTools","multcomp","effects","sandwich","qcc")
 
 has   <- wants %in% rownames(installed.packages())
 
