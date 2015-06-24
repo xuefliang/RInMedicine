@@ -529,4 +529,4 @@ summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time
 ```{r}
 summary(AnovaRBFpq, multivariate=TRUE, univariate=FALSE)
 ```
-
+多元方法分析结果类似，主效应time具有显著性，交互效应交互效应treatment:time和treatment主效应无显著性。可以认为不同时间的记录的VEGF有差异，不同组见记录的VEGF无差异。
