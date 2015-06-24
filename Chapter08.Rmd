@@ -364,7 +364,7 @@ confint(tukey) #95%置信区间
 ```
 结果显示0.5mg和1mg剂量，0.5mg和2mg剂量之间的差异显著。
 
-###格多重比较(Cell comparisons using the associated one-way ANOVA)
+###单元多重比较(Cell comparisons using the associated one-way ANOVA)
 ```{r}
 ToothGrowth$comb <- interaction(ToothGrowth$dose, ToothGrowth$supp)
 aovCRFpqA <- aov(len ~ comb, data=ToothGrowth)
@@ -374,7 +374,7 @@ cntrMat <- rbind("c1"=c(-1/2,  1/4, -1/2, 1/4, 1/4, 1/4),
 summary(glht(aovCRFpqA, linfct=mcp(comb=cntrMat), alternative="greater"),
         test=adjusted("none"))
 ```
-计划的格的多重比较中，未发现显著的差异。
+计划的单元的多重比较中，未发现显著的差异。
 
 ###非计划Scheffe检验
 ```{r}
@@ -473,11 +473,60 @@ P值小于0.05，可以认为不同时间记录(time)的VEGF差异显著，截�
 例 将42名诊断为胎粪吸入综合症的新生儿患儿随机分为肺表面活性物质治疗组（PS组）和常规治疗组（对照组），每组各21例。PS组和对照组两组所有患儿均给予除用药外的其他相应的对症治疗。PS组患儿给予牛肺表面活性剂70mg/kg治疗。采集PS组及对照组患儿0小时，治疗后24小时和72小时静脉血2ml，离心并提取上清液后保存备用并记录血清中VEGF的含量变化情况。不同组间不同时间的记录的VEGF是否有差异？
 
 ####传统的重复测量方差分析(Traditional univariate approach)
-
+aov()同样需要长格式数据。
 ```{r}
 dfRBFpqL <- read.csv("MAS.csv",header = T)
-dfRBFpqL$id <- as.factor(dfRBFpqL$id)
+id <- factor(rep(1:21, times=2*3))  #dfRBFpqL$id <- as.factor(dfRBFpqL$id)这种法方法每组因子水平不是21，而是42
+dfRBFpqL$id <- id
 aovRBFpq <- aov(value ~ treatment*time + Error(id/(treatment*time)), data=dfRBFpqL)
 summary(aovRBFpq)
+
+with(dfRBFpqL,interaction.plot(time,treatment, value, type = "b", col = c("red", "blue"), pch = c(16, 18), main = "Interaction Plot for treatment and time"))
+
+boxplot(value ~ treatment*time, data = dfRBFpqL, col = (c("gold", 
+    "green")), main = "treatment and time", 
+    ylab = "value")
+```
+方差分析表明主效应time和交互效应treatment:time有显著性差异，主效应treatment无显著性差异。
+
+###宽格式数据
+```{r}
+dfTemp   <- reshape(dfRBFpqL, v.names="value", timevar="treatment",
+                    idvar=c("id", "time"), direction="wide")
+dfRBFpqW <- reshape(dfTemp, v.names=c("value.contrast", "value.ps"),
+                    timevar="time", idvar="id", direction="wide")
+
+fitRBFpq   <- lm(cbind(value.contrast.time0,value.ps.time0,value.contrast.time24,value.ps.time24,value.contrast.time72,value.ps.time72) ~ 1,data=dfRBFpqW)
+inRBFpq    <- expand.grid(treatment=gl(2, 1), time=gl(3, 1))
+AnovaRBFpq <- Anova(fitRBFpq, idata=inRBFpq, idesign=~treatment*time)
+summary(AnovaRBFpq, multivariate=FALSE, univariate=TRUE)
+```
+宽格式数据方差分析结果与长格式数据结果类似，但提供了mauchly.test检验，球形假设的条件不满足，同时给出了Greenhouse-Geisser和 Huynh-Feldt校正结果。
+
+### anova.mlm() 和 mauchly.test()
+```{r}
+anova(fitRBFpq, M=~treatment, X=~1, idata=inRBFpq, test="Spherical")
+anova(fitRBFpq, M=~treatment + time, X=~treatment, idata=inRBFpq, test="Spherical")
+anova(fitRBFpq, M=~treatment + time + treatment:time, X=~treatment + time,idata=inRBFpq, test="Spherical")
+mauchly.test(fitRBFpq, M=~treatment, X=~1, idata=inRBFpq)
+mauchly.test(fitRBFpq, M=~treatment + time, X=~treatment, idata=inRBFpq)
+mauchly.test(fitRBFpq, M=~treatment + time + treatment:time, X=~treatment + time, idata=inRBFpq)
+```
+
+###效果大小(Effect size estimates)
+```{r}
+EtaSq(aovRBFpq, type=1)
+```
+
+###简单效应(Simple effects)
+```{r}
+summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time0")))
+summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time24")))
+summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time72")))
+```
+
+###多元方法(Multivariate approach)
+```{r}
+summary(AnovaRBFpq, multivariate=TRUE, univariate=FALSE)
 ```
 
