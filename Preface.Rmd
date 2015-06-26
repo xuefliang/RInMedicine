@@ -60,7 +60,7 @@ devtools::install_github("rstudio/rmarkdown")
 bioconductor中R包通过以下方式进行安装
 ```{r eval=FALSE}
 source("http://bioconductor.org/biocLite.R")
-biocLite(c("GenomicFeatures", "AnnotationDbi"))
+biocLite(c("GenomicFeatures", "AnnotationDbi","LBE"))
 ```
 R-Forge等其它第三方源中的包，通过以下方式进行安装
 ```{r eval=FALSE}
