@@ -559,3 +559,55 @@ dfSPFpqL <- data.frame(id=factor(rep(1:5, times=4)),
                        Diameter=diameter)
 ```
 
+```{r}
+aovSPFpq <- aov(Diameter ~ B*A + Error(id/A), data=dfSPFpqL)
+summary(aovSPFpq)
+```
+主因素和副因素均有统计学意义。
+
+###宽数据格式
+```{r}
+dfSPFpqW <- reshape(dfSPFpqL, v.names="Diameter", timevar="A",
+                    idvar=c("id", "B"), direction="wide")
+
+fitSPFpq   <- lm(cbind(Diameter.1, Diameter.2) ~ B, data=dfSPFpqW)
+inSPFpq    <- data.frame(A=gl(2, 1))
+AnovaSPFpq <- Anova(fitSPFpq, idata=inSPFpq, idesign=~A)
+summary(AnovaSPFpq, multivariate=FALSE, univariate=TRUE)
+```
+与长数据格式结果基本一致。
+
+###宽数据格式anova.mlm()和mauchly.test()
+```{r}
+anova(fitSPFpq, M=~1, X=~0, idata=inSPFpq, test="Spherical")
+anova(fitSPFpq, M=~A, X=~1, idata=inSPFpq, test="Spherical")
+mauchly.test(fitSPFpq, M=~A, X=~1, idata=inSPFpq)
+```
+
+###效果大小(Effect size estimates)
+```{r}
+EtaSq(aovSPFpq, type=1)
+```
+
+###简单效应
+```{r}
+#Between-subjects effect at a fixed level of the within-subjects factor
+summary(aov(Diameter ~ B, data=dfSPFpqL, subset=(A==1)))
+summary(aov(Diameter ~ B, data=dfSPFpqL, subset=(A==2)))
+#Within-subjects effect at a fixed level of the between-subjects factor
+summary(aov(Diameter ~ A + Error(id/A), data=dfSPFpqL,subset=(B==1)))
+summary(aov(Diameter ~ A + Error(id/A), data=dfSPFpqL,subset=(B==2)))
+```
+
+###计划的多重比较（Planned comparisons for the between-subjects factor）
+```{r}
+mDf    <- aggregate(Diameter ~ id + B, data=dfSPFpqL, FUN=mean)
+aovRes <- aov(Diameter ~ B, data=mDf)
+cMat <- rbind("1-2"=c(-1, 1))
+summary(glht(aovRes, linfct=mcp(B=cMat), alternative="greater"),
+        test=adjusted("none"))
+```
+副因素之间的差异具有统计学意义。
+
+###三因素裂区设计（Three-way split-plot ANOVA）
+在裂区设计中，若需再引进第三个因素时，可在副区内再分裂出第二副区，称为再裂区，然后将第三个因素的各个处理（称为副副处理），随机排列于再裂区内，这种设计称为再裂区设计（split-split plot design ）。3个以上的多因素试验采用裂区设计，试验起来很复杂，统计分析也麻烦，特别是因素之间有交互作用比较难以解释。
