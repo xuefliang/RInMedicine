@@ -619,3 +619,39 @@ ALP <- read.csv("ALP.csv",header = T)
 pander(ALP)
 ```
 
+```{r}
+dfSPFpq.rL <-read.csv("ALP2.csv",header = T)
+dfSPFpq.rL$id <- as.factor(dfSPFpq.rL$id)
+dfSPFpq.rL$B <- as.factor(dfSPFpq.rL$B)
+dfSPFpq.rL$C <- as.factor(dfSPFpq.rL$C)
+dfSPFpq.rL$A <- as.factor(dfSPFpq.rL$A)
+
+aovSPFpq.r <- aov(DV ~ C*B*A + Error(id/C), data=dfSPFpq.rL)
+summary(aovSPFpq.r)
+```
+C、B级处理、C和B交互、A和B的交互均有统计学意义。
+
+###效果大小(Effect size estimates)
+```{r}
+EtaSq(aovSPFpq.r, type=1)
+```
+
+###宽格式数据
+```{r}
+dfSPFpq.rW <- reshape(dfSPFpq.rL, v.names="DV", timevar="C",
+                      idvar=c("id", "B", "A"), direction="wide")
+
+fitSPFpq.r   <- lm(cbind(DV.1, DV.2) ~ A*B, data=dfSPFpq.rW)
+inSPFpq.r    <- data.frame(C=gl(2, 1))
+AnovaSPFpq.r <- Anova(fitSPFpq.r, idata=inSPFpq.r, idesign=~C)
+summary(AnovaSPFpq.r, multivariate=FALSE, univariate=TRUE)
+```
+A、C、B级处理、C和B交互、A和B的的交互均有统计学意义。
+
+###宽数据格式anova.mlm()和mauchly.test()
+```{r}
+anova(fitSPFpq.r, M=~1, X=~0, idata=inSPFpq.r, test="Spherical")
+anova(fitSPFpq.r, M=~C, X=~1, idata=inSPFpq.r, test="Spherical")
+mauchly.test(fitSPFpq.r, M=~C, X=~1, idata=inSPFpq.r)
+```
+
