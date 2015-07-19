@@ -668,5 +668,31 @@ C、C和B交互均有统计学意义。
 EtaSq(aovSPFp.qr, type=1)
 ```
 
+####宽格式数据
+```{r}
+dfW1       <- reshape(dfSPFpq.rL, v.names="DV", timevar="C",
+                      idvar=c("id", "B", "A"), direction="wide")
+dfSPFp.qrW <- reshape(dfW1, v.names=c("DV.1", "DV.2"),
+                      timevar="B", idvar=c("id", "A"), direction="wide")
+
+fitSPFp.qr   <- lm(cbind(DV.1.1, DV.2.1, DV.1.2, DV.2.2, DV.1.3, DV.2.3) ~ A,
+                   data=dfSPFp.qrW)
+inSPFp.qr    <- expand.grid(B=gl(3, 1), C=gl(2, 1))
+AnovaSPFp.qr <- Anova(fitSPFp.qr, idata=inSPFp.qr, idesign=~B*C)
+summary(AnovaSPFp.qr, multivariate=FALSE, univariate=TRUE)
+```
+
+####宽数据格式anova.mlm()和mauchly.test()
+```{r}
+anova(fitSPFp.qr, M=~1, X=~0,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B, X=~1,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B + C, X=~B,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B + C + B:C, X=~B + C,idata=inSPFp.qr, test="Spherical")
+mauchly.test(fitSPFp.qr, M=~B, X=~1,idata=inSPFp.qr)
+mauchly.test(fitSPFp.qr, M=~B + C, X=~B,
+             idata=inSPFp.qr)
+mauchly.test(fitSPFp.qr, M=~B + C + B:C, X=~B + C,
+             idata=inSPFp.qr)
+```
 
 
