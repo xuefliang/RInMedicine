@@ -23,6 +23,8 @@ library(gplots)
 library(plyr)
 library(effects)
 library(phia)
+library(nlme)
+library(lme4)
 ```
 
 方差分析（analysis of variation,简写为ANOVA）又称变异数分析或F检验,用于两个及两个以上样本均值差别的显著性检验,从函数的形式看，方差分析和回归都是广义线性模型的特例，回归分析lm()也能作方差分析。其目的是推断两组或多组数据的总体均值是否相同，检验两个或多个样本均值的差异是否有统计学意义。方差分析的基本思路为：将试验数据的总变异分解为来源于不同因素的相应变异，并作出数量估计，从而明确各个变异因素在总变异中所占的重要程度；也就是将试验数据的总变异方差分解成各变因方差，并以其中的误差方差作为和其他变因方差比较的标准，以推断其它变因所引起的变异量是否真实的一种统计分析方法。把对试验结果发生影响和起作用的自变量称为因素（factor），即我们所要检验的对象。如果方差分析研究的是一个因素对于试验结果的影响和作用，就称为单因素方差分析。因素的不同选择方案称之为因素的水平(level of factor)或处理(treatment)。因素的水平实际上就是因素的取值或者是因素的分组。样本数据之间差异如果是由于抽样的随机性造成的，称之为随机误差；如果是由于因素水平本身不同引起的差异，称之为系统误差。
@@ -698,8 +700,184 @@ mauchly.test(fitSPFp.qr, M=~B + C + B:C, X=~B + C,
 ##混合模型重复测量方差分析（Mixed-effects models for repeated-measures ANOVA）
 在分析数据时，考虑一个因素和它的不同水平对结果变量的影响，称之为这个因素不同水平对因变量的效应。这种效应不是固定效应就是随机效应，当参数能被认为是固定的常数时，这种因素所产生的效应为固定效应，当参数有随机变量的特征时，称之为随机效应。当模型中有多个因素，一部分产生固定效应，一部分产生随机效应，这样的模型就称为混合效应模型。重复测量中的单次测量为低水平，个体为高水平，建立的模型如下：$$Y=X\beta +Z\gamma +\epsilon$$,$X$为已知设计矩阵，$\beta$为固定效应参数构成的未知向量，$\epsilon$为未知的随机误差向量，其元素不必为独立同分布。$Y$和$\gamma$均为正态随机变量。
 
+例 d1为长格式的重复观测数据，因变量为Y，自变量为Xw1，id为表示变量。d2为长格式的重复观测数据，因变量为Y，自变量为Xw1和Xw2，id为表示变量。
 ```{r}
 d1 <- read.csv("d1.csv",header = T)
 d2 <- read.csv("d2.csv",header = T)
 ```
+
+###单因素重复测量方差分析(One-way repeated measures ANOVA, RB-p design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xw1 + Error(id/Xw1), data=d1))
+```
+结果显示自变量Xw1有统计学意义。
+
+####混合效应分析(Mixed-effects analysis)
+对重复测量的数据有个假设就是重复测量的数据间的关系是相同的，这就是我们所说的compound symmetry。但在实际中，往往会违背这个假设，特别是当临床试验的时间特别长或各个测量的时间点的间隔不相同时，这是因为间隔时间长的两个点的测量值之间的关系往往不如间隔时间短的两个点的测量值之间的关系紧密。
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xw1, random=~1 | id, method="ML", data=d1))  
+#符合compound symmetry假设
+lmeFit <- lme(Y ~ Xw1, random=~1 | id, correlation=corCompSymm(form=~1|id),
+              method="ML", data=d1)
+anova(lmeFit)
+
+anova(lme(Y ~ Xw1, random=list(id=pdCompSymm(~Xw1-1)), method="REML", data=d1))
+```
+结果显示自变量Xw1有统计学意义。
+
+#####lme4包lmer()方法
+```{r}
+fitF <- lmer(Y ~ Xw1 + (1|id), data=d1)
+anova(fitF)
+fitR <- lmer(Y ~ 1 + (1|id), data=d1)
+library(pbkrtest)
+KRmodcomp(fitF, fitR)
+```
+结果显示自变量Xw1有统计学意义。
+
+#####AIC值比较
+```{r}
+library(AICcmodavg)
+AICc(fitF)
+aictab(cand.set=list(fitR, fitF),
+       modnames=c("restricted", "full"),
+       sort=FALSE, second.ord=FALSE)
+```
+
+####多重比较(基于multcomp包的glht()方法)
+```{r}
+contr <- glht(lmeFit, linfct=mcp(Xw1="Tukey"))
+summary(contr)
+confint(contr) #置信区间
+```
+Xw1变量B-A和C-A比较有差异。
+
+###双因素重复测量方差分析(Two-way repeated measures ANOVA ,RBF-pq design)
+####常规分析（Conventional analysis using aov()）
+```{r}
+summary(aov(Y ~ Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
+```
+结果显示自变量Xw1有统计学意义。
+
+####Mixed-effects analysis
+#####nlme包lme方法（Using lme() from package nlme）
+```{r}
+anova(lme(Y ~ Xw1*Xw2, random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          method="ML", data=d2))
+#符合compound symmetry假设
+anova(lme(Y ~ Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          method="ML", data=d2))
+```
+结果显示自变量Xw1有统计学意义。
+
+#####lme4包lmer()方法(Using lmer() from package lme4)
+```{r}
+anova(lmer(Y ~ Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+```
+根据F值判断自变量Xw1有统计学意义。
+
+###两级裂区设计的方差分析(Two-way split-plot-factorial ANOVA ,SPF-p⋅q design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xw1 + Error(id/Xw1), data=d1))
+```
+
+####混合效应分析(Mixed-effects)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1, random=~1 | id, method="ML", data=d1))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1, random=~1 | id, correlation=corCompSymm(form=~1|id),
+          method="ML", data=d1))
+
+anova(lme(Y ~ Xb1*Xw1, random=list(id=pdCompSymm(~Xw1-1)), method="REML", data=d1))
+```
+自变量Xb1、Xw1和其交互效应均有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xw1 + (1|id), data=d1))
+```
+
+###三级裂区设计的方差分析(Three-way split-plot-factorial ANOVA ,SPF-pq⋅r design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xb2*Xw1 + Error(id/Xw1), data=d1))
+```
+自变量Xb1、Xb2、Xw1和其交互效应均有统计学意义。
+
+####混合效应模型(Mixed-effects analysis)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1, random=~1 | id, method="ML", data=d1))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1, random=~1 | id,
+          correlation=corCompSymm(form=~1 | id), method="ML", data=d1))
+anova(lme(Y ~ Xb1*Xb2*Xw1,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1)))),
+          method="ML", data=d1))
+```
+自变量Xb1、Xb2、Xw1和其交互效应均有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xb2*Xw1 + (1|id), data=d1))
+```
+根据F值判断自变量Xb1、Xb2、Xw1和其交互效应均有统计学意义。
+
+###三级裂区设计的方差分析Three-way split-plot-factorial ANOVA (SPF-p⋅qr design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
+```
+Xb1、Xw1和Xw2无统计学意义。
+
+####混合效应模型(Mixed-effects analysis)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          method="ML", data=d2))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          method="ML", data=d2))
+```
+Xb1、Xw1和其交互作用有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+```
+
+###四级裂区设计的方差分析(Four-way split-plot-factorial ANOVA ,SPF-pq⋅rs design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xb2*Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
+```
+
+####混合效应模型(Mixed-effects analysis)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          method="ML", data=d2))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          method="ML", data=d2))
+```
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xb2*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+```
+
 
