@@ -404,6 +404,10 @@ P值大于0.05，可以认为残差满足方差齐性。
 ##重复测量方差分析
 重复测量数据的方差分析是对同一因变量进行重复测量的一种试验设计技术。在给予一种或多种处理后，分别在不同的时间点上通过重复测量同一个受试对象获得的指标的观察值，或者是通过重复测量同一个个体的不同部位（或组织）获得的指标的观察值。重复测量数据在科学研究中十分常见，常用来分析该观察指标在不同时间点上的变化特点。分析前要对重复测量数据之间是否存在相关性进行球形检验。如果该检验结果为P﹥0.05，则说明重复测量数据之间不存在相关性，测量数据符合Huynh-Feldt条件，可以用单因素方差分析的方法来处理；如果检验结果P﹤0.05，则说明重复测量数据之间是存在相关性的，所以不能用单因素方差分析的方法处理数据。球形条件不满足时常有两种方法可供选择：（1）采用MANOVA（多变量方差分析方法）；（2）对重复测量ANOVA检验结果中与时间有关的F值的自由度进行调整。 
 
+在重复测量的方差分析中，实验对象被测量多次，所以会存在组内因子，组内因子要以下面的形式特别标明出来，其中B是组间因子，W是组内因子，subject是实验对象的ID，
+model=aov(Y ~ B * W + Error(Subject/W))
+上述方法的前提是对应组内因子不同水平的数据是等方差的，当传统方法的假设得不到满足时，则应用lme4包中lmer函数，利用混合效应模型来解决问题。
+
 ###单因素重复测量方差分析(One-way repeated measures ANOVA)
 
 单因素重复测量方差分析通常只有组内因素，没有组间因素。
@@ -562,19 +566,19 @@ dfSPFpqL <- data.frame(id=factor(rep(1:5, times=4)),
 ```
 
 ```{r}
-aovSPFpq <- aov(Diameter ~ B*A + Error(id/A), data=dfSPFpqL)
+aovSPFpq <- aov(Diameter ~ A*B + Error(id/B), data=dfSPFpqL)
 summary(aovSPFpq)
 ```
 主因素和副因素均有统计学意义。
 
 ###宽数据格式
 ```{r}
-dfSPFpqW <- reshape(dfSPFpqL, v.names="Diameter", timevar="A",
-                    idvar=c("id", "B"), direction="wide")
+dfSPFpqW <- reshape(dfSPFpqL, v.names="Diameter", timevar="B",
+                    idvar=c("id", "A"), direction="wide")
 
-fitSPFpq   <- lm(cbind(Diameter.1, Diameter.2) ~ B, data=dfSPFpqW)
-inSPFpq    <- data.frame(A=gl(2, 1))
-AnovaSPFpq <- Anova(fitSPFpq, idata=inSPFpq, idesign=~A)
+fitSPFpq   <- lm(cbind(Diameter.1, Diameter.2) ~ A, data=dfSPFpqW)
+inSPFpq    <- data.frame(B=gl(2, 1))
+AnovaSPFpq <- Anova(fitSPFpq, idata=inSPFpq, idesign=~B)
 summary(AnovaSPFpq, multivariate=FALSE, univariate=TRUE)
 ```
 与长数据格式结果基本一致。
@@ -582,8 +586,8 @@ summary(AnovaSPFpq, multivariate=FALSE, univariate=TRUE)
 ###宽数据格式anova.mlm()和mauchly.test()
 ```{r}
 anova(fitSPFpq, M=~1, X=~0, idata=inSPFpq, test="Spherical")
-anova(fitSPFpq, M=~A, X=~1, idata=inSPFpq, test="Spherical")
-mauchly.test(fitSPFpq, M=~A, X=~1, idata=inSPFpq)
+anova(fitSPFpq, M=~B, X=~1, idata=inSPFpq, test="Spherical")
+mauchly.test(fitSPFpq, M=~B, X=~1, idata=inSPFpq)
 ```
 
 ###效果大小(Effect size estimates)
@@ -594,22 +598,22 @@ EtaSq(aovSPFpq, type=1)
 ###简单效应
 ```{r}
 #Between-subjects effect at a fixed level of the within-subjects factor
-summary(aov(Diameter ~ B, data=dfSPFpqL, subset=(A==1)))
-summary(aov(Diameter ~ B, data=dfSPFpqL, subset=(A==2)))
+summary(aov(Diameter ~ A, data=dfSPFpqL, subset=(B==1)))
+summary(aov(Diameter ~ A, data=dfSPFpqL, subset=(B==2)))
 #Within-subjects effect at a fixed level of the between-subjects factor
-summary(aov(Diameter ~ A + Error(id/A), data=dfSPFpqL,subset=(B==1)))
-summary(aov(Diameter ~ A + Error(id/A), data=dfSPFpqL,subset=(B==2)))
+summary(aov(Diameter ~ B + Error(id/B), data=dfSPFpqL,subset=(A==1)))
+summary(aov(Diameter ~ B + Error(id/B), data=dfSPFpqL,subset=(A==2)))
 ```
 
 ###计划的多重比较（Planned comparisons for the between-subjects factor）
 ```{r}
-mDf    <- aggregate(Diameter ~ id + B, data=dfSPFpqL, FUN=mean)
-aovRes <- aov(Diameter ~ B, data=mDf)
+mDf    <- aggregate(Diameter ~ id + A, data=dfSPFpqL, FUN=mean)
+aovRes <- aov(Diameter ~ A, data=mDf)
 cMat <- rbind("1-2"=c(-1, 1))
-summary(glht(aovRes, linfct=mcp(B=cMat), alternative="greater"),
+summary(glht(aovRes, linfct=mcp(A=cMat), alternative="greater"),
         test=adjusted("none"))
 ```
-副因素之间的差异具有统计学意义。
+主因素之间如果有多个分区的情况，其差异是否具有统计学意义可采取上述方法。
 
 ##再裂区设计（Three-way split-plot ANOVA）
 在裂区设计中，若需再引进第三个因素时，可在副区内再分裂出第二副区，称为再裂区，然后将第三个因素的各个处理（称为副副处理），随机排列于再裂区内，这种设计称为再裂区设计（split-split plot design ）。3个以上的多因素试验采用裂区设计，试验起来很复杂，统计分析也麻烦，特别是因素之间有交互作用比较难以解释。
@@ -700,7 +704,7 @@ mauchly.test(fitSPFp.qr, M=~B + C + B:C, X=~B + C,
 ##混合模型重复测量方差分析（Mixed-effects models for repeated-measures ANOVA）
 在分析数据时，考虑一个因素和它的不同水平对结果变量的影响，称之为这个因素不同水平对因变量的效应。这种效应不是固定效应就是随机效应，当参数能被认为是固定的常数时，这种因素所产生的效应为固定效应，当参数有随机变量的特征时，称之为随机效应。当模型中有多个因素，一部分产生固定效应，一部分产生随机效应，这样的模型就称为混合效应模型。重复测量中的单次测量为低水平，个体为高水平，建立的模型如下：$$Y=X\beta +Z\gamma +\epsilon$$,$X$为已知设计矩阵，$\beta$为固定效应参数构成的未知向量，$\epsilon$为未知的随机误差向量，其元素不必为独立同分布。$Y$和$\gamma$均为正态随机变量。
 
-例 d1为长格式的重复观测数据，因变量为Y，自变量为Xw1，id为表示变量。d2为长格式的重复观测数据，因变量为Y，自变量为Xw1和Xw2，id为表示变量。
+例 d1为长格式的重复观测数据，因变量为Y，自变量为Xw1、Xb1和Xb2，w表示组内因子，b表示组间因子，id为标示变量。d2为长格式的重复观测数据，因变量为Y，自变量为Xw1、Xw2、Xb1和Xb2，w表示组内因子，b表示组间因子，id为标示变量。
 ```{r}
 d1 <- read.csv("d1.csv",header = T)
 d2 <- read.csv("d2.csv",header = T)
@@ -861,6 +865,7 @@ anova(lmer(Y ~ Xb1*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
 ```{r}
 summary(aov(Y ~ Xb1*Xb2*Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
 ```
+Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
 
 ####混合效应模型(Mixed-effects analysis)
 #####nlme包lme方法(Using lme() from package nlme)
@@ -874,10 +879,11 @@ anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
           random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
           method="ML", data=d2))
 ```
+Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
 
 #####lme4包lmer()方法（Using lmer() from package lme4）
 ```{r}
 anova(lmer(Y ~ Xb1*Xb2*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
 ```
-
+根据F值判断Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
 
