@@ -1,0 +1,118 @@
+---
+title: "地图展示"
+author: "梁雪枫"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+
+```{r include=FALSE}
+library(maptools)
+library(ggplot2)
+library(mapproj)
+library(ggmap)
+library(dplyr)
+library(magrittr)
+library(rgdal)
+library(animation)
+library(XML)
+```
+
+流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
+
+```{r}
+# 读取地理信息数据
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+# 将数据转为数据框
+gpclibPermit()
+tract <- fortify(city,region="CNTY_CODE")
+
+#发病数据
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data$id <- as.character(data$id)
+
+plotData <- left_join(tract, data)
+```
+
+地图数据查看及加工
+```{r}
+names(city)
+#Linux环境是UTF-8，需要iconv函数转化
+table(iconv(city$NAME, from = "GBK"))
+#选择兰州的地图
+lanzhou = city[city$CNTY_CODE8 == 62010000,]
+#默认把经度和纬度作为普通数据，均匀平等对待，绘制在笛卡尔坐标系上
+plot(lanzhou)
+#地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，ggplot2包提供了专门的coord_map()函数
+```
+
+geom_polygon()制作地图
+```{r warning=F}
+p <- ggplot() +
+  geom_polygon(data = plotData, aes(x = long, y = lat, group = group,fill = rand), color ="black", size = 0.25) +
+  coord_map()+theme_set(theme_bw())+
+  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
+        axis.text.y=element_blank(),axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
+  xlab("") + ylab("")+labs(title = "甘肃省")+
+  scale_fill_gradient2(low = "darkgreen", high = "red", mid = "yellow")+
+  guides(fill = guide_legend(keywidth = 1, keyheight = 1))
+
+ggsave(p, file = "map2.png", width = 5, height = 4.5, type = "cairo-png")
+print(p)
+```
+
+geom_map()制作地图
+```{r warning=F}
+ggplot(data, aes(map_id = id)) + 
+  geom_map(aes(fill = rand), map =tract) +
+  expand_limits(x = tract$long, y = tract$lat) +
+  coord_map()+
+  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
+     axis.text.y=element_blank(),axis.ticks=element_blank(),
+     axis.title.x=element_blank(),
+     axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
+  xlab("") + ylab("")+labs(title = "甘肃省")+
+  scale_fill_gradientn("发病率",breaks = c(0, 0.4, 0.8, 1),colours = c("green","yellow","red"),space = "Lab")
+  
+#scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
+```
+
+ggmap包，get_map函数用于获取地图可基于位置名称和经度度获取地图非矢量图片，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
+
+Center：get_googlemap的函數。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函數，有'normal'、'panel'和'device'三種可以選
+```{r}
+BeijinMap <-get_map(location = 'beijin', zoom = 12,maptype='roadmap')
+ggmap(BeijinMap,extent='device')
+#获得定中心的经纬度坐标
+bnu<-"BeiJing Normal University"
+geocode(bnu)
+
+webpage <-'http://data.earthquake.cn/datashare/globeEarthquake_csn.html'
+tables <- readHTMLTable(webpage,stringsAsFactors = FALSE)
+raw <- tables[[6]]
+data <- raw[-1,c('发震日期','纬度(°)','经度(°)')]
+names(data) <- c('date','lan','lon')
+data$lan <- as.numeric(data$lan)
+data$lon <- as.numeric(data$lon)
+data$date <- as.Date(data$date,  "%Y-%m-%d")
+
+ggmap(get_googlemap(center = 'china', zoom=4,maptype='terrain'),extent='device')+
+geom_point(data=data,aes(x=lon,y=lan),colour = 'red',alpha=0.7)+
+
+stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),
+                   size=2,bins=4,data=data,geom='polygon')+
+                       theme(legend.position = "none")
+
+ggmap(get_googlemap(center = 'beijin', zoom=12,maptype='terrain'),extent='device')
+```
+
+
+
