@@ -30,7 +30,7 @@ library(XML)
 # 读取地理信息数据
 city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
 # 将数据转为数据框
-gpclibPermit()
+gpclibPermit()  #install.packages("gpclib", type = "source")
 tract <- fortify(city,region="CNTY_CODE")
 
 #发病数据
@@ -85,33 +85,45 @@ ggplot(data, aes(map_id = id)) +
 #scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
 ```
 
-ggmap包，get_map函数用于获取地图可基于位置名称和经度度获取地图非矢量图片，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
+ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
 
-Center：get_googlemap的函數。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函數，有'normal'、'panel'和'device'三種可以選
-```{r}
+Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
+```{r warning=F}
+#由于goole的API被封，国内需要使用代理服务器完成访问
 BeijinMap <-get_map(location = 'beijin', zoom = 12,maptype='roadmap')
 ggmap(BeijinMap,extent='device')
-#获得定中心的经纬度坐标
-bnu<-"BeiJing Normal University"
-geocode(bnu)
 
-webpage <-'http://data.earthquake.cn/datashare/globeEarthquake_csn.html'
-tables <- readHTMLTable(webpage,stringsAsFactors = FALSE)
-raw <- tables[[6]]
-data <- raw[-1,c('发震日期','纬度(°)','经度(°)')]
-names(data) <- c('date','lan','lon')
+#获得定中心的经纬度坐标
+geocode("BeiJing Normal University")
+```
+
+例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
+```{r warning=F}
+data <- read.csv("data.csv",header = T,stringsAsFactors = F)
 data$lan <- as.numeric(data$lan)
 data$lon <- as.numeric(data$lon)
 data$date <- as.Date(data$date,  "%Y-%m-%d")
 
-ggmap(get_googlemap(center = 'china', zoom=4,maptype='terrain'),extent='device')+
+ggmap(get_googlemap(center = 'gansu', zoom=6,maptype='roadmap'),extent='device')+
 geom_point(data=data,aes(x=lon,y=lan),colour = 'red',alpha=0.7)+
-
 stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),
                    size=2,bins=4,data=data,geom='polygon')+
                        theme(legend.position = "none")
+```
 
-ggmap(get_googlemap(center = 'beijin', zoom=12,maptype='terrain'),extent='device')
+```{r eval=F}
+# 为了生成动画，先准备好一个绘图函数
+plotfunc <- function(x) {
+    df <- subset(data,date <= x)
+    df$lan <- as.numeric(df$lan)
+    df$lon <- as.numeric(df$lon)
+    p <- ggmap(get_googlemap(center ='gansu',zoom=8,maptype='roadmap'),,extent='device')+
+        geom_point(data=df,aes(x=lon,y=lan),colour = 'red',alpha=0.7)
+}
+# 获取地震的日期
+time <- sort(unique(data$date))
+# 生成并保存动画
+saveHTML(for( i in time) print(plotfunc(i))) #用getwd()查看目录，此目录下有生成html文件
 ```
 
 
