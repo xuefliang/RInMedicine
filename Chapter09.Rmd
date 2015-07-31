@@ -94,7 +94,14 @@ BeijinMap <-get_map(location = 'beijin', zoom = 12,maptype='roadmap')
 ggmap(BeijinMap,extent='device')
 
 #获得定中心的经纬度坐标
-geocode("BeiJing Normal University")
+geocode("Peking University")
+
+#绘制北京大学地图
+baylor <- "Peking university"
+qmap(baylor, zoom = 14)
+
+#绘制基于OpenStreetMaps数据的北京大学地图
+qmap(baylor, zoom = 14,source = "osm")
 ```
 
 例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
