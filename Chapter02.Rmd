@@ -14,6 +14,7 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ```{r include=FALSE}
 library(fitdistrplus)
 library(CircStats)
+library(ggplot2)
 ```
 
 如果给定一种概率分布，通常会有四类计算问题：计算其概率密度density(d);计算其概率分布probability(p);计算其百分位数quantile(q);随机数模拟random(r),R中常见的函数、分布和参数如下
@@ -45,37 +46,55 @@ wilcox	      Wilcoxon rank sum    m,n
 概率密度函数
 $$f(x)=\frac{1}{\sqrt{2\pi}\sigma}e^{-\frac{(x-\mu)^2}{2\sigma ^2}}$$
 ```{r}
-set.seed(1)
-x <- seq(-5,5,length.out=100)
-y <- dnorm(x,0,1)
+fun1 <- function(x){
+  y <- dnorm(x,mean = 0,sd = 1)
+  return(y)
+}
   
-plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Normal Density Distribution")
+fun2 <- function(x){
+  y <- dnorm(x,mean = 0,sd = 0.5)
+  return(y)
+} 
 
-lines(x,dnorm(x,0,0.5),col="green")
-lines(x,dnorm(x,0,2),col="blue")
-lines(x,dnorm(x,-2,1),col="orange")
+fun3 <- function(x){
+  y <- dnorm(x,mean = 0,sd = 2)
+  return(y)
+} 
 
-legend("topright",legend=paste("m=",c(0,0,0,-2)," sd=", c(1,0.5,2,1)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x = -5:5, g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x = -5:5, g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x = -5:5, g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Normal Density Distribution")
 ```
 
 累积分布函数
 $$F(x;u,\sigma )=\frac{1}{\sqrt{2\pi}\sigma} \int_{-\infty }^{x}exp(-\frac{(t-u)^2}{2\sigma ^2})dt$$
 ```{r}
-set.seed(1)
-x <- seq(-5,5,length.out=100)
-y <- pnorm(x,0,1)
+fun1 <- function(x){
+  y <- pnorm(x,mean = 0,sd = 1)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- pnorm(x,mean = 0,sd = 0.5)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Normal Cumulative Distribution")
+fun3 <- function(x){
+  y <- pnorm(x,mean = 0,sd = 2)
+  return(y)
+} 
 
-lines(x,pnorm(x,0,0.5),col="green")
-lines(x,pnorm(x,0,2),col="blue")
-lines(x,pnorm(x,-2,1),col="orange")
-
-legend("bottomright",legend=paste("m=",c(0,0,0,-2)," sd=", c(1,0.5,2,1)), lwd=1,col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x = -5:5, g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x = -5:5, g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x = -5:5, g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Normal Cumulative Distribution")
 ```
 分布检验
 Shapiro-Wilk正态分布检验: 用来检验是否数据符合正态分布，类似于线性回归的方法一样，是检验其于回归曲线的残差。该方法推荐在样本量很小的时候使用，样本在3到5000之间。该检验原假设为$H_{0}$:数据集符合正态分布，统计量W为：
@@ -106,36 +125,56 @@ $$f(x;\lambda)=\left\{\begin{matrix} \lambda e^{-\lambda x},x>=0
 \end{matrix}\right.$$
 其中$\lambda$> 0是分布的一个参数，常被称为率参数（rate parameter）。即每单位时间发生该事件的次数。指数分布的区间是$[0,\infty)$。 如果一个随机变量X 呈指数分布，则可以写作：$X$ ~ Exponential（$\lambda$）。
 ```{r}
-set.seed(1)
-x<-seq(-1,2,length.out=100)
-y<-dexp(x,0.5)
+fun1 <- function(x){
+  y <- dexp(x,0.5)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- dexp(x,1)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,2),ylim=c(0,5),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Exponential Density Distribution")
-lines(x,dexp(x,1),col="green")
-lines(x,dexp(x,2),col="blue")
-lines(x,dexp(x,5),col="orange")
+fun3 <- function(x){
+  y <- dexp(x,2)
+  return(y)
+} 
 
-legend("topright",legend=paste("rate=",c(.5, 1, 2,5)), lwd=1,col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,3,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,3,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,3,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Exponential Density Distribution")
 ```
 累积分布函数
 $$F(x;\lambda)=\left\{\begin{matrix} 1-e^{\lambda x},x>=0
  &  & \\ 0,x<0
 \end{matrix}\right.$$
 ```{r}
-set.seed(1)
-x<-seq(-1,2,length.out=100)
-y<-pexp(x,0.5)
+fun1 <- function(x){
+  y <- pexp(x,0.5)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- pexp(x,1)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,2),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Exponential Cumulative Distribution Function")
-lines(x,pexp(x,1),col="green")
-lines(x,pexp(x,2),col="blue")
-lines(x,pexp(x,5),col="orange")
+fun3 <- function(x){
+  y <- pexp(x,2)
+  return(y)
+} 
 
-legend("bottomright",legend=paste("rate=",c(.5, 1, 2,5)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,3,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,3,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,3,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Exponential Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -157,38 +196,54 @@ $$\Gamma(x)=\int_{0}^{\infty }t^{x-1}e^{-t}dt$$
 概率密度函数
 $$f(x)=x^{k-1}\frac{exp(-x/\theta )}{\Gamma (k)\theta^{k}}$$
 ```{r}
-set.seed(1)
-x<-seq(0,10,length.out=100)
-y<-dgamma(x,1,2)
+fun1 <- function(x){
+  y <- dgamma(x,1,2)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- dgamma(x,2,2)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,10),ylim=c(0,2),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Gamma Density Distribution")
+fun3 <- function(x){
+  y <- dgamma(x,5,1)
+  return(y)
+} 
 
-lines(x,dgamma(x,2,2),col="green")
-lines(x,dgamma(x,3,2),col="blue")
-lines(x,dgamma(x,5,1),col="orange")
-lines(x,dgamma(x,9,1),col="black")
-
-legend("topright",legend=paste("shape=",c(1,2,3,5,9)," rate=", c(2,2,2,1,1)), lwd=1, col=c("red", "green","blue","orange","black"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Gamma Density Distribution")
 ```
 累积分布函数
 $$f(x)=\frac{\gamma (k,x/\theta )}{\Gamma (k)}$$
 ```{r}
-set.seed(1)
-x<-seq(0,10,length.out=100)
-y<-pgamma(x,1,2)
+fun1 <- function(x){
+  y <- pgamma(x,1,2)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- pgamma(x,2,2)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Gamma Cumulative Distribution Function")
+fun3 <- function(x){
+  y <- pgamma(x,5,1)
+  return(y)
+} 
 
-lines(x,pgamma(x,2,2),col="green")
-lines(x,pgamma(x,3,2),col="blue")
-lines(x,pgamma(x,5,1),col="orange")
-lines(x,pgamma(x,9,1),col="black")
-
-legend("bottomright",legend=paste("shape=",c(1,2,3,5,9)," rate=", c(2,2,2,1,1)), lwd=1, col=c("red", "green","blue","orange","black"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Gamma Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -217,36 +272,54 @@ $$f(x;\lambda,k)=\left\{\begin{matrix}
  & 
 \end{matrix}\right.$$
 ```{r}
-set.seed(1)
-x<- seq(0, 2.5, length.out=1000)
-y<- dweibull(x, 0.5)
+fun1 <- function(x){
+  y <- dweibull(x,0.5)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- dweibull(x,1)
+  return(y)
+} 
 
-plot(x, y, type="l", col="blue",xlim=c(0, 2.5),ylim=c(0, 6),
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Weibull Density Distribution")
+fun3 <- function(x){
+  y <- dweibull(x,5)
+  return(y)
+} 
 
-lines(x, dweibull(x, 1), type="l", col="red")
-lines(x, dweibull(x, 1.5), type="l", col="magenta")
-lines(x, dweibull(x, 5), type="l", col="green")
-lines(x, dweibull(x, 15), type="l", col="purple")
-legend("topright", legend=paste("shape =", c(.5, 1, 1.5, 5, 15)), lwd=1,col=c("blue", "red", "magenta", "green","purple"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,2.5,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,2.5,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,2.5,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Weibull Density Distribution")
 ```
 累积分布函数
 $$ F(x)=1-e^{-(x/\lambda)^{k}}$$
 ```{r}
-set.seed(1)
-x<- seq(0, 2.5, length.out=1000)
-y<- pweibull(x, 0.5)
+fun1 <- function(x){
+  y <- pweibull(x,0.5)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- pweibull(x,1)
+  return(y)
+} 
 
-plot(x, y, type="l", col="blue",xlim=c(0, 2.5),ylim=c(0, 1.2),
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Weibull Cumulative Distribution Function")
+fun3 <- function(x){
+  y <- pweibull(x,5)
+  return(y)
+} 
 
-lines(x, pweibull(x, 1), type="l", col="red")
-lines(x, pweibull(x, 1.5), type="l", col="magenta")
-lines(x, pweibull(x, 5), type="l", col="green")
-lines(x, pweibull(x, 15), type="l", col="purple")
-legend("bottomright", legend=paste("shape =", c(.5, 1, 1.5, 5, 15)), lwd=1, col=c("blue", "red", "magenta", "green","purple"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,2.5,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,2.5,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,2.5,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Weibull Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -268,36 +341,55 @@ F分布的倒数性质：$F\alpha,df1,df2=1/F1-\alpha,df1,df2[1]$
 $$f(x)=\frac{\sqrt{\frac{d1x^{d1}d2^{d2}}{(d1x+d2)^{d1+d2}}}}{xB(\frac{d1}{2},\frac{d2}{2})}$$
 B是Beta函数(beta function)
 ```{r}
-x<-seq(0,5,length.out=1000)
-y<-df(x,1,1,0)
+fun1 <- function(x){
+  y <- -df(x,1,1,0)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- -df(x,1,1,2)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,5),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The F Density Distribution")
+fun3 <- function(x){
+  y <- -df(x,2,2,2)
+  return(y)
+} 
 
-lines(x,df(x,1,1,2),col="green")
-lines(x,df(x,2,2,2),col="blue")
-lines(x,df(x,2,4,4),col="orange")
-
-legend("topright",legend=paste("df1=",c(1,1,2,2),"df2=",c(1,1,2,4)," ncp=", c(0,2,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,5,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,5,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,5,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The F Density Distribution")
 ```
 累积分布函数
 $$F(x)=I\frac{d1x}{d1x+d2}(d1/2,d2/2)$$
 I是不完全Beta函数
 ```{r}
-set.seed(1)
-x<-seq(0,5,length.out=1000)
-y<-df(x,1,1,0)
+fun1 <- function(x){
+  y <- -pf(x,1,1,0)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <- -pf(x,1,1,2)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,5),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The F Cumulative Distribution Function")
+fun3 <- function(x){
+  y <- -pf(x,2,2,2)
+  return(y)
+} 
 
-lines(x,pf(x,1,1,2),col="green")
-lines(x,pf(x,2,2,2),col="blue")
-lines(x,pf(x,2,4,4),col="orange")
-
-legend("topright",legend=paste("df1=",c(1,1,2,2),"df2=",c(1,1,2,4)," ncp=", c(0,2,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,5,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,5,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,5,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The F Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -316,38 +408,56 @@ $$f(x)=\frac{\Gamma ((\nu+1)/2)}{\sqrt{\nu \pi }\Gamma (\nu/2)(1+x^{2}/\nu)^{(v1
 $v$ 等于n − 1。 T的分布称为t-分布。参数$\nu$ 一般被称为自由度。
 $\gamma$是伽玛函数。
 ```{r}
-set.seed(1)
-x<-seq(-5,5,length.out=1000)
-y<-dt(x,1,0)
+fun1 <- function(x){
+  y <-dt(x,1,0)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-dt(x,5,0)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,0.5),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The T Density Distribution")
+fun3 <- function(x){
+  y <-dt(x,5,2)
+  return(y)
+} 
 
-lines(x,dt(x,5,0),col="green")
-lines(x,dt(x,5,2),col="blue")
-lines(x,dt(x,50,4),col="orange")
-
-legend("topleft",legend=paste("df=",c(1,5,5,50)," ncp=", c(0,0,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(-5,5,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(-5,5,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(-5,5,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The T Density Distribution")
 ```
 累积分布函数
 $$f(x)=\frac{1}{2}+\frac{x\Gamma((\nu+1)/2)_{2}F_{1}(\frac{1}{2},(\nu+1)/2;\frac{3}{2};-\frac{x^{2}}{v})}{\sqrt{\nu \pi }\Gamma (\nu/2)}$$
 $\nu$等于n − 1。 T的分布称为t-分布。参数$\nu$一般被称为自由度。
 $\gamma$是伽玛函数。
 ```{r}
-set.seed(1)
-x<-seq(-5,5,length.out=1000)
-y<-pt(x,1,0)
+fun1 <- function(x){
+  y <-pt(x,1,0)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-pt(x,5,0)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(-5,5),ylim=c(0,0.5),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The T Cumulative Distribution Function")
+fun3 <- function(x){
+  y <-pt(x,5,2)
+  return(y)
+} 
 
-lines(x,pt(x,5,0),col="green")
-lines(x,pt(x,5,2),col="blue")
-lines(x,pt(x,50,4),col="orange")
-
-legend("topleft",legend=paste("df=",c(1,5,5,50)," ncp=", c(0,0,2,4)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(-5,5,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(-5,5,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(-5,5,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The T Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -367,39 +477,55 @@ $$f(x)=\frac{1}{B(\alpha,\beta )}(x^{\alpha-1})(1-x)^{\beta-1}$$
 随机变量X服从参数为$\alpha,\beta$，服从Beta分布
 $\gamma$是伽玛函数
 ```{r}
-set.seed(1)
-x<-seq(-5,5,length.out=10000)
-y<-dbeta(x,0.5,0.5)
+fun1 <- function(x){
+  y <-dbeta(x,0.5,0.5)
+  return(y)
+}
   
-plot(x,y,col="red",xlim=c(0,1),ylim=c(0,6),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Beta Density Distribution")
+fun2 <- function(x){
+  y <-dbeta(x,5,1)
+  return(y)
+} 
 
-lines(x,dbeta(x,5,1),col="green")
-lines(x,dbeta(x,1,3),col="blue")
-lines(x,dbeta(x,2,2),col="orange")
-lines(x,dbeta(x,2,5),col="black")
+fun3 <- function(x){
+  y <-dbeta(x,1,3)
+  return(y)
+} 
 
-legend("top",legend=paste("a=",c(.5,5,1,2,2)," b=", c(.5,1,3,2,5)), lwd=1,col=c("red", "green","blue","orange","black"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,1,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,1,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,1,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Beta Density Distribution")
 ```
 累积分布函数
 $$F(x;\alpha,\beta )=\frac{B_{x}(\alpha,\beta)}{B(\alpha,\beta)}=I_{x}(\alpha,\beta)$$
 I是正则不完全Beta函数
 ```{r}
-set.seed(1)
-x<-seq(-5,5,length.out=10000)
-y<-pbeta(x,0.5,0.5)
+fun1 <- function(x){
+  y <-pbeta(x,0.5,0.5)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-pbeta(x,5,1)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,1),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Beta Cumulative Distribution Function")
+fun3 <- function(x){
+  y <-pbeta(x,1,3)
+  return(y)
+} 
 
-lines(x,pbeta(x,5,1),col="green")
-lines(x,pbeta(x,1,3),col="blue")
-lines(x,pbeta(x,2,2),col="orange")
-lines(x,pbeta(x,2,5),col="black")
-
-legend("topleft",legend=paste("a=",c(.5,5,1,2,2)," b=", c(.5,1,3,2,5)), lwd=1,col=c("red", "green","blue","orange","black"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,1,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,1,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,1,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Beta Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -419,37 +545,55 @@ ks.test(S, "pbeta",1,2)
 $$f_{k}(x)=\frac{(1/2)^{k/2}}{\Gamma (k/2)}x^{k/2-1}e^{-x/2}$$
 $\gamma$是伽玛函数
 ```{r}
-set.seed(1)
-x<-seq(0,10,length.out=1000)
-y<-dchisq(x,1)
+fun1 <- function(x){
+  y <-dchisq(x,1)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-dchisq(x,2)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,5),ylim=c(0,2),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Chisq Density Distribution")
+fun3 <- function(x){
+  y <-dchisq(x,3)
+  return(y)
+} 
 
-lines(x,dchisq(x,2),col="green")
-lines(x,dchisq(x,3),col="blue")
-lines(x,dchisq(x,10),col="orange")
-
-legend("topright",legend=paste("df=",c(1,2,3,10)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Chisq Density Distribution")
 ```
 累积分布函数
 $$f_{k}(x)=\frac{\gamma (k/2,x/2)}{\Gamma (k/2)}$$
 $\gamma$是伽玛函数
 ```{r}
-set.seed(1)
-x<-seq(0,10,length.out=1000)
-y<-pchisq(x,1)
+fun1 <- function(x){
+  y <-pchisq(x,1)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-pchisq(x,2)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Chisq Cumulative Distribution Function")
+fun3 <- function(x){
+  y <-pchisq(x,3)
+  return(y)
+} 
 
-lines(x,pchisq(x,2),col="green")
-lines(x,pchisq(x,3),col="blue")
-lines(x,pchisq(x,10),col="orange")
-
-legend("topleft",legend=paste("df=",c(1,2,3,10)), lwd=1, col=c("red", "green","blue","orange"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Chisq Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
@@ -469,19 +613,28 @@ ks.test(S, "pchisq",1)
  & 
 \end{matrix}\right.$$
 ```{r}
-set.seed(1)
-x<-seq(0,10,length.out=1000)
-y<-dunif(x,0,1)
+fun1 <- function(x){
+  y <-dunif(x,0,1)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-dunif(x,0,0.5)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1.2),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Uniform Density Distribution")
-lines(x,dnorm(x,0,0.5),col="green")
-lines(x,dnorm(x,0,2),col="blue")
-lines(x,dnorm(x,-2,1),col="orange")
-lines(x,dnorm(x,4,2),col="purple")
+fun3 <- function(x){
+  y <-dunif(x,-3,1)
+  return(y)
+} 
 
-legend("topright",legend=paste("m=",c(0,0,0,-2,4)," sd=", c(1,0.5,2,1,2)), lwd=1, col=c("red", "green","blue","orange","purple"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Uniform Density Distribution")
 ```
 累积分布函数
 $$F(x)\left\{\begin{matrix} 0 \quad for \quad x< a
@@ -490,19 +643,28 @@ $$F(x)\left\{\begin{matrix} 0 \quad for \quad x< a
  & 
 \end{matrix}\right.$$
 ```{r}
-set.seed(1)
-x<-seq(0,10,length.out=1000)
-y<-punif(x,0,1)
+fun1 <- function(x){
+  y <-punif(x,0,1)
+  return(y)
+}
+  
+fun2 <- function(x){
+  y <-punif(x,0,0.5)
+  return(y)
+} 
 
-plot(x,y,col="red",xlim=c(0,10),ylim=c(0,1.2),type='l',
-     xaxs="i", yaxs="i",ylab='density',xlab='',
-     main="The Uniform Cumulative Distribution Function")
+fun3 <- function(x){
+  y <-punif(x,-3,1)
+  return(y)
+} 
 
-lines(x,punif(x,0,0.5),col="green")
-lines(x,punif(x,0,2),col="blue")
-lines(x,punif(x,-2,1),col="orange")
-
-legend("bottomright",legend=paste("m=",c(0,0,0,-2)," sd=", c(1,0.5,2,1)), lwd=1, col=c("red", "green","blue","orange","purple"))
+ggplot(NULL, aes(x=x, colour = g)) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(1)), fun = fun1) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(2)), fun = fun2) +
+  stat_function(data = data.frame(x=seq(0,10,length.out=100), g = factor(3)), fun = fun3) +
+  scale_colour_manual(values = c("red", "green","blue"), labels = c("red", "green","blue"))+
+  ylab(label = "density")+
+  labs(title="The Uniform Cumulative Distribution Function")
 ```
 分布检验
 Kolmogorov-Smirnov连续分布检验:检验单一样本是不是服从某一预先假设的特定分布的方法。以样本数据的累计频数分布与特定理论分布比较，若两者间的差距很小，则推论该样本取自某特定分布族。该检验原假设为$H_{0}$:数据集符合指数分布，$H_{1}$:样本所来自的总体分布不符合指数分布。令$F0(x)$表示预先假设的理论分布，$Fn(x)$表示随机样本的累计概率(频率)函数.
