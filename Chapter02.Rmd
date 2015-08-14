@@ -683,6 +683,36 @@ pnorm(85,65,10,lower.tail = F) #pnorm()函数是正态分布的分布函数，�
 ```
 解剖学成绩在85分以上的考生概率为`r round(pnorm(85,65,10,lower.tail = F) ,2)`
 
+##Poisson分布
+Poisson分布常用于描述单位时间、单位平面或单位空间中罕见事件的随机分布规律，Poisson分布的均数和方差相等。概率密度函数为
+$$f(x)=\frac{e^{-\lambda}\lambda^x}{x!},x\in {0,1,2,3,...}$$
+
+```{r warning=F}
+ggplot(data.frame(x=c(0:10)),aes(x=x))+
+  stat_function(fun=dpois,colour="red",args = list(lambda=1))+
+  stat_function(fun=dpois,colour="green",args = list(lambda=2))+
+  stat_function(fun=dpois,colour="blue",args = list(lambda=3))+
+  ylab(label = "density")+
+  labs(title="The Poisson Density Distribution")
+```
+
+累积分布函数
+$$f(x)=e^{-\lambda}\sum_{i=0}^{|x|}\frac{\lambda^{i}}{i!},x\in {0,1,2,3,...}$$
+```{r warning=F}
+ggplot(data.frame(x= seq(-0.01, 5, 0.01)),aes(x=x))+
+  stat_function(fun=ppois,colour="red",args = list(lambda=1))+
+  stat_function(fun=ppois,colour="green",args = list(lambda=2))+
+  stat_function(fun=ppois,colour="blue",args = list(lambda=3))+
+  ylab(label = "density")+
+  labs(title="The Poisson Cumulative Distribution Function")
+```
+
+例 随机变量X服从参数为3的Poisson分布，求概率P{x=6}.
+```{r}
+dpois(6,3)
+```
+参数为3的Poisson分布在X=6时的概率为`r dpois(6,3)`。
+
 ##数据分布直接的关系
 
 ![常见数据分布之间的关系](./distribution_chart.jpg)
