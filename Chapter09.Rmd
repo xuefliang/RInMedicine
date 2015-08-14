@@ -22,6 +22,8 @@ library(magrittr)
 library(rgdal)
 library(animation)
 library(XML)
+library(RCurl)
+library(plyr)
 ```
 
 流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
@@ -85,6 +87,97 @@ ggplot(data, aes(map_id = id)) +
 #scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
 ```
 
+点密度地图
+```{r  warning=F}
+myURL <- "https://en.wikipedia.org/wiki/United_States_presidential_election,_2012"
+tabs <- getURL(myURL)
+allTables <- readHTMLTable(tabs)
+
+#library(httr)
+#tabs <- GET(myURL)
+#allTables <- readHTMLTable(rawToChar(tabs$content), stringsAsFactors = F)
+#stateTable = readHTMLTable(readLines(myURL, encoding = "UTF-8"), which = 14, header = T)
+
+#str(allTables)  # Look at the allTables object to find the specific table we want
+stateTable <- allTables[[14]]  # We want the 14th table in the list (maybe 13th?)
+#head(stateTable)
+
+# Clean up:
+stateTable <- stateTable[2:(nrow(stateTable)-1), ]  # Drop summary lines
+stateTable <- rename(stateTable,c("V1"="State","V3"="Obama","V6"="Romney","V20"="Total"))
+stateTable$State <- do.call(rbind, strsplit(as.character(stateTable$State), "\\["))[, 1]
+stateTable$State[stateTable$State == "District of ColumbiaDistrict of Columbia"] <- "District of Columbia"
+stateTable$State <-gsub(",", "",stateTable$State)
+whichAreNumeric <- colMeans(apply(stateTable, 2, function(cc){
+  regexpr(",", cc) != -1})) > 0  #判断是否为数字列
+stateTable[, whichAreNumeric] <- apply(stateTable[, whichAreNumeric], 2, function(cc){
+  as.numeric(gsub(",", "", cc))})  #删除数字列中的逗号
+
+new_theme_empty <- theme_bw()  # Create our own, mostly blank, theme
+new_theme_empty$line <- element_blank()
+new_theme_empty$rect <- element_blank()
+new_theme_empty$strip.text <- element_blank()
+new_theme_empty$axis.text <- element_blank()
+#new_theme_empty$axis.title <- element_blank()
+new_theme_empty$plot.margin <- structure(c(0, 0, -1, -1), unit = "lines",
+                                         valid.unit = 3L, class = "unit")
+
+stateShapes <- map("state", plot = FALSE, fill = TRUE)
+stateShapes <- fortify(stateShapes)  # 转为数据框
+
+### New stuff begins here ###
+pointCollector <- list()
+perNCapita <- 1000
+
+for(ss in stateTable$State){
+  print(ss)
+  stateShapeFrame <- stateShapes[stateShapes$region == tolower(ss), ]
+  if(nrow(stateShapeFrame) < 1){next()}
+  statePoly <- Polygons(lapply(split(stateShapeFrame[, c("long", "lat")],
+                                     stateShapeFrame$group), Polygon), ID = "b")
+  nDems <- ceiling(stateTable[stateTable$State == ss, "Obama"] / perNCapita)
+  nReps <- ceiling(stateTable[stateTable$State == ss, "Romney"] / perNCapita)
+  nOther <- ceiling(with(stateTable[stateTable$State == ss, ],
+                         Total - Romney - Obama) / perNCapita)
+  
+  pDems <- data.frame(spsample(statePoly, nDems, type = "random")@coords,
+                      Vote = "Obama") #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
+  pReps <- data.frame(spsample(statePoly, nReps, type = "random")@coords,
+                      Vote = "Romney")
+  if(nOther < 1){
+    pOther <- data.frame(x = NULL, y = NULL, Vote = NULL)
+  } else {
+    pOther <- data.frame(spsample(statePoly, nOther, type = "random")@coords,
+                         Vote = "Other")
+  }
+  allPoints <- data.frame(State = ss, rbind(pDems, pReps, pOther))
+  pointCollector[[ss]] <- allPoints
+}
+
+pointFrame <- do.call(rbind, pointCollector)
+# Randomize, so we don't overplot "Other" on top of "Romney" on top of "Obama."
+pointFrame <- pointFrame[sample(1:nrow(pointFrame), nrow(pointFrame)), ]
+#head(pointFrame)
+
+mapPlot <- ggplot(stateShapes)
+mapPlot <- mapPlot + geom_point(data = pointFrame,
+                                aes(x = x, y = y, colour = Vote),
+                                shape = ".",
+                                alpha = 1/2)
+mapPlot <- mapPlot + geom_polygon(aes(x = long, y = lat, group = group),
+                                  colour = "BLACK", fill = "transparent")
+mapPlot <- mapPlot + coord_map(project="conic", lat0 = 30)
+mapPlot <- mapPlot + new_theme_empty
+mapPlot <- mapPlot + scale_colour_manual(values = c("blue", "red", "green"))
+mapPlot <- mapPlot + ggtitle("2012 Election Returns by State")
+mapPlot <- mapPlot + ylab("")
+mapPlot <- mapPlot + xlab(paste("Each dot represents ",
+                                perNCapita, " voters.", sep = ""))
+mapPlot <- mapPlot + guides(colour = guide_legend(override.aes =
+                                                    list(shape = 19, alpha = 1)))
+print(mapPlot)
+```
+
 ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
 
 Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
@@ -127,7 +220,7 @@ plotfunc <- function(x) {
     p <- ggmap(get_googlemap(center ='gansu',zoom=8,maptype='roadmap'),,extent='device')+
         geom_point(data=df,aes(x=lon,y=lan),colour = 'red',alpha=0.7)
 }
-# 获取地震的日期
+# 获取日期
 time <- sort(unique(data$date))
 # 生成并保存动画
 saveHTML(for( i in time) print(plotfunc(i))) #用getwd()查看目录，此目录下有生成html文件
