@@ -89,31 +89,42 @@ ggplot(data, aes(map_id = id)) +
 
 点密度地图
 ```{r  warning=F}
-myURL <- "https://en.wikipedia.org/wiki/United_States_presidential_election,_2012"
-tabs <- getURL(myURL)
-allTables <- readHTMLTable(tabs)
+tract$group <- tract$id
+tract <- rbind(filter(tract,id=="62290000"),filter(tract,id=="62300000"))
 
-#library(httr)
-#tabs <- GET(myURL)
-#allTables <- readHTMLTable(rawToChar(tabs$content), stringsAsFactors = F)
-#stateTable = readHTMLTable(readLines(myURL, encoding = "UTF-8"), which = 14, header = T)
 
-#str(allTables)  # Look at the allTables object to find the specific table we want
-stateTable <- allTables[[14]]  # We want the 14th table in the list (maybe 13th?)
-#head(stateTable)
+#发病数据
+data$id <- as.character(data$id)
+data$A <- round(data$rand*1000)
+data$B <- round(data$rand*100*4)
 
-# Clean up:
-stateTable <- stateTable[2:(nrow(stateTable)-1), ]  # Drop summary lines
-stateTable <- rename(stateTable,c("V1"="State","V3"="Obama","V6"="Romney","V20"="Total"))
-stateTable$State <- do.call(rbind, strsplit(as.character(stateTable$State), "\\["))[, 1]
-stateTable$State[stateTable$State == "District of ColumbiaDistrict of Columbia"] <- "District of Columbia"
-stateTable$State <-gsub(",", "",stateTable$State)
-whichAreNumeric <- colMeans(apply(stateTable, 2, function(cc){
-  regexpr(",", cc) != -1})) > 0  #判断是否为数字列
-stateTable[, whichAreNumeric] <- apply(stateTable[, whichAreNumeric], 2, function(cc){
-  as.numeric(gsub(",", "", cc))})  #删除数字列中的逗号
+plotData <- left_join(tract, data)
+pointCollector <- list()
+perNCapita <- 1
 
-new_theme_empty <- theme_bw()  # Create our own, mostly blank, theme
+for(ss in tract$id){
+  #print(ss)
+  stateShapeFrame <- tract[tract$id == ss, ]
+  if(nrow(stateShapeFrame) < 1){next()}
+  statePoly <- Polygons(lapply(split(stateShapeFrame[, c("long", "lat")],
+                                     stateShapeFrame$group), Polygon), ID = "b")
+  nA <- ceiling(data[data$id == ss, "A"]/perNCapita)
+  nB <- ceiling(data[data$id == ss, "B"]/perNCapita)
+  
+  pA <- data.frame(spsample(statePoly, nA, type = "random")@coords,
+                   Vote = "A") #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
+  pB <- data.frame(spsample(statePoly, nB, type = "random")@coords,
+                   Vote = "B")
+  
+  allPoints <- data.frame(State = ss, rbind(pA, pB))
+  pointCollector[[ss]] <- allPoints
+}
+
+pointFrame <- do.call(rbind, pointCollector)
+pointFrame <- pointFrame[sample(1:nrow(pointFrame), nrow(pointFrame)), ]
+#head(pointFrame)
+
+new_theme_empty <- theme_bw()  # 创建自己的主题
 new_theme_empty$line <- element_blank()
 new_theme_empty$rect <- element_blank()
 new_theme_empty$strip.text <- element_blank()
@@ -122,60 +133,16 @@ new_theme_empty$axis.text <- element_blank()
 new_theme_empty$plot.margin <- structure(c(0, 0, -1, -1), unit = "lines",
                                          valid.unit = 3L, class = "unit")
 
-stateShapes <- map("state", plot = FALSE, fill = TRUE)
-stateShapes <- fortify(stateShapes)  # 转为数据框
-
-### New stuff begins here ###
-pointCollector <- list()
-perNCapita <- 1000
-
-for(ss in stateTable$State){
-  print(ss)
-  stateShapeFrame <- stateShapes[stateShapes$region == tolower(ss), ]
-  if(nrow(stateShapeFrame) < 1){next()}
-  statePoly <- Polygons(lapply(split(stateShapeFrame[, c("long", "lat")],
-                                     stateShapeFrame$group), Polygon), ID = "b")
-  nDems <- ceiling(stateTable[stateTable$State == ss, "Obama"] / perNCapita)
-  nReps <- ceiling(stateTable[stateTable$State == ss, "Romney"] / perNCapita)
-  nOther <- ceiling(with(stateTable[stateTable$State == ss, ],
-                         Total - Romney - Obama) / perNCapita)
-  
-  pDems <- data.frame(spsample(statePoly, nDems, type = "random")@coords,
-                      Vote = "Obama") #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
-  pReps <- data.frame(spsample(statePoly, nReps, type = "random")@coords,
-                      Vote = "Romney")
-  if(nOther < 1){
-    pOther <- data.frame(x = NULL, y = NULL, Vote = NULL)
-  } else {
-    pOther <- data.frame(spsample(statePoly, nOther, type = "random")@coords,
-                         Vote = "Other")
-  }
-  allPoints <- data.frame(State = ss, rbind(pDems, pReps, pOther))
-  pointCollector[[ss]] <- allPoints
-}
-
-pointFrame <- do.call(rbind, pointCollector)
-# Randomize, so we don't overplot "Other" on top of "Romney" on top of "Obama."
-pointFrame <- pointFrame[sample(1:nrow(pointFrame), nrow(pointFrame)), ]
-#head(pointFrame)
-
-mapPlot <- ggplot(stateShapes)
-mapPlot <- mapPlot + geom_point(data = pointFrame,
-                                aes(x = x, y = y, colour = Vote),
-                                shape = ".",
-                                alpha = 1/2)
-mapPlot <- mapPlot + geom_polygon(aes(x = long, y = lat, group = group),
-                                  colour = "BLACK", fill = "transparent")
-mapPlot <- mapPlot + coord_map(project="conic", lat0 = 30)
-mapPlot <- mapPlot + new_theme_empty
-mapPlot <- mapPlot + scale_colour_manual(values = c("blue", "red", "green"))
-mapPlot <- mapPlot + ggtitle("2012 Election Returns by State")
-mapPlot <- mapPlot + ylab("")
-mapPlot <- mapPlot + xlab(paste("Each dot represents ",
-                                perNCapita, " voters.", sep = ""))
-mapPlot <- mapPlot + guides(colour = guide_legend(override.aes =
-                                                    list(shape = 19, alpha = 1)))
-print(mapPlot)
+ggplot(tract)+
+  geom_point(data = pointFrame,aes(x = x, y = y, colour = Vote),size=1)+
+  geom_polygon(aes(x = long, y = lat, group = group),colour = "BLACK", fill = "transparent")+
+  coord_map(project="conic", lat0 = 30)+
+  new_theme_empty+
+  scale_colour_manual(values = c("blue", "red"))+
+  ggtitle("Type by State")+
+  ylab("")+
+  xlab(paste("Each dot represents ",perNCapita, " Vote", sep = ""))+
+  guides(colour = guide_legend(override.aes =list(shape = 19, alpha = 1)))
 ```
 
 ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
