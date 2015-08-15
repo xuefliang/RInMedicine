@@ -166,16 +166,21 @@ qmap(baylor, zoom = 14,source = "osm")
 
 例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
 ```{r warning=F}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
 data <- read.csv("data.csv",header = T,stringsAsFactors = F)
 data$lan <- as.numeric(data$lan)
 data$lon <- as.numeric(data$lon)
 data$date <- as.Date(data$date,  "%Y-%m-%d")
 
-ggmap(get_googlemap(center = 'gansu', zoom=6,maptype='roadmap'),extent='device')+
+ggmap(get_googlemap(center = 'gansu', zoom=5,maptype='roadmap'),extent='device')+
+geom_polygon(data = tract, aes(x = long, y = lat, group = group),colour="black",fill='grey' ,alpha = 0.2)+
 geom_point(data=data,aes(x=lon,y=lan),colour = 'red',alpha=0.7)+
-stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),
-                   size=2,bins=4,data=data,geom='polygon')+
-                       theme(legend.position = "none")
+stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),size=2,bins=4,data=data,geom='polygon')+
+theme_nothing(legend = TRUE)+
+  coord_cartesian(xlim=c(90, 110), ylim=c(32, 43))
 ```
 
 ```{r eval=F}
