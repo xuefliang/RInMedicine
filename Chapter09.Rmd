@@ -145,6 +145,33 @@ ggplot(tract)+
   guides(colour = guide_legend(override.aes =list(shape = 19, alpha = 1)))
 ```
 
+spsample()方法速度较慢，可以dotsInPolys()方法提高作图的速度。
+```{r}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data$id <- as.character(data$id)
+data$CNTY_CODE <- as.integer(data$id)
+data$A <- round(data$rand*1000)
+data$B <- round(data$rand*100*4)
+
+plotDdata <- left_join(city@data, data)
+
+dots.A <- dotsInPolys(city, as.integer(plotDdata$A))
+dots.A$Vote <- "A"
+dots.B <- dotsInPolys(city, as.integer(plotDdata$B))
+dots.B$Vote <- "B"
+dots.all <- spRbind(dots.A, dots.B) 
+dots <- data.frame(coordinates(dots.all)[,1:2],Vote=dots.all$Vote)
+
+ggplot(tract, aes(x = long, y = lat)) + 
+  geom_polygon(aes(group = group), size=0.2, fill = "white") + 
+  coord_equal()+geom_point(data=dots, aes(x=x,y=y,colour=factor(Vote)), size=0.8)+
+  scale_colour_manual (values=c("blue", "orange")) 
+```
+
 ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
 
 Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
