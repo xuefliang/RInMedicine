@@ -1,0 +1,229 @@
+---
+title: "地图展示"
+author: "梁雪枫"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+
+```{r include=FALSE}
+library(maptools)
+library(ggplot2)
+library(mapproj)
+library(ggmap)
+library(dplyr)
+library(magrittr)
+library(rgdal)
+library(animation)
+library(XML)
+library(RCurl)
+library(plyr)
+```
+
+流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
+
+```{r}
+# 读取地理信息数据
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+# 将数据转为数据框
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+#发病数据
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data$id <- as.character(data$id)
+
+plotData <- left_join(tract, data)
+```
+
+地图数据查看及加工
+```{r}
+names(city)
+#Linux环境是UTF-8，需要iconv函数转化
+table(iconv(city$NAME, from = "GBK"))
+#选择兰州的地图
+lanzhou = city[city$CNTY_CODE8 == 62010000,]
+#默认把经度和纬度作为普通数据，均匀平等对待，绘制在笛卡尔坐标系上
+plot(lanzhou)
+#地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，ggplot2包提供了专门的coord_map()函数
+```
+
+geom_polygon()制作地图
+```{r warning=F}
+p <- ggplot() +
+  geom_polygon(data = plotData, aes(x = long, y = lat, group = group,fill = rand), color ="black", size = 0.25) +
+  coord_map()+theme_set(theme_bw())+
+  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
+        axis.text.y=element_blank(),axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
+  xlab("") + ylab("")+labs(title = "甘肃省")+
+  scale_fill_gradient2(low = "darkgreen", high = "red", mid = "yellow")+
+  guides(fill = guide_legend(keywidth = 1, keyheight = 1))
+
+ggsave(p, file = "map2.png", width = 5, height = 4.5, type = "cairo-png")
+print(p)
+```
+
+geom_map()制作地图
+```{r warning=F}
+ggplot(data, aes(map_id = id)) + 
+  geom_map(aes(fill = rand), map =tract) +
+  expand_limits(x = tract$long, y = tract$lat) +
+  coord_map()+
+  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
+     axis.text.y=element_blank(),axis.ticks=element_blank(),
+     axis.title.x=element_blank(),
+     axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
+  xlab("") + ylab("")+labs(title = "甘肃省")+
+  scale_fill_gradientn("发病率",breaks = c(0, 0.4, 0.8, 1),colours = c("green","yellow","red"),space = "Lab")
+  
+#scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
+```
+
+点密度地图
+```{r  warning=F}
+tract$group <- tract$id
+tract <- rbind(filter(tract,id=="62290000"),filter(tract,id=="62300000"))
+
+
+#发病数据
+data$id <- as.character(data$id)
+data$A <- round(data$rand*1000)
+data$B <- round(data$rand*100*4)
+
+plotData <- left_join(tract, data)
+pointCollector <- list()
+perNCapita <- 1
+
+for(ss in tract$id){
+  #print(ss)
+  stateShapeFrame <- tract[tract$id == ss, ]
+  if(nrow(stateShapeFrame) < 1){next()}
+  statePoly <- Polygons(lapply(split(stateShapeFrame[, c("long", "lat")],
+                                     stateShapeFrame$group), Polygon), ID = "b")
+  nA <- ceiling(data[data$id == ss, "A"]/perNCapita)
+  nB <- ceiling(data[data$id == ss, "B"]/perNCapita)
+  
+  pA <- data.frame(spsample(statePoly, nA, type = "random")@coords,
+                   Vote = "A") #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
+  pB <- data.frame(spsample(statePoly, nB, type = "random")@coords,
+                   Vote = "B")
+  
+  allPoints <- data.frame(State = ss, rbind(pA, pB))
+  pointCollector[[ss]] <- allPoints
+}
+
+pointFrame <- do.call(rbind, pointCollector)
+pointFrame <- pointFrame[sample(1:nrow(pointFrame), nrow(pointFrame)), ]
+#head(pointFrame)
+
+new_theme_empty <- theme_bw()  # 创建自己的主题
+new_theme_empty$line <- element_blank()
+new_theme_empty$rect <- element_blank()
+new_theme_empty$strip.text <- element_blank()
+new_theme_empty$axis.text <- element_blank()
+#new_theme_empty$axis.title <- element_blank()
+new_theme_empty$plot.margin <- structure(c(0, 0, -1, -1), unit = "lines",
+                                         valid.unit = 3L, class = "unit")
+
+ggplot(tract)+
+  geom_point(data = pointFrame,aes(x = x, y = y, colour = Vote),size=1)+
+  geom_polygon(aes(x = long, y = lat, group = group),colour = "BLACK", fill = "transparent")+
+  coord_map(project="conic", lat0 = 30)+
+  new_theme_empty+
+  scale_colour_manual(values = c("blue", "red"))+
+  ggtitle("Type by State")+
+  ylab("")+
+  xlab(paste("Each dot represents ",perNCapita, " Vote", sep = ""))+
+  guides(colour = guide_legend(override.aes =list(shape = 19, alpha = 1)))
+```
+
+在循环中使用spsample()方法获取点的速度较慢，可以dotsInPolys()方法提高作图的速度。
+```{r}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data$id <- as.character(data$id)
+data$CNTY_CODE <- as.integer(data$id)
+data$A <- round(data$rand*1000)
+data$B <- round(data$rand*100*4)
+
+plotDdata <- left_join(city@data, data)
+
+dots.A <- dotsInPolys(city, as.integer(plotDdata$A))
+dots.A$Vote <- "A"
+dots.B <- dotsInPolys(city, as.integer(plotDdata$B))
+dots.B$Vote <- "B"
+dots.all <- spRbind(dots.A, dots.B) 
+dots <- data.frame(coordinates(dots.all)[,1:2],Vote=dots.all$Vote)
+
+ggplot(tract, aes(x = long, y = lat)) + 
+  geom_polygon(aes(group = group), size=0.2, fill = "white") + 
+  coord_equal()+geom_point(data=dots, aes(x=x,y=y,colour=factor(Vote)), size=0.8)+
+  scale_colour_manual (values=c("blue", "orange")) 
+```
+
+ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
+
+Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
+```{r warning=F}
+#由于goole的API被封，国内需要使用代理服务器完成访问
+BeijinMap <-get_map(location = 'beijin', zoom = 12,maptype='roadmap')
+ggmap(BeijinMap,extent='device')
+
+#获得定中心的经纬度坐标
+geocode("Peking University")
+
+#绘制北京大学地图
+baylor <- "Peking university"
+qmap(baylor, zoom = 14)
+
+#绘制基于OpenStreetMaps数据的北京大学地图
+qmap(baylor, zoom = 14,source = "osm")
+```
+
+例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
+```{r warning=F}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+data <- read.csv("data.csv",header = T,stringsAsFactors = F)
+data$lan <- as.numeric(data$lan)
+data$lon <- as.numeric(data$lon)
+data$date <- as.Date(data$date,  "%Y-%m-%d")
+
+ggmap(get_googlemap(center = 'gansu', zoom=5,maptype='roadmap'),extent='device')+
+geom_polygon(data = tract, aes(x = long, y = lat, group = group),colour="black",fill='grey' ,alpha = 0.2)+
+geom_point(data=data,aes(x=lon,y=lan),colour = 'red',alpha=0.7)+
+stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),size=2,bins=4,data=data,geom='polygon')+
+theme_nothing(legend = TRUE)+
+  coord_cartesian(xlim=c(90, 110), ylim=c(32, 43))
+```
+
+```{r eval=F}
+# 为了生成动画，先准备好一个绘图函数
+plotfunc <- function(x) {
+    df <- subset(data,date <= x)
+    df$lan <- as.numeric(df$lan)
+    df$lon <- as.numeric(df$lon)
+    p <- ggmap(get_googlemap(center ='gansu',zoom=8,maptype='roadmap'),,extent='device')+
+        geom_point(data=df,aes(x=lon,y=lan),colour = 'red',alpha=0.7)
+}
+# 获取日期
+time <- sort(unique(data$date))
+# 生成并保存动画
+saveHTML(for( i in time) print(plotfunc(i))) #用getwd()查看目录，此目录下有生成html文件
+```
+
+
+
