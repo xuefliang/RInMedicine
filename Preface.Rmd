@@ -17,7 +17,8 @@ R目前仍然不为大众所了解，但并不能妨碍其流行趋势，越来�
 本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，Markdown是一种非常简洁的标记语言，足以使写作关注于内容而不是形式。本书是在Linux Mint系统上安装R的，需要在shell中安装如下的库文件
 
 ```{r eval=FALSE}
-sudo apt-get install build-essential gfortran libxml2-dev libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  libpcre++-dev liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-* libgmp3-dev libmysql++-dev libmpfr-dev libgdal1-dev libproj-dev 
+#安装依赖库和编译库
+sudo apt-get install build-essential gfortran libxml2-dev libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  libpcre++-dev liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-* libgmp3-dev libmysql++-dev libmpfr-dev libgdal1-dev libproj-dev r-cran-boot r-cran-class r-cran-cluster r-cran-codetools r-cran-foreign r-cran-kernsmooth r-cran-lattice r-cran-mass r-cran-matrix r-cran-mgcv r-cran-nlme r-cran-nnet r-cran-rpart r-cran-spatial r-cran-survival r-cran-rodbc
 
 #Step 1: Update Sources.List File
 #- Edit the sources.list file
