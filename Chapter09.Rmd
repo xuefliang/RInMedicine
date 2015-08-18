@@ -54,7 +54,8 @@ plot(lanzhou)
 #地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，ggplot2包提供了专门的coord_map()函数
 ```
 
-geom_polygon()制作地图
+## Choropleth map
+### geom_polygon()绘制地图
 ```{r warning=F}
 p <- ggplot() +
   geom_polygon(data = plotData, aes(x = long, y = lat, group = group,fill = rand), color ="black", size = 0.25) +
@@ -71,7 +72,7 @@ ggsave(p, file = "map2.png", width = 5, height = 4.5, type = "cairo-png")
 print(p)
 ```
 
-geom_map()制作地图
+### geom_map()绘制地图
 ```{r warning=F}
 ggplot(data, aes(map_id = id)) + 
   geom_map(aes(fill = rand), map =tract) +
@@ -87,7 +88,8 @@ ggplot(data, aes(map_id = id)) +
 #scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
 ```
 
-点密度地图
+##点密度地图(Dot Density Maps)
+###spsample()绘制地图
 ```{r  warning=F}
 tract$group <- tract$id
 tract <- rbind(filter(tract,id=="62290000"),filter(tract,id=="62300000"))
@@ -145,6 +147,7 @@ ggplot(tract)+
   guides(colour = guide_legend(override.aes =list(shape = 19, alpha = 1)))
 ```
 
+###dotsInPolys()绘制地图
 在循环中使用spsample()方法获取点的速度较慢，可以dotsInPolys()方法提高作图的速度。
 ```{r}
 city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
@@ -172,6 +175,7 @@ ggplot(tract, aes(x = long, y = lat)) +
   scale_colour_manual (values=c("blue", "orange")) 
 ```
 
+##ggmap包使用
 ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
 
 Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
@@ -224,6 +228,61 @@ time <- sort(unique(data$date))
 # 生成并保存动画
 saveHTML(for( i in time) print(plotfunc(i))) #用getwd()查看目录，此目录下有生成html文件
 ```
+
+##添加标记和路径
+```{r}
+dat <- read.table(text = "
+location lat long
+A	33.29	104.6
+B	40.01	97.95
+C	36.83	103.65
+D	35.32	106.53
+E	36.06	103.49
+F	39.2	97.81
+", header = TRUE)
+
+map <- get_map(location = "gansu", zoom = 6, maptype = "watercolor")
+
+p <- ggmap(map)
+p <- p + geom_point(data = dat, aes(x = long, y = lat, shape = location, colour = location, size = 7))
+p <- p + geom_text(data = dat, aes(x = long, y = lat, label = location), hjust = -0.2)
+p <- p + theme(legend.position = "none", panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.text = element_blank(), 
+               axis.title = element_blank(), 
+               axis.ticks = element_blank()
+)
+p <- p + labs(title = "Gansu locations")
+print(p)
+```
+
+添加路径
+```{r}
+dat.pts <- data.frame(x = dat$long, y = dat$lat)
+map <- get_googlemap("gansu", zoom = 6, maptype = "satellite", markers = dat.pts, path = dat.pts, scale = 2)
+
+p <- ggmap(map, extent = "device" # 除去白色边框
+, darken = 0.1 #图层淡化，凸显标记点
+)
+
+p <- p + geom_text(data = dat, aes(x = long, y = lat, label = location)
+                   , hjust = -0.2, colour = "white", size = 6)
+p <- p + theme(legend.position = c(0.05, 0.05) # put the legend inside the plot area
+, legend.justification = c(0, 0)
+, legend.background = element_rect(colour = F, fill = "white")
+, legend.key = element_rect(fill = F, colour = F)
+, panel.grid.major = element_blank()
+, panel.grid.minor = element_blank()
+, axis.text = element_blank()
+, axis.title = element_blank()
+, axis.ticks = element_blank()
+)
+p <- p + labs(title = "Around Gansu")
+print(p)
+```
+
+
+
 
 
 
