@@ -24,6 +24,9 @@ library(animation)
 library(XML)
 library(RCurl)
 library(plyr)
+library(leaflet)
+library(rgdal)
+library(htmltools)
 ```
 
 流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
@@ -280,7 +283,163 @@ p <- p + theme(legend.position = c(0.05, 0.05) # put the legend inside the plot 
 p <- p + labs(title = "Around Gansu")
 print(p)
 ```
+##交互式地图
+交互式地图提供比传统地图更好的展示效果，通过生成的html进行缩放查看。交互式地图的绘制主要依靠leaflet包完成,交互式地图查看应以html方式，此处由于要印刷而添加了eval=F。
 
+###添加标记点
+```{r eval=F}
+Icon <- makeIcon(
+  iconAnchorX = 22, iconAnchorY = 32
+)
+
+m <- leaflet() %>%
+  setView(103.87,36.05,zoom=13)%>%
+  addTiles() %>%  # 默认OpenStreetMap地图
+  addMarkers(lng=103.87, lat=36.05, popup="我的工作地",icon = Icon)
+m  # Print the map
+```
+
+###添加多边形连线
+```{r eval=F}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp") 
+longnan = city[city$CNTY_CODE8 == 62120000,]
+longnan <- fortify(longnan,region="CNTY_CODE")
+
+leaflet() %>% addTiles() %>%addPolylines(lng=longnan$long,lat=longnan$lat)
+```
+
+###以人口多少绘制圆形
+```{r eval=F}
+cities <- read.csv(textConnection("
+City,Long,Lat,Pop
+兰州,103.8343,36.06109,3616163
+陇南,104.9218,33.40069,2567718
+甘南,102.911,34.983399,689132
+临夏,103.2105,35.60118,1946677
+天水,105.7249,34.58086,3262548
+庆阳,107.6436,35.70908,2211191
+平凉,106.6651,35.54306,2068033 
+"))
+
+leaflet(cities) %>% addTiles() %>%
+  addCircles(lng = ~Long, lat = ~Lat, weight = 1,
+    radius = ~sqrt(Pop) * 30, popup = ~City
+  )
+```
+
+###绘制多边形区域
+```{r eval=F}
+states <- readOGR("/home/xuefliang/RInMedicine/cb_2013_us_state_20m",
+                  layer = "cb_2013_us_state_20m", verbose = FALSE)
+
+neStates <- subset(states, states$STUSPS %in% c(
+  "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
+))
+
+leaflet(neStates) %>%
+  addPolygons(
+    stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5,
+    color = ~colorQuantile("YlOrRd", states$AWATER)(AWATER)
+  )
+```
+
+###添加包含超级连接的标记点
+```{r eval=F}
+content <- paste(sep = "<br/>",
+  "<b><a href='http://www.gscdc.net'>甘肃省疾控中心</a></b>",
+  "东岗西路230号",
+  "甘肃省,兰州市"
+)
+
+leaflet() %>% addTiles() %>%
+  addPopups(103.87,36.05, content,
+    options = popupOptions(closeButton = FALSE)
+  )
+```
+
+###添加多个html标记点
+```{r eval=F}
+leaflet(cities) %>% addTiles() %>%
+  addMarkers(~Long, ~Lat, popup = ~htmlEscape(City))
+```
+
+###连续性变量
+```{r eval=F}
+countries <- readOGR("/home/xuefliang/RInMedicine/countries.geojson", "OGRGeoJSON")
+map <- leaflet(countries)
+
+qpal <- colorQuantile("Blues", countries$gdp_md_est, n = 7) #将GDP这个连续性变量分为7段
+map %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~qpal(gdp_md_est)
+  )
+```
+
+###分类变量
+```{r eval=F}
+countries$category <- factor(sample.int(5L, nrow(countries), TRUE))
+
+factpal <- colorFactor(topo.colors(5), countries$category)
+
+leaflet(countries) %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~factpal(category)  #分类变量
+  )
+```
+
+###添加图例
+```{r eval=F}
+map <- leaflet(countries) %>% addTiles()
+
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = countries$gdp_md_est
+)
+map %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~pal(gdp_md_est)
+  ) %>%
+  addLegend("bottomright", pal = pal, values = ~gdp_md_est,  #addLegend（）函数添加图例
+    title = "Est. GDP (2010)",
+    labFormat = labelFormat(prefix = "$"),
+    opacity = 1
+  )
+```
+
+###比例图例
+```{r eval=F}
+qpal <- colorQuantile("RdYlBu", countries$gdp_md_est, n = 5) #用不同颜色表示所占比例
+map %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~qpal(gdp_md_est)
+  ) %>%
+  addLegend(pal = qpal, values = ~gdp_md_est, opacity = 1)
+```
+
+###波及范围交互地图
+```{r eval=F}
+data <- read.csv("data.csv",header = T,stringsAsFactors = F)
+data$lan <- as.numeric(data$lan)
+data$lon <- as.numeric(data$lon)
+outline <- data[chull(data$lon, data$lan),]
+
+map <- leaflet(data) %>%
+  # Base groups
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles("Stamen.Toner", group = "Toner") %>%
+  addProviderTiles("Stamen.TonerLite", group = "Toner Lite") %>%
+  # Overlay groups
+  addCircles(~lon, ~lan, ~10^X/5,stroke = F, group = "occur") %>%
+  addPolygons(data = outline, lng = ~lon, lat = ~lan,
+    fill = F, weight = 2, color = "#FFFFCC", group = "Outline") %>%
+  # Layers control
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
+    overlayGroups = c("Quakes", "Outline"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+map
+```
 
 
 
