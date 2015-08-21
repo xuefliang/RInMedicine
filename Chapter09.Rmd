@@ -27,6 +27,8 @@ library(plyr)
 library(leaflet)
 library(rgdal)
 library(htmltools)
+library(reshape2)
+library(ggplot2)
 ```
 
 流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
@@ -440,6 +442,36 @@ map <- leaflet(data) %>%
   )
 map
 ```
+
+##等高线
+```{r}
+volcano3d <- melt(volcano) #reshape2包
+names(volcano3d) <- c("x", "y", "z")
+
+#等高线
+v <- ggplot(volcano3d, aes(x, y, z = z))
+v + stat_contour(binwidth = 5,aes(colour = ..level..),size = 1)
+
+#面积
+v + stat_contour(geom="polygon", aes(fill=..level..))+geom_tile(aes(fill = z))
+
+v + geom_tile(aes(fill = z)) + stat_contour()
+```
+
+###制作三维图
+```{r eval=F}
+z <- 2*volcano
+x <- 10*(1:nrow(z))
+y <- 10*(1:ncol(z))
+zlim <- range(z)
+zlen <- zlim[2]-zlim[1]+1
+colorlut <- terrain.colors(zlen)
+col <- colorlut[z-zlim[1]+1]
+rgl.open()
+rgl.surface(x,y,z,color=col,back="lines")
+```
+
+
 
 
 
