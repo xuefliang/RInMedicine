@@ -28,7 +28,6 @@ library(leaflet)
 library(rgdal)
 library(htmltools)
 library(reshape2)
-library(ggplot2)
 ```
 
 流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
