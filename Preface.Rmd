@@ -24,7 +24,7 @@ sudo apt-get install build-essential gfortran libxml2-dev libcurl4-openssl-dev l
 #- Edit the sources.list file
 sudo gedit /etc/apt/sources.list
 #- Add following entry
-deb http://cran.rstudio.com/bin/linux/ubuntu utopic/
+deb http://cran.rstudio.com/bin/linux/ubuntu trusty/
 #Step 2: Add the Public Keys
 gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 gpg -a --export E084DAB9 | sudo apt-key add -
