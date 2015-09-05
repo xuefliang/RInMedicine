@@ -25,6 +25,7 @@ library(plyr)
 library(doBy)
 library(vcd)
 library(gmodels)
+library(readr)
 ```
 
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
@@ -286,10 +287,32 @@ data(drugDat,package = "elrm")
 sapply(drugDat,mystats)
 ```
 
-
 Hmisc包中的describe()函数可返回变量和观测的数量、缺失值和唯一值的数目、平均值、分位数，以及五个最大的值和五个最小的值。pastecs包中有一个名为stat.desc()的函数，它可以计算种类繁多的描述性统计量。使用格式为：stat.desc(x,basic=TRUE,desc=TRUE,norm=FALSE,p=0.95)其中的x是一个数据框或时间序列。若basic=TRUE（默认值），则计算其中所有值、空值、缺失值的数量，以及最小值、最大值、值域，还有总和。若desc=TRUE（同样也是默认值），则计算中位数、平均数、平均数的标准误、平均数置信度为95%的置信区间、方差、标准差以及变异系数。最后，若norm=TRUE（不是默认的），则返回正态分布统计量，包括偏度和峰度（以及它们的统计显著程度）和Shapiro–Wilk正态检验结果。这里使用了p值来计算平均数的置信区间（默认置信度为0.95）。psych包也拥有一个名为describe()的函数，它可以计算非缺失值的数量、平均数、标准差、中位数、截尾均值、绝对中位差、最小值、最大值、值域、偏度、峰度和平均值的标准误。
 
-##分类汇总
+##数据操作
+
+###数据输入
+readr包中的函数使数据读入的速度更快，相对于基础包中的函数，对字符类型并不需要指定stringsAsFactors = FALSE防止字符类型自动转为因子，对列名限制更少。固定分割的数据使用read_delim(), read_csv(), read_tsv()和read_csv2()函数，固定宽度的数据使用read_fwf()和 read_table()。
+```{r}
+WHO<- read_csv("WHO.csv",col_names=T) #col_names相当于header=T，默认为True
+#可以从压缩包或网站上直接输入
+mtcars <- read_csv(system.file("extdata/mtcars.csv.bz2", package = "readr"))
+mtcars <- read_csv("https://github.com/hadley/readr/raw/master/inst/extdata/mtcars.csv")
+```
+
+###数据输出
+用readr包读入的数据，变量的引用使用如下格式WHO$`Adolescent fertility rate (%)`，不同于通常的引用。write_csv()将数据框快速的输出为csv文件。
+
+```{r}
+who <- read_csv("WHO.csv", col_types = list(
+  CountryID = col_integer(),
+  Continent=col_double(),
+  Country=col_factor(c("Country")) #col_date() 使用Y-m-d格式，col_datetime()使用 ISO8601日期时间格式
+))
+class(who) #tbl_df、tbl和data.frame类型
+```
+
+###分类汇总
 在比较多组个体或观测时，关注的焦点经常是各组的描述性统计信息，而不是整体的描述性统计信息时，可以使用aggregate()分组获取描述性统计量。
 
 例 epicalc中HW93数据集是1993年泰国南部钩虫感染的调查资料，其中intense变量表示感染的严重程度为有序多分类变量，egp为感染的数量，shoes表示是否穿鞋，agegr是年龄分组,需要计算每个年龄的构虫平均感染钩虫的数量。
