@@ -26,6 +26,7 @@ library(doBy)
 library(vcd)
 library(gmodels)
 library(readr)
+library(stringr)
 ```
 
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
@@ -310,6 +311,69 @@ who <- read_csv("WHO.csv", col_types = list(
   Country=col_factor(c("Country")) #col_date() 使用Y-m-d格式，col_datetime()使用 ISO8601日期时间格式
 ))
 class(who) #tbl_df、tbl和data.frame类型
+```
+
+###字符串操作
+####合并字符串
+```{r}
+IT <- c("google","baidu","bing")
+res <- str_c(1:3,IT,sep=' ',collapse=' ')
+str_c('My work place is ',res,collapse=' ')
+```
+
+####计算字符串长度
+```{r}
+str_length(c("programming R and Python", 123,res))
+```
+
+####按位置取子字符串
+```{r}
+str_sub(IT, 1, 3)
+```
+
+####子字符串重新赋值
+```{r}
+capital <-toupper(str_sub(IT,1,1))
+str_sub(IT, rep(1,3),rep(1,3)) <- capital 
+```
+
+####重复字符串
+```{r}
+str_dup(IT, c(2,3,4))
+```
+
+####加空白和去除空白
+```{r}
+str_pad(IT, 10, "both")
+str_trim(IT)
+```
+
+####根据正则表达式检验是否匹配
+```{r}
+str_detect(IT, "g$")  #查找以g结尾
+str_detect(IT, "[aiu]") #查找是否包含a、i、u
+```
+
+####查找匹配的字符串位置
+```{r}
+str_locate(IT, "a")  #返回起始和结束的位置
+```
+
+####提取匹配的部分
+```{r}
+str_extract(IT, "[a-z]+")
+str_extract(IT, "[a-z]{1,3}")
+str_match(IT, "[a-z]+")
+```
+
+####替换匹配的部分
+```{r}
+str_replace(IT, "[aeiou]", "-")
+```
+
+####分割
+```{r}
+str_split(res, " ")
 ```
 
 ###分类汇总
