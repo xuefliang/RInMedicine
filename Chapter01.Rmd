@@ -27,6 +27,7 @@ library(vcd)
 library(gmodels)
 library(readr)
 library(stringr)
+library(dplyr)
 ```
 
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
@@ -376,6 +377,76 @@ str_replace(IT, "[aeiou]", "-")
 str_split(res, " ")
 ```
 
+###数据操作
+dplyr包将plyr包中的ddply()等函数进一步分离强化,专注接受dataframe对象,大幅提高了运算速度,并且提供了更稳健的与其它数据库对象间的接口。
+
+####数据集类型
+将过长过大的数据集转换为显示更友好的tbl_df类型
+```{r}
+iris_df<- tbl_df(iris)
+iris_df
+```
+
+####筛选
+filter 用于选择满足条件的观测（行），第一个参数是 data frame 名字，第二个参数是条件。
+```{r}
+filter(iris_df, Species == "versicolor") #选取 Species == versicolor的观测
+filter(iris_df, Sepal.Length %in% c(7.0, 5.2,6.6)) #选取Sepal.Length为7.0，5.2，6.6的观测
+```
+对于多条件的选择，需要完整条件的，然后使用集合运算符将条件拼接起来。集合运算符有 !、|、&、xor(交补)。条件的判断符有>(=)、<(=)、==、!=、%in% (判断元素是否在集合或者列表内，返回逻辑值)。
+```{r}
+filter(iris_df, Sepal.Length>=6.3 & Species=="versicolor")
+```
+
+####排列
+arrange 用于根据变量排序，如果排序依据（列）是字符，按照字母表的顺序，如果是数字，默认按照从小到大的顺序排序，如果需要使用逆序排，可以使用desc(var) 或者 -var。
+```{r}
+arrange(iris_df, Petal.Length)
+arrange(iris_df, desc(Petal.Length))
+```
+
+####选择
+select 用于选择列,类似于R自带的 subset() 函数,select中负号表示不选择。其中变量的声明还有其他形式，比如B:F表示从 B 列到 F 列所有列；ends_with("string") 表示选取列名以 string 结尾的全部列；contains("string") 表示选取列名中含有 string 的所有列。
+```{r}
+select(iris_df, Petal.Length)
+```
+
+####变形
+mutate用于添加新的变量，直接使用列名进行计算得到新变量即可。可使用刚添加的变量，也就是在一个语句中可以多个变量，而且变量可以来源于刚新建的变量。
+```{r}
+mutate(iris_df, double=Petal.Length*2,quadruple=double*2)
+```
+
+####分类汇总
+summarise可以用于分类汇总,实际上它是把 data frame 依据分组依据拆分成多个data frame，然后对每data frame 分别计算，类似于ddply。summarise 可以使用的函数有：min(x), median(x), max(x), quantile(x, p)，计算个数n(), 计算 x 中唯一值的个数n_distinct(), sum(x), mean(x),sum(x > 10), mean(x > 10),sd(x), var(x), iqr(x), mad(x)
+
+```{r}
+group <- group_by(iris_df, Species)  # 分组依据
+summarise(group, Speciessum = sum(Sepal.Length), Speciesmean=mean(Petal.Length, na.rm = TRUE)) #分组求和
+```
+
+####管道操作
+%>%与pipeR和magrittr包中%>%操作符一样，用来将上一步产生的对象管道输出为下一步调用的函数的第一个参数。
+```{r}
+iris_df %>% group_by(Species) %>% 
+  summarise(total = sum(Sepal.Length)) %>%
+  arrange(desc(total)) %>%head(5)
+```
+
+####变量查重
+通常用select指定需要查重的变量，distinct返回没有重复的数据。
+```{r}
+distinct(select(iris_df, Sepal.Length,Species)) #Sepal.Length,Species这两列中没有重复的数据
+```
+
+####随机抽样
+使用sample_n和sample_frac从数据框中随机的返回一些行，sample_n按指定的行数返回，sample_frac按指定的比例返回。
+```{r}
+sample_n(iris, 10)  #返回10行
+sample_frac(iris, 0.01) #返回总行数的0.01倍
+```
+
+
 ###分类汇总
 在比较多组个体或观测时，关注的焦点经常是各组的描述性统计信息，而不是整体的描述性统计信息时，可以使用aggregate()分组获取描述性统计量。
 
@@ -394,7 +465,7 @@ summaryBy(epg~agegr,data=HW93,FUN=max)
 describe.by(HW93$epg,HW93$agegr)
 ```
 
-需要使用复杂函数则需要plyr包中的*ply族函数。该函数由Hadley Wickham创建，将这类任务以“分割-应用-结合”这种三步方式进行处理：通过一种或多种factor将数据集进行分割，而后应用某项函数，最后将结果整合回数据集当中。Plyr包中囊括了一整套“ply”函数，其第一个字母表示输入的类型，第二个字母表示输出的类型，输入:array,dataframe,list三种格式，输出: array,dataframe,list,discareded四种格式。plyr包中的ddply()可以得到相同结果。summarize不会提供来自原始数据框中其它列中的任何信息，如果大家需要列出其它column数据，则可以把“summarize”替换为“transform”，请且允许一次应用多个函数。
+需要使用复杂函数则需要plyr包中的*ply族函数。该函数将这类任务以“分割-应用-结合”这种三步方式进行处理：通过一种或多种factor将数据集进行分割，而后应用某项函数，最后将结果整合回数据集当中。Plyr包中囊括了一整套“ply”函数，其第一个字母表示输入的类型，第二个字母表示输出的类型，输入:array,dataframe,list三种格式，输出: array,dataframe,list,discareded四种格式。plyr包中的ddply()可以得到相同结果。summarize不会提供来自原始数据框中其它列中的任何信息，如果需要列出其它column数据，则可以把“summarize”替换为“transform”，且允许一次应用多个函数。
 ```{r eval=FALSE}
 ddply(.data = HW93,.(agegr),summarize,mean=mean(epg),max=max(epg),min=min(epg))
 
