@@ -34,35 +34,25 @@ library(reshape2)
 统计分析分为统计描述和统计推断两个部分，统计描述是通过绘制统计图、计算统计量等方法描述数据的分布特征，是数据分析的基本步骤。
 
 ## 常用统计量
-
 ###矩
 设X和Y是随机变量，若$$E(X^{k}),k=1,2,\cdot \cdot \cdot $$存在，则称它为X的k阶原点矩，简称k阶矩。
-
 若$$E\left \{ [X-E(x)]^{k} \right \},k=2,3,\cdot \cdot \cdot$$存在，则称它为X的k阶中心距。
-
 若$$E(X^{k}Y^{l}),k,l=1,2,\cdot \cdot \cdot$$存在，则称它为X和Y的k+l阶混合距。
-
 若$$E\left \{ [X-E(X)]^{k}[Y-E(Y)]^{l} \right \},k,l=1,2,\cdot \cdot \cdot$$存在，则称它为X和Y的k+l阶混合中心距。
-
 X的数学期望E(X)是X的一阶原点矩，方差D(X)是X的二阶中心矩，协方差Cov(X,Y)是X和Y的二阶混合中心矩。
-
 ###  均值(Mean)
 一阶原点矩又称均数是一组数据的平均值,均数（记为$\bar{x}$）定义为
 $$\bar{X}=\frac{1}{n}\sum _{i=1}^{n}X_{i}$$
 用它来描述正态分布数据的集中趋势。
-
 ### 标准差(Standard Deviation)
 样本方差定义为$$S^{2}=\frac{1}{n-1}\sum_{i=1}^{n}(X_{i}-\bar{X})^{2}$$,标准差是方差的算术平方根，是一组数值自均数分散开来的程度的一种测量观念。定义为
 $$\delta = \sqrt{\frac{1}{N}\sum_{i=1}^{n}(x_i-u)^2}$$
 一个较大的标准差，代表大部分的数值和其平均值之间差异较大；一个较小的标准差，代表这些数值较接近平均值。
-
 例 已知50名患者的收缩压（mmHg）分别为：
 147 163 159 124 120  94 135 185 109 143 116 129 157 146 149 127 124 160 101 129 130 154 151
 119 128 147 127 122 145 159 141 131 117 139 142 152 147 157 134 146 144 119 160 136 122 172
 170 109 151 144
-
 求血压的集中趋势和离散趋势及集中趋势的95%可信区间。
-
 思路：先判断数据是否为正态分布，然后根据结果选择描述集中趋势的统计量。
 ```{r}
 sbp <- c(147,163,159,124,120,94,135,185,109,143,116,129,157,146,149,127,124,160,101,129,130,154,151,119,128,147,127,122,145,159,141,131,117,139,142,152,147,157,134,146,144,119,160,136 ,122,172,170,109,151,144)
@@ -83,12 +73,10 @@ sd(sbp)
 ```{r}
 favstats(sbp)
 ```
-
 对均数的95%可信区间的计算可通过t.test()获得，对一个给定的可信区间，它表示一个总体参数的估计范围。根据中位数和均数可以快速检查数据分布，如中位数小于均数，说明分布有可能向右倾斜。
 ```{r}
 t.test(sbp)
 ```
-
 通过设置conf.level=0.99，可以将可信区间水平提高到99%。
 ```{r}
 t.test(sbp,conf.level=0.99)
@@ -103,7 +91,6 @@ $$\mathrm{Q}_\frac{1}{2}(x) =
 \end{cases}
 $$
 odd 为奇数，even 为偶数。
-
 ###四分位差(quartile deviation)
 是上四分位数（QU，即位于75%）与下四分位数（QL，即位于25%）的差的一半。计算公式为：$Qd=QU-QL$。四分位差反映了中间50%数据的离散程度，其数值越小，说明中间的数据越集中；其数值越大，说明中间的数据越分散。四分位差不受极值的影响。
 例 某地17名患者的月收入分别为：
@@ -128,13 +115,11 @@ quantile(income)
 ```{r}
 wilcox.test(income, conf.int=TRUE)
 ```
-
 ### 数学期望(mathematical expectation)
 离散型随机变量：离散型随机变量的一切可能的取值$x_{i}$与对应的概率$P_{i}(=x_{i})$之积的和称为该离散型随机变量的数学期望，记为$E(X)$。数学期望是最基本的数学特征之一。它反映随机变量平均取值的大小
 $$E(X)=\sum_{i}x_{i}p_{i}$$
 连续型随机变量：若随机变量X的分布函数$F(x)$可表示成一个非负可积函数$f(x)$的积分，则称$X$为连续性随机变量，$f(x)$称为$X$的概率密度函数，积分值为X的数学期望，记为$E(X)$。
 $$E(X)=\int_{-\infty }^{+\infty }xf(x)dx$$
-
 ###方差(Variance)
 方差是各个数据与平均数之差的平方的平均数。在概率论和数理统计中，方差用来度量随机变量和其数学期望（即均值）之间的偏离程度。
 设$X$为随机变量，如果$E{[X-E(X)]^2}$存在，则称$E{[X-E(X)]^2}$为$X$的方差，记为$Var(X)$。
@@ -144,16 +129,13 @@ $$E(X)=\int_{-\infty }^{+\infty }xf(x)dx$$
 s <- c(2,5,78,45,89,124)
 var(s)
 ```
-
 ###众数(Mode)
 观察资料中出现次数最多的数值或类别，不受极值影响，由于可能有不只一个，也可能没有众数，一般不适合进行统计分析。
-
 例 计算样本(4,22,31,33,3,27,27,27,27,569,110,8,21,31,33,33)的众数
 ```{r}
 S <- c(4,22,31,33,3,27,27,27,27,569,110,8,21,31,33,33)
 names(which.max(table(S)))
 ```
-
 ###协方差(Covariance)
 协方差用于衡量两个变量的总体误差。而方差是协方差的一种特殊情况，即当两个变量是相同的情况。设$X$,$Y$为两个随机变量，称$E{[X-E(X)][Y-E(Y)]}$为$X$和$Y$的协方差，记录$Cov(X,Y)$。方差是协方差的一种特殊情况，即当两个变量是相同的情况。
 $$Cov(X,Y)=E\left \{ [X-E(X)][Y-E(Y)] \right \}=E(XY)-E(X)E(Y)$$
@@ -163,7 +145,6 @@ x <- c(2,5,7)
 y <- c(6,7,9)
 cov(x,y)
 ```
-
 ###相关系数(Correlation coefficient)
 相关系数是用以反映变量之间相关关系密切程度的统计指标。相关系数是按积差方法计算，同样以两变量与各自平均值的离差为基础，通过两个离差相乘来反映两变量之间相关程度。当$Var(X)>0, Var(Y)>0$时，称$Cov(X,Y)/sqrt(Var(X)*Var(Y))$为$X$与$Y$的相关系统。
 $$\rho (X,Y)=\frac{Cov(X,Y)}{\sqrt{Var(X)Var(Y)}}$$
@@ -173,11 +154,9 @@ x <- c(2,5,7)
 y <- c(6,7,9)
 cor(x,y)
 ```
-
 ### 偏度(skewness)
 是统计数据分布偏斜方向和程度的度量，是统计数据分布非对称程度的数字特征。设分布函数$F(x)$有中心矩$\mu_{2}=E(X-E(X))^2$,$\mu_{3}=E(X-E(X))^3$,则$\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$为偏度系数。当$C_{s}$>0时，概率分布偏向均值右则,$C_{s}$<0时，概率分布偏向均值左则。
 $$C_{s}=\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$$
-
 ###峰度(kurtosis)
 表征概率密度分布曲线在平均值处峰值高低的特征数。峰度刻划不同类型的分布的集中和分散程序。设分布函数$F(x)$有中心矩$\mu_{2}=E(X-E(X))^2$, $\mu_{4}=E(X-E(X))^4$，则$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$为峰度系数。
 $$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$$
@@ -188,7 +167,6 @@ skewness(S)
 kurtosis(S)
 hist(S,breaks=100)
 ```
-
 ###几何平均数（Geometric mean）
 是n个变量值连乘积的n次方根,是用于反映一组经对数转换后呈对称分布的变量值在数量上的平均水平即对数正态分布数据，在医学研究中常适用于免疫学的指标。对于变量值呈倍数关系或呈对数正态分布（正偏态分布），如抗体效价及抗体滴度，某些传染病的潜伏期，细菌计数等，宜用几何均数表示其平均水平。
 $$H=G=\sqrt[n]{X_{1}*X_{2}*...*X_{n}}=\sum \sqrt[n]{\prod_{i=1}^{n}X_{n}}$$
@@ -208,25 +186,19 @@ geomean(s)
 geosd(s)
 ```
 也可以安装NCStats包，调用geomean和geosd()函数。
-
 ###变异系数（Coefficient of Variation）
 是刻画数据相对分散性的一种度量，记为$c_v$,是概率分布离散程度的一个归一化量度，其定义为标准差$\ \sigma$与平均值$\ \mu$ 之比
 $$c_v = {\sigma \over \mu }$$
-
 ###样本校正平方和（CSS）
 样本与均值差的平方的求和$CSS=\sum_{i=1}^{n}(x_{i}-\overline{x})$
-
 ###样本未校正平方和（USS）
 样本值平方的求和$USS=\sum_{i=1}^{n}x_{i}^{2}$
-
 ###标准误（Standard Deviation）
 是某种统计量在抽样分布上的标准差称为该种统计量的标准误，即样本统计量的标准差，是描述对应的样本统计量抽样分布的离散程度及衡量对应样本统计量抽样误差大小的尺度。设n个测量值的误差为v1、v2……vn，则这组测量值的标准误差$\sigma$
 $$\sigma =\sqrt{\frac{1}{n-1}\sum_{i=1}^{n}v_{i}^2}$$
-
 ###极差
 描述样本分散性，数据越分散，其极差越大。
 $$R=max(x)-min(x)$$
-
 例 对例1求变异系数、样本校正平方和、样本未校正平方和、极差和均值的标准误。
 ```{r}
 cv <- 100*sd(sbp)/mean(sbp)
@@ -243,7 +215,6 @@ r
 sd <- sd(sbp)/sqrt(length(sbp))
 sd
 ```
-
 ###数据中心化和标准化
 数据中心化是将某变量中的观察值减去该变量的平均数，数据标准化将某变量中的观察值减去该变量的平均数，然后除以该变量的标准差。经标准化的数据都是没有单位的纯数量。对变量进行的标准差标准化可以消除量纲（单位）影响和变量自身变异的影响。
 例 对下表中三科成绩进行标准化。
@@ -272,7 +243,6 @@ options(digits=2) #限定为2位小数
 scale(Student[,1:3],center = T,scale = F) #数据中心化 
 scale(Student[,1:3],center = F,scale = T) #数据标准化
 ```
-
 apply()函数或sapply()函数计算所选择的任意描述性统计量。对于sapply()函数，其使用格式为：sapply(x,FUN,options)其中的x是输入的数据框（或矩阵），FUN为一个任意的函数。如果指定了options，它们将被传递给FUN。你可以在这里插入的典型函数有mean、sd、var、min、max、median、length、range和quantile。可以根据需要自定义需要的统计量，如下
 ```{r}
 mystats <- function(x, na.omit = FALSE) {
@@ -289,23 +259,19 @@ mystats <- function(x, na.omit = FALSE) {
 data(drugDat,package = "elrm")
 sapply(drugDat,mystats)
 ```
-
 Hmisc包中的describe()函数可返回变量和观测的数量、缺失值和唯一值的数目、平均值、分位数，以及五个最大的值和五个最小的值。pastecs包中有一个名为stat.desc()的函数，它可以计算种类繁多的描述性统计量。使用格式为：stat.desc(x,basic=TRUE,desc=TRUE,norm=FALSE,p=0.95)其中的x是一个数据框或时间序列。若basic=TRUE（默认值），则计算其中所有值、空值、缺失值的数量，以及最小值、最大值、值域，还有总和。若desc=TRUE（同样也是默认值），则计算中位数、平均数、平均数的标准误、平均数置信度为95%的置信区间、方差、标准差以及变异系数。最后，若norm=TRUE（不是默认的），则返回正态分布统计量，包括偏度和峰度（以及它们的统计显著程度）和Shapiro–Wilk正态检验结果。这里使用了p值来计算平均数的置信区间（默认置信度为0.95）。psych包也拥有一个名为describe()的函数，它可以计算非缺失值的数量、平均数、标准差、中位数、截尾均值、绝对中位差、最小值、最大值、值域、偏度、峰度和平均值的标准误。
 
 ##数据操作
-
 ###数据输入
 readr包中的函数使数据读入的速度更快，相对于基础包中的函数，对字符类型并不需要指定stringsAsFactors = FALSE防止字符类型自动转为因子，对列名限制更少。固定分割的数据使用read_delim(), read_csv(), read_tsv()和read_csv2()函数，固定宽度的数据使用read_fwf()和 read_table()。
-```{r}
+```{r warning=F}
 WHO<- read_csv("WHO.csv",col_names=T) #col_names相当于header=T，默认为True
 #可以从压缩包或网站上直接输入
 mtcars <- read_csv(system.file("extdata/mtcars.csv.bz2", package = "readr"))
-mtcars <- read_csv("https://github.com/hadley/readr/raw/master/inst/extdata/mtcars.csv")
+#mtcars <- read_csv("https://github.com/hadley/readr/raw/master/inst/extdata/mtcars.csv")
 ```
-
 ###数据输出
 用readr包读入的数据，变量的引用使用如下格式WHO$`Adolescent fertility rate (%)`，不同于通常的引用。write_csv()将数据框快速的输出为csv文件。
-
 ```{r}
 who <- read_csv("WHO.csv", col_types = list(
   CountryID = col_integer(),
@@ -314,7 +280,6 @@ who <- read_csv("WHO.csv", col_types = list(
 ))
 class(who) #tbl_df、tbl和data.frame类型
 ```
-
 ###字符串操作
 ####合并字符串
 ```{r}
@@ -322,72 +287,59 @@ IT <- c("google","baidu","bing")
 res <- str_c(1:3,IT,sep=' ',collapse=' ')
 str_c('My work place is ',res,collapse=' ')
 ```
-
 ####计算字符串长度
 ```{r}
 str_length(c("programming R and Python", 123,res))
 ```
-
 ####按位置取子字符串
 ```{r}
 str_sub(IT, 1, 3)
 ```
-
 ####子字符串重新赋值
 ```{r}
 capital <-toupper(str_sub(IT,1,1))
 str_sub(IT, rep(1,3),rep(1,3)) <- capital 
 ```
-
 ####重复字符串
 ```{r}
 str_dup(IT, c(2,3,4))
 ```
-
 ####加空白和去除空白
 ```{r}
 str_pad(IT, 10, "both")
 str_trim(IT)
 ```
-
 ####根据正则表达式检验是否匹配
 ```{r}
 str_detect(IT, "g$")  #查找以g结尾
 str_detect(IT, "[aiu]") #查找是否包含a、i、u
 ```
-
 ####查找匹配的字符串位置
 ```{r}
 str_locate(IT, "a")  #返回起始和结束的位置
 ```
-
 ####提取匹配的部分
 ```{r}
 str_extract(IT, "[a-z]+")
 str_extract(IT, "[a-z]{1,3}")
 str_match(IT, "[a-z]+")
 ```
-
 ####替换匹配的部分
 ```{r}
 str_replace(IT, "[aeiou]", "-")
 ```
-
 ####分割
 ```{r}
 str_split(res, " ")
 ```
-
 ###数据操作
 dplyr包将plyr包中的ddply()等函数进一步分离强化,专注接受dataframe对象,大幅提高了运算速度,并且提供了更稳健的与其它数据库对象间的接口。
-
 ####数据集类型
 将过长过大的数据集转换为显示更友好的tbl_df类型
 ```{r}
 iris_df<- tbl_df(iris)
 iris_df
 ```
-
 ####筛选
 filter 用于选择满足条件的观测（行），第一个参数是 data frame 名字，第二个参数是条件。
 ```{r}
@@ -398,34 +350,28 @@ filter(iris_df, Sepal.Length %in% c(7.0, 5.2,6.6)) #选取Sepal.Length为7.0，5
 ```{r}
 filter(iris_df, Sepal.Length>=6.3 & Species=="versicolor")
 ```
-
 ####排列
 arrange 用于根据变量排序，如果排序依据（列）是字符，按照字母表的顺序，如果是数字，默认按照从小到大的顺序排序，如果需要使用逆序排，可以使用desc(var) 或者 -var。
 ```{r}
 arrange(iris_df, Petal.Length)
 arrange(iris_df, desc(Petal.Length))
 ```
-
 ####选择
 select 用于选择列,类似于R自带的 subset() 函数,select中负号表示不选择。其中变量的声明还有其他形式，比如B:F表示从 B 列到 F 列所有列；ends_with("string") 表示选取列名以 string 结尾的全部列；contains("string") 表示选取列名中含有 string 的所有列。
 ```{r}
 select(iris_df, Petal.Length)
 ```
-
 ####变形
 mutate用于添加新的变量，直接使用列名进行计算得到新变量即可。可使用刚添加的变量，也就是在一个语句中可以多个变量，而且变量可以来源于刚新建的变量。
 ```{r}
 mutate(iris_df, double=Petal.Length*2,quadruple=double*2)
 ```
-
 ####分类汇总
 summarise可以用于分类汇总,实际上它是把 data frame 依据分组依据拆分成多个data frame，然后对每data frame 分别计算，类似于ddply。summarise 可以使用的函数有：min(x), median(x), max(x), quantile(x, p)，计算个数n(), 计算 x 中唯一值的个数n_distinct(), sum(x), mean(x),sum(x > 10), mean(x > 10),sd(x), var(x), iqr(x), mad(x)
-
 ```{r}
 group <- group_by(iris_df, Species)  # 分组依据
 summarise(group, Speciessum = sum(Sepal.Length), Speciesmean=mean(Petal.Length, na.rm = TRUE)) #分组求和
 ```
-
 ####管道操作
 %>%与pipeR和magrittr包中%>%操作符一样，用来将上一步产生的对象管道输出为下一步调用的函数的第一个参数。
 ```{r}
@@ -433,20 +379,17 @@ iris_df %>% group_by(Species) %>%
   summarise(total = sum(Sepal.Length)) %>%
   arrange(desc(total)) %>%head(5)
 ```
-
 ####变量查重
 通常用select指定需要查重的变量，distinct返回没有重复的数据。
 ```{r}
 distinct(select(iris_df, Sepal.Length,Species)) #Sepal.Length,Species这两列中没有重复的数据
 ```
-
 ####随机抽样
 使用sample_n和sample_frac从数据框中随机的返回一些行，sample_n按指定的行数返回，sample_frac按指定的比例返回。
 ```{r}
 sample_n(iris, 10)  #返回10行
 sample_frac(iris, 0.01) #返回总行数的0.01倍
 ```
-
 ###长宽格式数据转换
 在wide format中，每一个样本点(subject)自成一行，这一行内记录了这个样本点的所有信息。典型的宽格式数据如下：
 ```{r}
@@ -459,9 +402,7 @@ data_wide <- read.table(header=TRUE, text='
 ')
 data_wide
 ```
-
 long format把wide format中的某几个numerical variables变成了一个factor variable之下的levels，而这几个numerical variables的取值都被集中在了一个变量之下。reshape2包中melt函数把wide format变成long format。
-
 ```{r}
 data_long <- melt(data_wide,
      id.vars = c('subject', 'sex'),
@@ -471,27 +412,21 @@ data_long <- melt(data_wide,
 data_long
 ```
 在long format中，每个样本点被拆成了三个行，两个新的变量出现。第一个新变量是一个factor variable，fator levels是wide format中的三个变量。第二个新变量是一个numeric variable，记录的数值对应于wide format中该样本点在control, cond1, cond2三列的取值。除了id.variable之外，其他变量都被变成了long format的形式,数据的长短是相对的，如果把没有转换的sex变量转换掉，数据将变得更长。
-
 ```{r}
 melt(data_wide, id.vars = 'subject')
 ```
-
 Wide format转换为long format时，最极端的情况是所有变量都转换掉
 ```{r}
 melt(data_wide, id.vars = NULL)
 ```
-
 reshape2包中Cast函数把long format变成wide format的函数，dcast针对data.frame，acast针对的是array或matrices。dcast中需要一个formular来说明转换的形式，formular的左边是id variables，右边是一个factor variables，它的factor levels将会在wide format中成为新的variables，这些variables的取值用value.var来指定，最后得到的wide format如下：
 ```{r}
 data.wide <- dcast(data_long, subject + sex ~ condition, value.var = "measurement")
 data.wide
 ```
-
 ###分类汇总
 在比较多组个体或观测时，关注的焦点经常是各组的描述性统计信息，而不是整体的描述性统计信息时，可以使用aggregate()分组获取描述性统计量。
-
 例 epicalc中HW93数据集是1993年泰国南部钩虫感染的调查资料，其中intense变量表示感染的严重程度为有序多分类变量，egp为感染的数量，shoes表示是否穿鞋，agegr是年龄分组,需要计算每个年龄的构虫平均感染钩虫的数量。
-
 使用aggregate()分组获取描述性统计量
 ```{r}
 data(HW93,package = "epicalc")
@@ -499,12 +434,10 @@ aggregate(HW93$epg,by=list(epg=HW93$agegr),mean)
 ```
 注意list(epg=HW93$age)的使用。如果使用的是list(HW93$age)，则age列将被标注为Group.1而不是age。如果有多个分组变量，可以使用by=list(name1=groupvar1, name2=groupvar2, ... , groupvarN)这样的语句。aggregate()仅允许在每次调用中使用平均数、标准差这样的单返回值函数。
 doBy包和psych包也提供了分组计算描述性统计量的函数，doBy包中summaryBy()函数的使用格式为：summaryBy(formula,data=dataframe,FUN=function) 其中的formula接受以下的格式：var1+var2+…+varN~grounpvar1+goupvar2+…+groupvarN,在~左侧的变量是需要分析的数值型变量，而右侧的变量是类别型的分组变量。function可为任何内建或用户自编的R函数。psych包中的describe.by()函数可计算和describe相同的描述性统计量，只是按照一个或多个分组变量分层，使用psych包中的describe.by()和使用doBy包中的summaryBy()分组计算概述统计量如下，describe.by()函数不允许指定任意函数，所以它的使用范围较窄。若存在一个以上的分组变量，你可以使用list(groupvar1, groupvar2, ... , groupvarN)来表示它们。但这仅在分组变量交叉后不出现空白单元时有效。
-
 ```{r}
 summaryBy(epg~agegr,data=HW93,FUN=max)
 describe.by(HW93$epg,HW93$agegr)
 ```
-
 需要使用复杂函数则需要plyr包中的*ply族函数。该函数将这类任务以“分割-应用-结合”这种三步方式进行处理：通过一种或多种factor将数据集进行分割，而后应用某项函数，最后将结果整合回数据集当中。Plyr包中囊括了一整套“ply”函数，其第一个字母表示输入的类型，第二个字母表示输出的类型，输入:array,dataframe,list三种格式，输出: array,dataframe,list,discareded四种格式。plyr包中的ddply()可以得到相同结果。summarize不会提供来自原始数据框中其它列中的任何信息，如果需要列出其它column数据，则可以把“summarize”替换为“transform”，且允许一次应用多个函数。
 ```{r eval=FALSE}
 ddply(.data = HW93,.(agegr),summarize,mean=mean(epg),max=max(epg),min=min(epg))
@@ -514,10 +447,8 @@ rate <- function(x){
 }
 ddply(.data = HW93,.(agegr),.fun = function(x){rate(x$epg)})
 ```
-
 ##频数表和列联表
 table(var1, var2, …, varN) 使用 N 个类别型变量（因子）创建一个 N 维列联表。xtabs(formula, data) 根据一个公式和一个矩阵或数据框创建一个 N 维列联表。prop.table(table, margins) 依margins定义的边际列表将表中条目表示为分数形式。margin.table(table, margins) 依margins定义的边际列表计算表中条目的和addmargins(table, margins) 将概述边margins（默认是求和结果）放入表中。ftable(table) 创建一个紧凑的“平铺”式列联表
-
 ###一维列联表
 ```{r}
 data(Arthritis,package = "vcd")
@@ -529,15 +460,12 @@ mytable
 ```{r}
 prop.table(mytable)
 ```
-
 ###二维列联表
 对于二维列联表，table()函数的使用格式为：table(A,B),其中的A是行变量，B是列变量。xtabs()函数还可使用公式风格的输入创建列联表，格式为：xtabs(\~A+B,data=mydata)，其中的mydata是一个矩阵或数据框，要进行交叉分类的变量应出现在公式的右侧（即\~符号的右方），以+作为分隔符。若某个变量写在公式的左侧，则其为一个频数向量（在数据已经被表格化时很有用）。
-
 ```{r}
 mytable<-xtabs(~Treatment+Improved,data=Arthritis)
 mytable
 ```
-
 可以使用margin.table()和prop.table()函数分别生成边际频数(行和)和比例(行比)。
 ```{r}
 margin.table(mytable,1)
@@ -573,7 +501,6 @@ CrossTable()函数有很多选项计算（行、列、单元格）的百分比�
 
 ###多维列联表
 table()和xtabs()都可以基于三个或更多的类别型变量生成多维列联margin.table()、prop.table()和addmargins()函数也可以推广到多维的情况。另外，ftable()函数可以以一种紧凑而吸引人的方式输出多维列联表
-
 ```{r}
 mytable<-xtabs(~Treatment+Sex+Improved,data=Arthritis)
 mytable
