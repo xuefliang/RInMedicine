@@ -1,0 +1,27 @@
+---
+title: "生存分析"
+author: "梁雪枫"
+documentclass: ctexart
+output:
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    template: !expr rticles::ctex_template()
+    toc: yes
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+---
+
+```{r include=FALSE}
+library(epicalc)
+library(survival)
+```
+生存分析(Survival analysis)是指根据试验或调查得到的数据对生物或人的生存时间进行分析和推断，研究生存时间和结局与众多影响因素间关系及其程度大小的方法，也称生存率分析或存活率分析。生存分析适合于处理时间－事件数据,生存时间(survival time)是指从某起点事件开始到被观测对象出现终点事件所经历的时间，如从疾病的“确诊”到“死亡”。生存时间有两种类型：完全数据(complete data)指被观测对象从观察起点到出现终点事件所经历的时间;截尾数据(consored data)或删失数据，指在出现终点事件前，被观测对象的观测过程终止了。由于被观测对象所提供的信息是不完全的，只知道他们的生存事件超过了截尾时间。截尾主要由于失访、退出和终止产生。
+
+死亡概率(mortality probability)指某段时间开始时生存的个体在该段时间内死亡的可能性大小，若无删失数据，死亡概率=某人群某段时间总死亡例数/该人群同时间段期初观察例数。生存概率(survival probability)指某段时间开始时存活的个体至该时间结束时仍然存活的可能性大小，生存概率=1-死亡概率=某人群活过某段时间例数/该人群同时间段期初观察例数。由于生存分析中常存在删失数据，假定删失事件在观察时间内各个时间点等机会发生，分母改用校正观察例数。校正观察例数=期初观察例数-删失例数/2。
+生存率(Survival rate)，用$S(t_{k})$表示，指经历$t_{k}$个单位时间后仍存活的概率，若无删失数据，则为活过了$t_{k}$时刻仍然存活的例数/观察开始的总例数。如果有删失数据，分母则需要按时段进行校正，此时生存率的计算公式为$$S(t_{k})=P(T>t_{k})=p_{1} \cdot p_{2}\cdot \cdot \cdot  p_{k}$$,其中$p_{1} \cdot p_{2}\cdot \cdot \cdot  p_{k}$表示不同时间段的生存概率。生存率为多个时间段生存概率的累积，故又称累积生存概率，其标准误计算公式为$$SE(S(t_{k}))=S(t_{k})\sqrt{\sum_{i=1}^{k}\frac{q_{i}}{p_{i}n_{i}}}$$,$q_{i}$为死亡概率，$p_{i}$为生存概率。
+```{r}
+addicts <- read.table('ADDICTS.txt',T)
+names(addicts) <- c('id','clinic','status', 'survt','prison','dose')
+```
+包含通过寿命表（Life Table）分析法，完成对病例随访资料在任意指定时点的生存状况评价；Kaplan-Meier方法，对病例随访资料进行生存分析，在对应于每一实际观察事件时点上，作生存率的评价和建立Cox回归模型（亦称比例风险模型）。
