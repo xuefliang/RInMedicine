@@ -20,8 +20,63 @@ library(survival)
 
 死亡概率(mortality probability)指某段时间开始时生存的个体在该段时间内死亡的可能性大小，若无删失数据，死亡概率=某人群某段时间总死亡例数/该人群同时间段期初观察例数。生存概率(survival probability)指某段时间开始时存活的个体至该时间结束时仍然存活的可能性大小，生存概率=1-死亡概率=某人群活过某段时间例数/该人群同时间段期初观察例数。由于生存分析中常存在删失数据，假定删失事件在观察时间内各个时间点等机会发生，分母改用校正观察例数。校正观察例数=期初观察例数-删失例数/2。
 生存率(Survival rate)，用$S(t_{k})$表示，指经历$t_{k}$个单位时间后仍存活的概率，若无删失数据，则为活过了$t_{k}$时刻仍然存活的例数/观察开始的总例数。如果有删失数据，分母则需要按时段进行校正，此时生存率的计算公式为$$S(t_{k})=P(T>t_{k})=p_{1} \cdot p_{2}\cdot \cdot \cdot  p_{k}$$,其中$p_{1} \cdot p_{2}\cdot \cdot \cdot  p_{k}$表示不同时间段的生存概率。生存率为多个时间段生存概率的累积，故又称累积生存概率，其标准误计算公式为$$SE(S(t_{k}))=S(t_{k})\sqrt{\sum_{i=1}^{k}\frac{q_{i}}{p_{i}n_{i}}}$$,$q_{i}$为死亡概率，$p_{i}$为生存概率。
+survival包中包括了所有生存分析所必须的函数，生存分析主要是把数据放入Surv object，通过Surv()函数做进一步分析。Surv object是将时间和生存状花的信息合并在一个简单的对象内，生存状况变量必须是数值或者逻辑型的。如果时数值型，则有两个选项，0表示删失，1表示终点事件，或者1表示删失，2表示终点事件。如果时逻辑型的，则FALSE表示删失，True表示终点事件。
+
+例  addicts是238名病例随访信息，status变量表示病例的生存状况（0为删失，1为终点事件），Days.survival变量表示生存的天数。
+
 ```{r}
 addicts <- read.table('ADDICTS.txt',T)
-names(addicts) <- c('id','clinic','status', 'survt','prison','dose')
+addicts$Clinic <- as.factor(addicts$Clinic)
 ```
-包含通过寿命表（Life Table）分析法，完成对病例随访资料在任意指定时点的生存状况评价；Kaplan-Meier方法，对病例随访资料进行生存分析，在对应于每一实际观察事件时点上，作生存率的评价和建立Cox回归模型（亦称比例风险模型）。
+
+##寿命表（Life Table）
+寿命表时描述一段时间内生存状况、终点事件和生存概率的表格，需计算累积生存概率即每一步生存概率的乘积，可完成对病例随访资料在任意指定时点的生存状况评价。
+
+```{r}
+addicts$surv <- Surv(addicts$Days.survival,addicts$Status)
+summary(survfit(addicts$surv~1),censor=T)
+```
+上表的第一行表示，在第2天，有238个调查对象，没有发生终点事件（n.event），生存概率为(238-0)/238=1,其中有2个删失对象没有显示出来。第二行表示在第7天，有236个对象，其中1个发生了终点事件，生存概率为(236-1)/235*1=0.996。寿命表中其他数据行的意思类似。
+
+##Kaplan-Meier曲线
+Kaplan-Meier曲线也称生存曲线， 纵轴表示生存概论，横轴表示生存事件。如果在概率50%处画一条水平线，它将中位生存事件点和生存曲线相交。
+```{r}
+kml <- summary(survfit(addicts$surv~1),censor=T)
+attributes(kml)
+plot(kml$time,kml$surv,type="s")
+plot(survfit(addicts$surv~1))
+#绘制一条曲线时，图形中包含95%的置信区间和删失标记，不需要可设置为False
+plot(survfit(addicts$surv~1),conf.int = F,mark.time = F)
+abline(h=0.5,lty=2,col="red")
+#中位生存时间
+survfit(addicts$surv~1)
+```
+
+在survfit函数中改变公式右边的参数，可获得不同因子水平的生存曲线。
+```{r}
+plot(survfit(addicts$surv~addicts$Clinic),col=c("red","blue"),conf.int = F)
+legend(10,.4,legend=c("1","2"),col = c("red","blue"),lty=c(1,1))
+```
+
+不同生存曲线间是否有差异，可通过survdiff进行比较，该函数最后一个参数时rho，用于指定检验的类型。让rho=0(默认时)，进行对数秩(log-rank)检验或$Mantel-Haenszel \chi^{2}$检验，比较各组期望频数和实际观察数。如果两组间的差异水平太大，$\chi^{2}$会较大而P值较小，表示生存曲线有统计学差异。当rho=1时，进行Gehan-Wilcoxon的Peto校正检验，该检验赋予早期终点事件较大的权重。
+```{r}
+survdiff(addicts$surv~addicts$Clinic)
+```
+
+
+
+##累积风险率
+风险率指每个单位时间的时小比例，这个随时间变化。用图形可绘制累积风险率，其斜率可相对容易的观察。
+```{r}
+plot(survfit(addicts$surv~1),conf.int = F,fun="cumhaz")
+```
+上图显示，在后800多天的时，由于没有终点事件的发生，斜率时水平的。
+
+在survfit函数中改变公式右边的参数，可获得不同因子水平的累积风险概率。
+```{r}
+plot(survfit(addicts$surv~addicts$Clinic),col=c("red","blue"),conf.int = F,fun="cumhaz")
+legend(5,4,legend=c("1","2"),col = c("red","blue"),lty=c(1,1))
+```
+
+
+包含通过寿命表（Life Table）分析法，；Kaplan-Meier方法，对病例随访资料进行生存分析，在对应于每一实际观察事件时点上，作生存率的评价和建立Cox回归模型（亦称比例风险模型）。
