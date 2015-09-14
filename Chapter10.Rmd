@@ -27,6 +27,7 @@ survival包中包括了所有生存分析所必须的函数，生存分析主要
 ```{r}
 addicts <- read.table('ADDICTS.txt',T)
 addicts$Clinic <- as.factor(addicts$Clinic)
+addicts$Prison <- as.factor(addicts$Prison)
 ```
 
 ##寿命表（Life Table）
@@ -41,15 +42,20 @@ summary(survfit(addicts$surv~1),censor=T)
 ##Kaplan-Meier曲线
 Kaplan-Meier曲线也称生存曲线， 纵轴表示生存概论，横轴表示生存事件。如果在概率50%处画一条水平线，它将中位生存事件点和生存曲线相交。
 ```{r}
-kml <- summary(survfit(addicts$surv~1),censor=T)
-attributes(kml)
+KM0 <- survfit(surv ~ 1,  type="kaplan-meier",data=addicts)
+kml <- summary(KM0,censor=T)
+ttributes(kml)
 plot(kml$time,kml$surv,type="s")
 plot(survfit(addicts$surv~1))
-#绘制一条曲线时，图形中包含95%的置信区间和删失标记，不需要可设置为False
+#绘制一条曲线时，图形中a包含95%的置信区间和删失标记，不需要可设置为False
 plot(survfit(addicts$surv~1),conf.int = F,mark.time = F)
 abline(h=0.5,lty=2,col="red")
 #中位生存时间
 survfit(addicts$surv~1)
+#25%,50%和75%生存时间
+quantile(KM0, probs=c(0.25, 0.5, 0.75), conf.int=FALSE)
+#50天和100天生存状况
+summary(KM0, times=c(50, 100))
 ```
 
 在survfit函数中改变公式右边的参数，可获得不同因子水平的生存曲线。
@@ -63,7 +69,13 @@ legend(10,.4,legend=c("1","2"),col = c("red","blue"),lty=c(1,1))
 survdiff(addicts$surv~addicts$Clinic)
 ```
 
-
+###分层比较
+在Clinic变量有可能和其他变量之间存在相关性，应调整其影响后，研究生存区间之间的差异。
+```{r}
+cc(addicts$Clinic,addicts$Prison)
+survdiff(addicts$surv~addicts$Clinic+strata(addicts$Prison))
+```
+在调整addicts$Prison的影响之后，与原始情况没有太大差异，说明Prison对surv的影响不是独立的。
 
 ##累积风险率
 风险率指每个单位时间的时小比例，这个随时间变化。用图形可绘制累积风险率，其斜率可相对容易的观察。
@@ -78,5 +90,8 @@ plot(survfit(addicts$surv~addicts$Clinic),col=c("red","blue"),conf.int = F,fun="
 legend(5,4,legend=c("1","2"),col = c("red","blue"),lty=c(1,1))
 ```
 
+```{r}
+model <-coxph(surv~Clinic,data=addicts)
+```
 
 包含通过寿命表（Life Table）分析法，；Kaplan-Meier方法，对病例随访资料进行生存分析，在对应于每一实际观察事件时点上，作生存率的评价和建立Cox回归模型（亦称比例风险模型）。
