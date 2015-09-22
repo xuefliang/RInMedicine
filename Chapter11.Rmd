@@ -299,4 +299,107 @@ rZ    <- (rr-muR) / sqrt(varR)
 (pVal <- 1-pnorm(rZ))
 ```
 
+##无序相关检验(Association tests and measures for unordered categorical variables)
+###(2×2)列联表
+Fishe精确检验是检验两个二分类变量是否是独立的一种检验。
+
+例 某疾病的影像学诊断和疾病的确诊结果如下，问影像学诊断和确诊结果是否有差别？
+        
+疾病    isHealthy  isIll
+---     ---        ---
+no      8          2  
+yes     1          4 
+    
+```{r}
+disease <- factor(rep(c("no", "yes"),   c(10, 5)))
+diagN   <- rep(c("isHealthy", "isIll"), c( 8, 2))
+diagY   <- rep(c("isHealthy", "isIll"), c( 1, 4))
+diagT   <- factor(c(diagN, diagY))
+contT1  <- table(disease, diagT)
+addmargins(contT1)
+fisher.test(contT1)
+```
+P值大于0.05，可以认为影像学诊断和确诊结果没有差别。
+
+###灵敏度、特异度等(Prevalence, sensitivity, specificity, CCR, F-score)
+```{r}
+TN <- c11 <- contT1[1, 1]       ## true negative 真阴性
+TP <- c22 <- contT1[2, 2]       ## true positive / hit 真阳性
+FP <- c12 <- contT1[1, 2]       ## false positive 假阳性
+FN <- c21 <- contT1[2, 1]       ## false negative / miss 假阴性
+
+(prevalence <- sum(contT1[2, ]) / sum(contT1)) #盛行率
+(sensitivity <- recall <- TP / (TP+FN))  #灵敏度
+(specificity <- TN / (TN+FP))  #特异度
+(relevance <- precision <- TP / (TP+FP)) #阳性预测值
+(CCR <- sum(diag(contT1)) / sum(contT1)) #正确分类率 accuracy = (TP + TN)/(TP + FP + FN + TN)
+(Fval <- 1 / mean(1 / c(precision, recall))) #F得分 = 2*TP /(2*TP + FP + FN) % 
+```
+
+### OR值、相对危险度等(Odds ratio, Yule's Q and risk ratio)
+```{r}
+(OR <- OddsRatio(contT1, conf.level=0.95)) # OR值
+YuleQ(contT1)  ## Goodman-Kruskal γ值，属于2×2四格表的列联比例函数
+RelRisk(contT1) #相对危险度
+(risk    <- prop.table(contT1, margin=1))
+(relRisk <- risk[1, 1] / risk[2, 1]) #相对危险度
+```
+
+###(r×c)列联表
+例 某研究得出吸烟和冠心病疾病的严重程度人数分布如下表，问吸烟和冠心病疾病的严重程度是否有关？
+
+smokes  轻   中   重
+---     ---  ---  ---
+no      5    21   6
+yes     4    13   1 
+```{r}
+table2flat <- function(mytable){
+  df <- as.data.frame(mytable)
+  rows <- dim(df)[1]
+  cols <- dim(df)[2]
+  x <- NULL
+  for(i in 1:rows){
+    for(j in 1:as.integer(as.character(df$Freq[i]))){
+      row <- df[i,c(1:(cols-1))]
+      x <- rbind(x,row)
+    }
+  }
+  row.names(x) <- c(1:dim(x)[1])
+  return(x)
+}
+
+smokes <- rep(c("no","yes"),times=1)
+siblings <- rep(c("1","2","3"),each=2)
+Freq <- c(5,4,21,13,6,1)
+mytable <- as.data.frame(cbind(smokes,siblings,Freq))
+mydata <- table2flat(mytable)
+cTab <- table(mydata)
+cTab
+addmargins(cTab)
+chisq.test(cTab)
+```
+p值大于0.05，可以认为吸烟和冠心病疾病的严重程度无关。
+
+#### \(\phi\), Cramer's \(V\), contingency coefficient等值
+```{r}
+Assocs(cTab)
+```
+
+####Cochran-Mantel-Haenszel 检验
+MHC 检验在存在第三个类别变量的情况下有条件地检验两个二分类变量的关联度。
+
+例 检验在A、B两组组别因素存在的情况下，性别和工作而分类变量的关联度
+```{r}
+set.seed(123)
+myDf <- data.frame(work =factor(sample(c("home", "office"), 10, replace=TRUE)),
+                   sex=factor(sample(c("f", "m"),10, replace=TRUE)),
+                   group=factor(sample(c("A", "B"), 10, replace=TRUE)))
+tab3 <- xtabs(~ work + sex + group, data=myDf)
+tab3
+cmh_test(tab3, distribution=approximate(B=9999))
+```
+P值大于0.05，可以认为性别和工作无关联。
+
+
+
 
