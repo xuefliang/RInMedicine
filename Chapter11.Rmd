@@ -52,7 +52,7 @@ median_test(DV ~ IV, distribution="exact", data=wIndDf)
 ```
 P值均大于0.05，不能拒绝原假设，可以认为两组病人血尿素氮无差异。
 
-##Wilcoxon符号秩和检验(Wilcoxon rank-sum test)
+###Wilcoxon符号秩和检验(Wilcoxon rank-sum test)
 Wilcoxon符号秩和检验即Mann-Whitney U检验适用于两独立样本的差异显著性检验，用以确定两种总体的分布是否相同，对应于参数检验中两独立样本均数之差的Ｔ检验。
 例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲组病人血尿素氮(BUN)的含量是否大于乙组？
 ```{r}
@@ -235,7 +235,7 @@ BinomCI(tab[1], sum(tab), method="wilson")
 ```
 该血清阳性率为71.42%，95%置信区间为35.89%~91.77%.
 
-##卡方检验($\chi^{2}$)
+##卡方检验($\chi^{2}$检验)
 卡方检验用于两个率或两个构成比之间的比较。
 例 三组大白鼠分别为35 16 94只，在不同致癌剂作用下的发病数分别为15 6 39，问不同组只见发病数是否有差别？
 ```{r}
@@ -244,3 +244,59 @@ hits  <- c(15,6,39)
 prop.test(hits, total)
 ```
 P值大于0.05，不能拒绝零假设，不能认为三组之间的发病数有差异。
+
+##游程检验(Runs-test)
+游程检验即单样本变量值的随机性检验，其中连续出现区段称为游程，对是样本序列中连续出现的变量值的次数进行检验。
+例 某村发生一种地方病，其住户沿一条河排列，调查时对发病的住户标记为“t”，对非发病的住户标记为“f”，共8户，其取值如下表所示:"f", "t", "t", "f", "t", "f", "f", "f",问该地方的发病是否随机？
+```{r}
+queue <- factor(c("f", "t", "t", "f", "t", "f", "f", "f"))
+RunsTest(queue, alternative="greater")
+```
+P值大于0.05，可以认为地方病的发病是随机的。
+
+###置换检验(Manual permutation test)
+样本数较少，实现置换检验
+```{r}
+Nj    <- table(queue)
+(runs <- rle(levels(queue)[as.numeric(queue)]))
+(rr <- length(runs$lengths))
+(rr1 <- table(runs$values)[1])
+(rr2 <- table(runs$values)[2])
+getP <- function(r1, r2, n1, n2) {
+    # iterations of a symbol <= total number of this symbol?
+    stopifnot(r1 <= n1, r2 <= n2)
+
+    # probability in case r1+r2 is uneven
+    p <- (choose(n1-1, r1-1) * choose(n2-1, r2-1)) / choose(n1+n2, n1)
+
+    # probability in case r1+r2 is even: twice the uneven case
+    ifelse(((r1+r2) %% 2) == 0, 2*p, p)
+}
+
+n1 <- Nj[1]
+n2 <- Nj[2]
+N <- sum(Nj)
+rMin  <- 2
+(rMax <- ifelse(n1 == n2, N, 2*min(n1, n2) + 1))
+p3.2 <- getP(3, 2, n1, n2)
+p2.3 <- getP(2, 3, n1, n2)
+p3.3 <- getP(3, 3, n1, n2)
+p4.3 <- getP(4, 3, n1, n2)
+(pGrEq <- p3.2 + p2.3 + p3.3 + p4.3)
+p2.2 <- getP(2, 2, n1, n2)
+p1.2 <- getP(1, 2, n1, n2)
+p2.1 <- getP(2, 1, n1, n2)
+p1.1 <- getP(1, 1, n1, n2)
+(pLess <- p2.2 + p1.2 + p2.1 + p1.1)
+pGrEq + pLess
+```
+
+对上述游程进行检验可用正态近似法
+```{r}
+muR   <- 1 + ((2*n1*n2) / N)
+varR  <- (2*n1*n2*(2*n1*n2 - N)) / (N^2 * (N-1))
+rZ    <- (rr-muR) / sqrt(varR)
+(pVal <- 1-pnorm(rZ))
+```
+
+
