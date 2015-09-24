@@ -16,6 +16,10 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ```{r include=FALSE}
 library(coin)
 library(DescTools)
+library(mvtnorm)
+library(polycor)
+library(pROC)
+library(rms)
 ```
 非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
 
@@ -246,7 +250,7 @@ prop.test(hits, total)
 P值大于0.05，不能拒绝零假设，不能认为三组之间的发病数有差异。
 
 ##游程检验(Runs-test)
-游程检验即单样本变量值的随机性检验，其中连续出现区段称为游程，对是样本序列中连续出现的变量值的次数进行检验。
+游程检验即单样本变量值的随机性检验，其一个或多个的代表相同属性或类型的接连出现区段称为游程。游程检验主要是用来检验数据是否为随机性取得。 
 例 某村发生一种地方病，其住户沿一条河排列，调查时对发病的住户标记为“t”，对非发病的住户标记为“f”，共8户，其取值如下表所示:"f", "t", "t", "f", "t", "f", "f", "f",问该地方的发病是否随机？
 ```{r}
 queue <- factor(c("f", "t", "t", "f", "t", "f", "f", "f"))
@@ -299,7 +303,7 @@ rZ    <- (rr-muR) / sqrt(varR)
 (pVal <- 1-pnorm(rZ))
 ```
 
-##无序相关检验(Association tests and measures for unordered categorical variables)
+##无序分类联合检验(Association tests and measures for unordered categorical variables)
 ###(2×2)列联表
 Fishe精确检验是检验两个二分类变量是否是独立的一种检验。
 
@@ -400,6 +404,76 @@ cmh_test(tab3, distribution=approximate(B=9999))
 ```
 P值大于0.05，可以认为性别和工作无关联。
 
+##有序分类联合检验(Association tests and measures for ordered categorical variables)
+###线性间的联合检验(Linear-by-linear association test)
+线性间的联合检验检验两有序变量之间升高或降低的变化趋势。
+
+例  下表表示不同年龄组血液病患者真菌感染发生的严重分级情况，是否年龄组越高，感染越重？
+年龄   I      II      III     IV
+---    ---    ---     ---     ---
+<=29   1      5       6       9 
+30~59  5      7       6       7
+>=60   8      9       13      10
+
+```{r}
+age <- rep(c("Q","Z","L"),times=4)
+severity <- rep(c("I","II","III","IV"),each=3)
+Freq <- c(1,5,8,5,7,9,6,6,13,9,7,10)
+mytable <- as.data.frame(cbind(age,severity,Freq))
+dfOrd <- table2flat(mytable)
+cTab <- xtabs(~ age + severity, data=dfOrd)
+addmargins(cTab)
+lbl_test(cTab, distribution=approximate(B=9999))
+```
+P值大于0.05，不能认为年龄越高真菌感染的严重程度越重。
+
+###多序列相关(Polychoric and polyserial correlation)
+Polychoric相关是估计从两个从有序分类变量所获得的两个近似连续正态分布的潜变量（latent variables）之间的相关。
+```{r}
+polychor(dfOrd$age, dfOrd$severity, ML=TRUE)
+#polychor(cTab, ML=TRUE)
+```
+
+polyserial相关是估计一个连续性变量和一个有序分类的变量之间的相关。
+```{r}
+x <- rnorm(86,mean = 23,sd=10) 
+polyserial(x, dfOrd$severity) #两步骤估计
+polyserial(x, dfOrd$severity,ML=TRUE, std.err=TRUE) #ML估计 
+```
+
+###异构相关矩阵(Heterogeneous correlation matrices)
+```{r}
+N <- 100
+Sigma <- matrix(c(4,2,-3, 2,16,-1, -3,-1,9), byrow=TRUE, ncol=3)
+mu<- c(-3, 2, 4)
+Xdf   <- data.frame(rmvnorm(n=N, mean=mu, sigma=Sigma))
+lOrd   <- lapply(Xdf, function(x) {
+  cut(x, breaks=quantile(x), include.lowest=TRUE,
+      ordered=TRUE, labels=LETTERS[1:4]) })
+dfOrd  <- data.frame(lOrd)
+
+Xdf2<- rmvnorm(n=N, mean=mu, sigma=Sigma) #产生随机多元正态分布
+dfBoth <- cbind(Xdf2, dfOrd)
+hetcor(dfBoth, ML=TRUE)
+```
+
+###有序变量和连续性变量(Association measures involving categorical and continuous variables)
+对有序分类变量和连续性变量的相关测量，可以使用rms包中建立Logistic模型的lmr函数，AUC等指标可从模型的stats中获得。
+```{r}
+set.seed(123)
+N   <- 100
+x   <- rnorm(N)
+y   <- x + rnorm(N, 0, 2)
+yDi <- ifelse(y <= median(y), 0, 1)
+
+lrm(yDi ~ x)$stats
+
+#绘制ROC曲线
+(rocRes <- roc(yDi ~ x, plot=TRUE, ci=TRUE, main="ROC-curve",
+               xlab="specificity (TN / (TN+FP))", ylab="sensitivity (TP / (TP+FN))"))
+rocCI <- ci.se(rocRes)
+plot(rocCI, type="shape")
+```
 
 
 
