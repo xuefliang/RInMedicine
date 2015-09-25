@@ -482,6 +482,10 @@ Cochran-Q检验是对多个变量的二分数据具有同一分布的检验。�
 例 某研究调查了20名患者，对四个医院的满意情况，满意用1表示，不满意用0表示。
 ```{r}
 data_wide <- read.csv("Cochran.csv",header = T)
+data_wide
+```
+
+```{r}
 data_long <- melt(data_wide, id.vars = NULL) #转为长格式
 id=factor(rep(1:20,times=4))
 cdf <- data.frame(id,data_long)
@@ -490,7 +494,49 @@ symmetry_test(value~variable  | id, teststat="quad", data=cdf)
 ```
 P值小于0.05，可以认为对四个医院的满意情况有差异。
 
+##McNemar检验(McNemar test)
+McNemar检验用于配对计数资料的分析，主要分析配对资料中对照组和处理组的频数或比率是否有差异。常用于同一批观察对象用药前后或试验前后的结果是否有差异。
+
+例 同一批病例治疗前后症状研究结果如下，试分析治疗前后是否有差异？
+
+       后有    后无  
+---    ---     ---
+前有    3       5
+前无    6       6
+
+```{r}
+pre <- rep(c("yes","no"),times=2)
+post <- rep(c("yes","no"),each=2)
+Freq <- c(3,6,5,6)
+mytable <- as.data.frame(cbind(pre,post,Freq))
+mydata <- table2flat(mytable)
+cTab    <- table(mydata$pre, mydata$post)
+addmargins(cTab)
+mcnemar.test(cTab, correct=FALSE)
+symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
+```
+P值大于0.05，不但能认为治疗前后的症状有差异。
+
 ##Bowker 检验(Bowker test)
 对于配对设计的二分类资料，通常使用McNemar检验，而对于配对设计多分类资料，使用Bowker检验，是McNemar检验的一般化。
 
+例 两名放射科医生对203名棉屑沉着病可疑患者的诊断结果见下表。试分析两名医生诊断的结果是否相同。
 
+	   I	   II	   III
+---  ---   ---   ---
+I	   78	   5	   2
+II	 6	   56	   12
+III  2	   10	   32
+
+```{r}
+A <- rep(c("I","II","III"),times=3)
+B <- rep(c("I","II","III"),each=3)
+Freq <- c(78,6,2,5,56,10,2,12,32)
+mytable <- as.data.frame(cbind(A,B,Freq))
+mydata <- table2flat(mytable)
+cTab  <- table(mydata$A, mydata$B)
+addmargins(cTab)
+mcnemar.test(cTab) #对于大于2*2的列联表mcnemar.test自动采用Bowke检验
+symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
+```
+P值大于0.05，不但能认为两医生的诊断有差异。
