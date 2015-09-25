@@ -20,6 +20,7 @@ library(mvtnorm)
 library(polycor)
 library(pROC)
 library(rms)
+library(reshape2)
 ```
 非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
 
@@ -475,5 +476,21 @@ rocCI <- ci.se(rocRes)
 plot(rocCI, type="shape")
 ```
 
+##Cochran Q检验(Cochran-Q-test)
+Cochran-Q检验是对多个变量的二分数据具有同一分布的检验。检验的数据是二分类数据，且数据是0或1两种编码。
+
+例 某研究调查了20名患者，对四个医院的满意情况，满意用1表示，不满意用0表示。
+```{r}
+data_wide <- read.csv("Cochran.csv",header = T)
+data_long <- melt(data_wide, id.vars = NULL) #转为长格式
+id=factor(rep(1:20,times=4))
+cdf <- data.frame(id,data_long)
+cdf$value <- as.numeric(cdf$value) #转为数字
+symmetry_test(value~variable  | id, teststat="quad", data=cdf)
+```
+P值小于0.05，可以认为对四个医院的满意情况有差异。
+
+##Bowker 检验(Bowker test)
+对于配对设计的二分类资料，通常使用McNemar检验，而对于配对设计多分类资料，使用Bowker检验，是McNemar检验的一般化。
 
 
