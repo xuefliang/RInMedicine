@@ -630,4 +630,14 @@ addmargins(cTab)
 mcnemar.test(cTab) #对于大于2*2的列联表mcnemar.test自动采用Bowke检验
 symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
 ```
-P值大于0.05，不但能认为两医生的诊断有差异。
+P值大于0.05，不能认为两医生的诊断有差异。
+
+##Stuart Maxwell检验(Stuart-Maxwell-test for marginal homogeneity)
+Stuart Maxwell检验与Bowker 检验类似，适用于有序多分类的资料。
+
+例 如上题。
+```{r}
+mh_test(cTab, distribution=approximate(B=9999))
+```
+结果与上题类似，P值大于0.05，不能认为两医生的诊断有差异。
+
