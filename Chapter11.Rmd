@@ -23,6 +23,12 @@ library(rms)
 library(reshape2)
 library(pander)
 library(vcd)
+library(coin)
+library(e1071)
+library(lmPerm)
+library(corrperm)
+library(logregperm)
+library(glmperm)
 ```
 非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
 
@@ -837,6 +843,84 @@ P值大于0.05，接受原假设，认为三名病例的智力测验稳定性一
 当数据抽样于非正态分布时，如未知或混合分布、样本量过小、存在离群点、基于理论分布设计合适的统计检验过于复杂且数学上难以处理等情况，这时可以使用基于随机化和重抽样的统计方法。
 
 ###置换检验（Permutation tests）
+以原假设为起点，假定二组没有差别，由此将二组样本合并，从中以无放回方式进行抽样，分别归入两个组再计算统计量，反复进行由此得到置换分布，在此基础上进行推断。相对于传统检验，coin包提供了进行置换检验的一般性框架，函数形式：function(formula,data,distribution=)，formula描述的是要检验变量间的关系，如下表所示，data是一个数据框，distribution指定经验分布在零假设条件下的形式，若distribution ="exact"，那么表示在零假设条件下，分布的计算是精确的（即依据所有可能的排列组合），仅可用于两样本问题；若distribution = "asymptotic"表示根据它的渐进分布进行计算；若distribution ="approxiamate(B = #)"表示根据蒙特卡洛重抽样来做近似计算，其中#指所需重复的次数。
+
+检验	                                        coin函数
+---                                           ---
+两样本和K样本置换检验	                        oneway_test(y ~ A)
+含一个分层（区组）因子的两样本和K样本置换检验	oneway_test(y ~ A | C)
+Wilcoxon-Mann-Whitney秩和检验	                wilcox_test(y ~ A)
+Kruskal-Wallis检验	                          kruskal_test(y ~ A)
+Person卡方检验	                              chisq_test(A ~ B)
+Cochran-Mantel-Haenszel检验	                  cmh_test(A ~ B | C)
+线性关联检验	                                lbl_test(D ~ E)
+Spearman检验	                                spearman_test(y ~ x)
+Friedman检验	                                friedman_test(y ~ A | C)
+Wilcoxon符号秩检验	                          wilcoxsign_test(y1 ~ y2)
+
+coin函数中，y和x是数值变量，A和B是分类因子，C是类别型区组变量，D和E是有序因子，y1和y2是相匹配的数值变量。类别变量和有序变量均应转化为因子和有序因子。
+
+####独立两样本和K样本检验（Two-sample t-test / one-way ANOVA for independent groups）
+
+例 某医院欲研究A、B两种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），问两组家兔血清ACE浓度是否相同？
+```{r}
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
+    46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
+    45, 46, 44, 45, 46, 44, 43, 42, 45)
+
+dfCRp <- data.frame(length = c(a, b), site = factor(c(rep("1", 20), 
+    rep("2", 25))))
+
+set.seed(123)
+ot <- oneway_test(length ~ site, data = dfCRp,distribution=approximate(B=9999))
+ot
+```
+
+置换密度图
+```{r}
+supp <- support(ot)
+dens <- sapply(supp, dperm, object=ot)
+plot(supp, dens, xlab="Support", ylab=NA, pch=20, main="Density permutation distribution")
+```
+
+QQ图
+```{r}
+qEmp <- sapply(ppoints(supp), qperm, object=ot)
+qqnorm(qEmp, xlab="Normal quantiles", ylab="Permutation quantiles",
+       pch=20, main="Permutation quantiles vs. normal quantiles")
+abline(a=0, b=1, lwd=2, col="blue")
+```
+
+累积分布图
+```{r}
+plot(qEmp, ecdf(qEmp)(qEmp), col="gray60", pch=16,
+     xlab="Difference in means", ylab="Cumulative relative frequency",
+     main="Cumulative relative frequency and normal CDF")
+```
+
+
+
+例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
+
+```{r}
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
+    46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
+    45, 46, 44, 45, 46, 44, 43, 42, 45)
+c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48, 47, 44, 45, 46, 
+    45, 43, 44, 45, 46, 43, 42)
+dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20), 
+    rep("2", 25), rep("3", 23))))
+
+set.seed(123)
+ot <- aovp(length ~ site, data = dfCRp,perm="Prob")
+summary(ot)
+```
+
+
+
+
 
 
 
