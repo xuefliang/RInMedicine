@@ -29,6 +29,7 @@ library(lmPerm)
 library(corrperm)
 library(logregperm)
 library(glmperm)
+library(vcd)
 ```
 非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
 
@@ -903,13 +904,44 @@ plot(qEmp, ecdf(qEmp)(qEmp), col="gray60", pch=16,
 
 例 10各高血压病人在治疗前后的血压值分别为86 120  82 137  96 104 142  86  77  82和75 107  88 111 111 132  67 115 103 136，问治疗前后的血压值是否有不同？
 ```{r}
+N <- 10
 pre <- c(86,120,82,137,96,104,142,86,77,82)
 post <- c(75,107,88,111,111,132,67,115,103,136)
 tDepDf <- data.frame(DV=c(pre, post),
-                     IV=factor(rep(0:1, each=10), labels=c("pre", "post")))
-
-
+                     IV=factor(rep(0:1, each=N), labels=c("pre", "post")))
+id     <- factor(rep(1:N, times=2))
+set.seed(123)
+oneway_test(DV ~ IV | id, alternative="less", distribution=approximate(B=9999), data=tDepDf)
 ```
+P值大于0.05，治疗前后的血压值没有不同。
+
+####独立性检验
+
+例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否独立？
+```{r}
+Arthritisc <- transform(Arthritis,Improved=as.factor(as.numeric(Improved)))
+set.seed(123)
+chisq_test(Treatment~Improved,distribution=approximate(B=9999),data=Arthritisc)
+```
+p值较小，可以认为治疗情况和改善情况不独立。
+
+#####Cochran-Mantel-Haenszel检验
+CMH检验可以对一些分层变量进行调整，从而获得反应率的总体比较。最为最为常见的应用是在多中心试验中对研究中心进行调整而进行两组率的比较。
+
+例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）、性别（Sex）和改善情况（Improved），在性别分层的情况下治疗情况和改善情况是否独立？
+```{r}
+set.seed(123)
+cmh_test(Treatment~Improved|Sex,distribution=approximate(B=9999),data=Arthritis)
+```
+P值较小，分性别来看，治疗情况和改善情况并不独立。
+
+####趋势检验
+例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否存在线性趋势？
+```{r}
+set.seed(123)
+lbl_test(Treatment~Improved,distribution=approximate(B=9999),data=Arthritis)
+```
+P值较小，治疗情况和改善情况存在线性趋势。
 
 
 例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
