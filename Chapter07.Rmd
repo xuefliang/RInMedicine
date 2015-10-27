@@ -310,7 +310,6 @@ nnet包中multinom()函数、VGAM包中的vglm()函数、mlogit包中mlogit()函
 本例中是以outc变量的Deli(分娩)做为参考水平的，有人工流产史的病例(hia ever IA)发生宫外孕（EP）的危险增加4.44，有人工流产史的病例(hia ever IA)发生人工流产（IA）的危险增加1.47(置信区间包括1，无显著性意义)。multinom()函数默认是第一水平，可通过levels(Ectopic$outc)方法查看。vglm()和mlogit()函数是可以指定参考水平。
 
 #### 模型拟合评价
-
 ```{r}
 PhatCateg <- VGAM::predict(vglmFitMN, type="response")
 categHat <- levels(Ectopic$outc)[max.col(PhatCateg)]

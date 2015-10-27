@@ -30,6 +30,7 @@ library(corrperm)
 library(logregperm)
 library(glmperm)
 library(vcd)
+library(plyr) 
 ```
 非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
 
@@ -96,8 +97,6 @@ Wilcoxon符号秩和检验即Mann-Whitney U检验适用于两独立样本的差�
 #wilcox.test(x,y,exact = FALSE,correct =F) #差异性比较 
 #wilcox.test(x,y,exact = FALSE) 
 wilcox.test(DV ~ IV, alternative="less", conf.int=TRUE, data=wIndDf)
-wilcox_test(DV ~ IV, alternative="less", conf.int=TRUE,
-            distribution="exact", data=wIndDf)
 ```
 P值均大于0.05，不能拒绝原假设，可以认为甲组病人血尿素氮(BUN)的含量不大于乙组。
 
@@ -254,7 +253,6 @@ Fdf <- data.frame(id=factor(rep(1:N, times=P)),
                   IV=factor(rep(1:P, each=N),
                             labels=LETTERS[1:P]))
 friedman.test(DV ~ IV | id, data=Fdf)
-friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Fdf)
 ```
 P值小于0.05，拒绝原假设，可以认为四种不同的测试方式之间有差异。
 
@@ -411,7 +409,7 @@ P值大于0.05，可以认为A、B两组的分布相同。
 ##列联表的独立性检验
 在研究问题时有时候会遇到要求判断两个分类变量之间是否存在联系的问题，通常使用$\chi ^{2}$检验判断两组或多组资料是否相互关联。如果不相互关联，就称为独立，这类问题处理称为独立性检验（Test of Independence）。
 
-####earson$\chi ^{2}$检验
+####pearson$\chi ^{2}$检验
 在$i$为行，$j$为列的列联表中，统计量为$K=\sum_{i=1}^{I}\sum_{j=1}^{J}\frac{[n\cdot n_{ij}-n_{i}\cdot n_{j}]^{2}}{n\cdot n_{i}\cdot n_{j}}$。
 
 例 vcd包中Arthritis数据集是一项风湿性关节炎新疗法的双盲临床实验的结果，请分析治疗措施是否与风湿性关节炎改善情况有关？
@@ -901,7 +899,6 @@ plot(qEmp, ecdf(qEmp)(qEmp), col="gray60", pch=16,
 ```
 
 ####非独立两样本和K样本检验（Two-sample t-test / one-way ANOVA for dependent groups）
-
 例 10各高血压病人在治疗前后的血压值分别为86 120  82 137  96 104 142  86  77  82和75 107  88 111 111 132  67 115 103 136，问治疗前后的血压值是否有不同？
 ```{r}
 N <- 10
@@ -916,7 +913,6 @@ oneway_test(DV ~ IV | id, alternative="less", distribution=approximate(B=9999), 
 P值大于0.05，治疗前后的血压值没有不同。
 
 ####独立性检验
-
 例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否独立？
 ```{r}
 Arthritisc <- transform(Arthritis,Improved=as.factor(as.numeric(Improved)))
@@ -935,7 +931,7 @@ cmh_test(Treatment~Improved|Sex,distribution=approximate(B=9999),data=Arthritis)
 ```
 P值较小，分性别来看，治疗情况和改善情况并不独立。
 
-####趋势检验
+#####趋势检验
 例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否存在线性趋势？
 ```{r}
 set.seed(123)
@@ -943,7 +939,165 @@ lbl_test(Treatment~Improved,distribution=approximate(B=9999),data=Arthritis)
 ```
 P值较小，治疗情况和改善情况存在线性趋势。
 
+#####数值变量的独立性
+某医生分别采用盐析法和结合法测定正常皮肤中胶原蛋白的含量，检测结果如下，分析两数值变量之间的独立性。
 
+编号   盐析法   结合法
+---    ---      ---
+1      6.8      546
+2      7.8      553
+3      8.7      562
+4      8.7      563
+5      8.9      570
+6      9.5      575
+7      10.1     581
+8      10.2     605
+9      10.3     607
+10     10.4     621
+11     11.1     624
+12     12.4     626
+13     13.3     632
+14     13.1     640
+15     13.2     656
+ 
+```{r}
+y <- c(546,553,562,563,570,575,581,605,607,621,624,626,632,640,656)
+x <- c(6.8,7.8,8.7,8.7,8.9,9.5,10.1,10.2,10.3,10.4,11.1,12.4,13.3,13.1,13.2)
+df <- as.data.frame(cbind(x,y))
+
+set.seed(123)
+spearman_test(x~y,data=df,distribution=approximate(B=9999))
+```
+基于9999次重复的近似置换检验， 盐析法和结合法并不独立。
+
+####相关性
+
+#####Wilcoxon符号秩检验
+Wilcoxon符号秩检验适用于成对观测的数据，主要用于成对比较，比传统的单独用正负号的检验更加有效。
+例 某医生为了探讨缺碘地区母婴TSH水平的关系，应用免疫放射分析测定了160名孕妇（15-17周）及分娩时脐带血TSH水平（mU/L），现随机抽取10对数据，母血TSH1.21 1.30 1.39	1.42 1.47 1.56 1.68	1.72 1.98	2.1,脐血TSH3.90 4.5 4.20	4.83 4.16 4.93 4.32	4.99 4.7 5.2，试对母血TSH水平与新生儿脐带血TSH水平进行相关分析。
+```{r}
+x <- c(1.21,3.90,1.30,4.50,1.39,4.20,1.42,4.83,1.47,4.16)
+y <- c(1.56,4.93,1.68,4.32,1.72,4.99,1.98,4.70,2.10,5.20)
+df <- as.data.frame(cbind(x,y))
+
+set.seed(123)
+wilcoxsign_test(x~y,data=df,distribution="exact")
+```
+P值较小，可以认为母血TSH水平与新生儿脐带血TSH水平相关。
+
+#####Mann-Whitney-Wilcoxon检验
+Mann-Whitney-Wilcoxon检验是比较没有配对的两个独立样本的非参数检验。
+例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲组病人血尿素氮(BUN)的含量是否大于乙组？
+```{r}
+#wilcox.test(x,y,exact = FALSE,correct =F) #差异性比较 
+#wilcox.test(x,y,exact = FALSE) 
+wilcox_test(DV ~ IV, alternative="less", conf.int=TRUE,
+            distribution="exact", data=wIndDf)
+```
+P值均大于0.05，不能拒绝原假设，可以认为甲组病人血尿素氮(BUN)的含量不大于乙组。
+
+#####Spearman秩相关检验
+例 两位评分员对新出生的5名新生儿进行Apgar评分，甲：6  7  8  9 10，乙：5  6  7  8 10。试用Spearman秩相关检验方法检验两个评分员对等级评定有无相关关系。
+```{r}
+x <- c(6,7,8,9,10)
+y <- c(5,6,7,8,10)
+set.seed(123)####Spearman秩相关检验
+spearman_test(y~x)
+```
+P值小于0.05，可以认为两位评分员结论有关。
+
+#####Friedman检验
+例 四种测试的方式，分别测试得到如下：A：14 13 12 11 10 ，B：11 12 13 14 15，C：16 15 14 13 12，D：13 12 11 10 9，问不同的测试方式之间是否有差异？
+
+```{r}
+N   <- 5
+P   <- 4
+DV1 <- c(14, 13, 12, 11, 10)
+DV2 <- c(11, 12, 13, 14, 15)
+DV3 <- c(16, 15, 14, 13, 12)
+DV4 <- c(13, 12, 11, 10,9)
+Fdf <- data.frame(id=factor(rep(1:N, times=P)),
+                  DV=c(DV1, DV2, DV3, DV4),
+                  IV=factor(rep(1:P, each=N),
+                            labels=LETTERS[1:P]))
+set.seed(123)
+friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Fdf)
+```
+P值小于0.05，拒绝原假设，可以认为四种不同的测试方式之间有差异。
+
+####回归分析
+例　某项“冠状动脉缓慢血流现象”的影响因素的研究，以前降支、回旋支、右冠状动脉三支血管的平均TIMI帧基数(MTFC)表示，调查的影响因素有年龄(AGE,岁)、收缩压(SBP,mmHg)、舒张压(DBP,mmHg)、白细胞(WBC,$10^{2}$/L),寻找影响MTFC变化的因素。
+
+age sbp dbp wbc   mtfc
+--- --- --- ---   ---
+43  110 50	6.19	33.67
+63	105	60	6.03	26.67
+59	100	60	5.28	23
+78	100	60	6.52	26
+67	100	60	7.31	28
+65	119	61	5.67	30.33
+66	120	64	5.11	27
+73	130	88	6.40  47
+53	113	68	4.41	27.67
+76	120	70	4.20	37.33
+76	136	70	5.38	35.67
+76	130	70	4.94	31.33
+68	126	70	4.56	32.33
+61	136	70	5.42	30.67
+78	124	70	5.75	37.67
+80	110	70	4.68	36
+74	140	70	8.67	41
+75	130	70	6.62	41.67
+66	130	70	6.86	22
+55	114	70	7.52	23.33
+71	120	70	4.94	25.67
+62	130	70	4.59	25
+69	130	70	4.26	27
+45	110	70	10.21	29
+79	120	70	6.46	30.33
+58	110	70	4.70	27
+65	100	70	6.06	28
+44	119	70	5.55	22.33
+53	110	70	14.0	29.33
+62	130	72	7.29	43
+62	118	72	3.97	27.33
+53	122	74	3.97	18.33
+71	130	75	3.78	31
+54	116	75	4.35	22.33
+64	120	76	6.59	30
+71	140	78	5.70	35.67
+50	121	78	5.27	40.33
+51	138	80	5.65	34.67
+73	130	80	7.45	35.33
+64	138	80	6.58	33.67
+40	130	80	7.51	35.33
+72	120	80	4.42	34
+51	100	80	7.85	21
+49	120	89	5.14	20.67
+63	150	90	8.18	42.67
+56	130	90	5.23	30.67
+69	160	90	7.10	39
+78	130	90	6.03	29
+78	120	90	4.52	30.67
+61	150	92	7.52	40
+76	142	92	4.66	38
+51	140	100	5.70	28.33
+51	140	100	6.71	42.67
+57	160	100	6.14	41
+63	190	100	5.25	46
+69	150	80	6.33	22.67
+
+```{r warning=FALSE}
+records <- read.table("example1")
+ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
+set.seed(123)
+fit <- lmp(mtfc~age+sbp+log10(wbc),data=ex,perm = "Prob")
+summary(fit)
+```
+结果显示三个因素均有统计学意义。perm有Exact、Prob和SPR三个选项，Exact适用于10个观测数以下的精确间检验，Prob从可能的排列中不断抽样，直至估计的标准差在0.1之下，SPR适用序贯概率比检验来判断何时停止抽样。
+
+####方差分析
+#####单因素方差分析
 例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
 
 ```{r}
@@ -960,6 +1114,61 @@ set.seed(123)
 ot <- aovp(length ~ site, data = dfCRp,perm="Prob")
 summary(ot)
 ```
+
+#####单因素协方差分析
+例 multcomp包中litter数据集是怀孕小白鼠被分为四个小组，每个小组接受不同剂量（0、5、50和500）的药物处理dose为自变量，产下幼崽的体重weigth均值为因变量，怀孕时间gesttime为协变量。
+```{r}
+data(litter,package = "multcomp")
+ddply(.data = litter,.(dose),summarize,mean=mean(weight))
+shapiro.test(litter$weight)
+bartlett.test(weight~dose,data = litter)
+set.seed(123)
+ancova <- aovp(weight~gesttime+dose,data = litter,perm = "Prob")
+summary(ancova)
+par(mfrow=c(2,2))
+plot(ancova)
+par(mfrow=c(1,1))
+```
+数据满足正态性的要求,但不满足方差齐性的要求。检验结果表明怀孕时间gesttime与出生体重weight相关，在控制怀孕时间后，每种药物剂量dose下出生体重weight均值不同。
+
+#####双因素方差分析
+例 基础安装中的ToothGrowth数据集是随机分配60只豚鼠,分别采用两种喂食方法supp(橙汁或维生素C),各喂食方法中抗坏血酸含量有三种水平dose(0.5mg、1mg或2mg),每种处理方式组合都被分配10只豚鼠,牙齿长度len为因变量。
+
+```{r}
+attach(ToothGrowth)
+table(supp,dose)
+ddply(.data = ToothGrowth,.(supp,dose),summarise,mean=mean(len))
+ddply(.data = ToothGrowth,.(supp,dose),summarise,sd=sd(len))
+```
+table语句的预处理表明该设计是均衡设计(各设计单元中样本大小都相同),ddply语句处理可获得各单元的均值和标准差。
+
+```{r}
+set.seed(123)
+aovCRFpq <- aovp(len~ supp*dose, data=ToothGrowth,perm = "Prob")
+summary(aovCRFpq)
+par(mfrow=c(2,2))
+plot(aovCRFpq)
+par(mfrow=c(1,1))
+```
+得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
+
+####Logistic回归
+例 AER包中包含一个Affairs数据，记录了一组婚外情数据，其中包括参与者性别、年龄、婚龄、是否有小孩、宗教信仰程度（5分制，1表示反对，5表示非常信仰）、学历、职业和婚姻的自我评分（5分制，1表示非常不幸福，5表示非常幸福），问婚外情的影响因素。
+```{r}
+data(Affairs,package="AER")
+Affairs$ynaffair[Affairs$affairs > 0] <- 1
+Affairs$ynaffair[Affairs$affairs==0] <- 0
+Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
+Affairs <- Affairs[,c("gender","age","yearsmarried","children","religiousness","education","occupation","rating","ynaffair")]
+
+nobs<-nrow(Affairs)
+
+step(fit.full)
+```
+
+####广义线性模型
+
+
 
 
 
