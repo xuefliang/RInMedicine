@@ -26,11 +26,10 @@ library(vcd)
 library(coin)
 library(e1071)
 library(lmPerm)
-library(corrperm)
-library(logregperm)
-library(glmperm)
+library(pgirmess)
 library(vcd)
-library(plyr) 
+library(plyr)
+library(boot)
 ```
 非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
 
@@ -1094,7 +1093,11 @@ set.seed(123)
 fit <- lmp(mtfc~age+sbp+log10(wbc),data=ex,perm = "Prob")
 summary(fit)
 ```
-结果显示三个因素均有统计学意义。perm有Exact、Prob和SPR三个选项，Exact适用于10个观测数以下的精确间检验，Prob从可能的排列中不断抽样，直至估计的标准差在0.1之下，SPR适用序贯概率比检验来判断何时停止抽样。
+结果显示三个因素均有统计学意义。perm有Exact、Prob和SPR三个选项，Exact适用于10个观测数以下的精确间检验，Prob从可能的排列中不断抽样，直至估计的标准差在0.1之下，SPR适用序贯概率比检验来判断何时停止抽样。pgirmess包中PermTest函数也可以对lm、lme和glm(binomial and Poisson)进行置换检验。
+```{r}
+fit <- lm(mtfc~age+sbp+log10(wbc),data=ex)
+PermTest(fit,B=1000)
+```
 
 ####方差分析
 #####单因素方差分析
@@ -1136,7 +1139,7 @@ par(mfrow=c(1,1))
 
 ```{r}
 attach(ToothGrowth)
-table(supp,dose)
+#table(supp,dose)
 ddply(.data = ToothGrowth,.(supp,dose),summarise,mean=mean(len))
 ddply(.data = ToothGrowth,.(supp,dose),summarise,sd=sd(len))
 ```
@@ -1159,18 +1162,61 @@ data(Affairs,package="AER")
 Affairs$ynaffair[Affairs$affairs > 0] <- 1
 Affairs$ynaffair[Affairs$affairs==0] <- 0
 Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
-Affairs <- Affairs[,c("gender","age","yearsmarried","children","religiousness","education","occupation","rating","ynaffair")]
-
-nobs<-nrow(Affairs)
-
-step(fit.full)
+fit<- glm(Affairs$ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating,data=Affairs,family=binomial())
+summary(fit)
+set.seed(123)
+PermTest(fit,B=250)
 ```
+yearsmarried、religiousness和rating三个变量的P值较小，可能是婚外情的影响因素。
 
 ####广义线性模型
+例 robust包中Breslow癫痫数据记录了治疗初期八周内，抗癫痫药物对癫痫发病数的影响，因变量sumY为随机后8周内癫痫发病数，自变量治疗Trt，年龄Age和治疗前8周的癫痫发病数Base。
 
+```{r}
+data(breslow.dat,package="robust")
+fitm <- glm(breslow.dat$sumY~Base+Age+Trt,data=breslow.dat,family = poisson())
+summary(fitm)
+set.seed(123)
+PermTest(fitm,B=250)
+```
+Base变量的P值较小，可能对癫痫的发病数有影响。
 
+##自主法(Bootstrapping)
+自主法是在原样本中有放回的抽样，随机抽取形成一个新的样本，重复这样的操作，形成一系列的新样本，通过这些样本就可以计算出样本的一个分布。该法无需特定的理论分布，便可计算统计量的置信区间，并能检验统计假设。
 
+###单个统计量
+例 计算robust包中breslow.dat数据集年龄Age的中位数及其置信区间
+```{r}
+mymedian <- function(data,indices){
+  d <- data[indices,]
+  rs <- median(d$Age)
+  return (rs)
+}
 
+set.seed(123)
+result <- boot(data=breslow.dat,statistic = mymedian,R=1000)
+print(result)
+plot(result)
+boot.ci(result,type = c("perc","bca"))
+```
+
+###多个统计量
+例 计算Affairs数据中logistic回归系统的置信区间
+```{r}
+bs <- function(formula,data,indices){
+  d <- data[indices,]
+  fit <- glm(formula,data=d,family=binomial())
+  return (coef(fit))
+}
+
+result <- boot(data = Affairs,statistic = bs,R=1000,formula=ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating)
+print(result)
+#print(result,index = 8) #多个统计量，添加索引
+plot(result,index = 8)
+
+boot.ci(result,type = "perc",index = 8)
+```
+type参数有norm(normal approximation方法)、basic(basic bootstrap方法)、stud(studentized bootstrap方法)、perc(bootstrap percentile方法)、bca(adjusted bootstrap percentile)和all(全部)。
 
 
 
