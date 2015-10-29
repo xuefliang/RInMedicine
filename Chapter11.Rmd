@@ -1099,6 +1099,18 @@ fit <- lm(mtfc~age+sbp+log10(wbc),data=ex)
 PermTest(fit,B=1000)
 ```
 
+回归系数的置信区间
+```{r}
+getRegr <- function(dat, idx) {
+  bsFit <- lm(mtfc~age+sbp+log10(wbc), subset=idx, data=dat)
+  coef(bsFit)
+}
+
+(bsRegr <- boot(ex, statistic=getRegr, R=999))
+boot.ci(bsRegr, conf=0.95, type="bca", index=1)$bca #需要指定索引参数
+```
+
+
 ####方差分析
 #####单因素方差分析
 例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
@@ -1116,6 +1128,66 @@ dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20),
 set.seed(123)
 ot <- aovp(length ~ site, data = dfCRp,perm="Prob")
 summary(ot)
+```
+P值为0.05，可以认为三组的家兔血清ACE浓度不同。
+
+自主法求F值及其置信区间
+```{r warning=F}
+anBase <- anova(lm(length ~ site, data=dfCRp))
+Fbase  <- anBase["site", "F value"]
+(pBase <- anBase["length", "Pr(>F)"])
+
+fit0 <- lm(length ~ 1, data=dfCRp)    ## fit 0-model
+E    <- residuals(fit0)               ## residuals
+Er   <- E / sqrt(1-hatvalues(fit0))   ## rescaled residuals
+Yhat <- fitted(fit0)     
+
+getAnova <- function(dat, idx) {
+  Ystar <- Yhat + Er[idx]
+  anBS  <- anova(lm(Ystar ~ site, data=dat))
+  anBS["site", "F value"]
+}
+
+(bsAnova <- boot(dfCRp, statistic=getAnova, R=999))
+boot.ci(bsAnova,conf=0.95, type=c("basic", "bca"))
+
+Fstar    <- bsAnova$t
+# don't use >= because of floating point arithmetic problems
+tol     <- .Machine$double.eps^0.5
+FsIsGEQ <- (Fstar > Fbase) | (abs(Fstar-Fbase) < tol)
+(pValBS <- (sum(FsIsGEQ) + 1) / (length(Fstar) + 1))
+
+plot(Fstar, ecdf(Fstar)(Fstar), col="gray60", pch=1, xlab="f* bzw. f",
+     ylab="P(F <= f)", main="F*: cumulative rel. freqs and F CDF")
+curve(pf(x, P-1, sum(Nj) - P), lwd=2, add=TRUE)
+legend(x="topleft", lty=c(NA, 1), pch=c(1, NA), lwd=c(2, 2),
+       col=c("gray60", "black"), legend=c("F*", "F"))
+```
+Wild boostrap
+```{r warning=F}
+getAnovaWild <- function(dat, idx) {
+  n  <- length(idx)                     ## size of replication
+  ## 1st choice for random variate U: Rademacher-variables
+  Ur <- sample(c(-1, 1), size=n, replace=TRUE, prob=c(0.5, 0.5))
+  
+  ## 2nd option for choosing random variate U
+  Uf <- sample(c(-(sqrt(5) - 1)/2, (sqrt(5) + 1)/2), size=n, replace=TRUE,
+               prob=c((sqrt(5) + 1)/(2*sqrt(5)), (sqrt(5) - 1)/(2*sqrt(5))))
+  
+  Ystar <- Yhat + (Er*Ur)[idx]          ## for E* with Rademacher-variables
+  # Ystar <- Yhat + (Er*Uf)[idx]        ## for E* with 2nd option
+  anBS  <- anova(lm(Ystar ~ site, data=dat))
+  anBS["site", "F value"]
+}
+
+bsAnovaW <- boot(dfCRp, statistic=getAnovaWild, R=999)
+boot.ci(bsAnovaW,conf=0.95, type=c("basic", "bca"))
+FstarW   <- bsAnovaW$t
+
+# don't use >= because of floating point arithmetic problems
+tol      <- .Machine$double.eps^0.5
+FsIsGEQ  <- (FstarW > Fbase) | (abs(FstarW-Fbase) < tol)
+(pValBSw <- (sum(FsIsGEQ) + 1) / (length(FstarW) + 1))
 ```
 
 #####单因素协方差分析
@@ -1217,6 +1289,29 @@ plot(result,index = 8)
 boot.ci(result,type = "perc",index = 8)
 ```
 type参数有norm(normal approximation方法)、basic(basic bootstrap方法)、stud(studentized bootstrap方法)、perc(bootstrap percentile方法)、bca(adjusted bootstrap percentile)和all(全部)。
+
+##分层自主法(Stratified bootstrapping)
+例 制药厂试制某种安定神经的新药，两台仪器制造药品服从正态分布，从各自加工药品中，分别取若干个测量其直径，两组直径如下A组 20.5 19.8 19.7 20.4 20.1 20.0 19.0 19.9 B组 20.7 19.8 19.5 20.8 20.4 19.6 20.2，问两组均数之差的置信区间？
+两组分层抽样非参数法
+```{r}
+DVm<-c(20.5, 19.8, 19.7, 20.4, 20.1, 20.0, 19.0, 19.9)
+DVf<-c(20.7, 19.8, 19.5, 20.8, 20.4, 19.6, 20.2)
+tDf <- data.frame(DV=c(DVm, DVf),
+                  IV=factor(rep(c("m", "f"), c(length(DVm), length(DVf)))))
+getDM <- function(dat, idx) {
+  Mfm <- aggregate(DV ~ IV, data=dat, subset=idx, FUN=mean)
+  -diff(Mfm$DV)
+}
+
+bsTind <- boot(tDf, statistic=getDM, strata=tDf$IV, R=999)
+boot.ci(bsTind, conf=0.95, type=c("basic", "bca")) 
+```
+参数法
+```{r}
+tt <- t.test(DV ~ IV, alternative="two.sided", var.equal=TRUE, data=tDf)
+tt$conf.int
+```
+
 
 
 
