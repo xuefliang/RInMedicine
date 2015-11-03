@@ -1412,3 +1412,2882 @@ try(detach(package:CircStats))
 try(detach(package:ggplot2))
 ```
 
+#参数估计
+```{r include=FALSE}
+library(MASS)
+library(pander)
+library(mixtools)
+library(boot)
+```
+
+参数估计(Parameter Estimation)是指用样本指标(称为统计量)估计总体指标(称为参数)。参数估计有点估计(point estimation)和区间估计(interval estimation)两种。 
+
+##点估计
+设总体$X$的分布函数$F(x;\theta)$形式已知，其中$\theta$是待估计的参数，点估计就是利用样本($x_{1},x_{2},...,x_{n}$)，构造一个统计量$\hat{\theta }=\hat{\theta}(x_{1},x_{2},...,x_{n})$来估计$\theta$，称$\hat{\theta}(x_{1},x_{2},...,x_{n})$为$\theta$的点估计量，它是一个随机变量。将样本观测值($x_{1},x_{2},...,x_{n}$)代入估计量$\hat{\theta}(x_{1},x_{2},...,x_{n})$，就得到它的一个具体数值$\hat{\theta}(x_{1},x_{2},...,x_{n})$，这个数值成为$\theta$的点估计值。
+点估计是依据样本估计总体分布中所含的未知参数或未知参数的函数。通常它是总体的某个特征值，如数学期望、方差和相关系数等。点估计问题就是要构造一个只依赖于样本的量，作为未知参数或未知参数的函数的估计值。
+构造点估计常用的方法是：
+
+###矩估计法  
+设$(x_{1},x_{2},...,x_{n})$是来自总体$X$的一个样本，根据大数定律，对任意$\varepsilon >0$,有
+$$\lim_{n\rightarrow \infty}P\left \{\right |\bar{X}-E(X)|\geq \varepsilon\}=0$$
+并且对于任何$k$，只要$E(X^{k})$存在，同样有
+$$\lim_{n\rightarrow \infty}P\left \{  \right|\frac{1}{n}\sum_{i=1}^{n}X_{i}^{k}-E(X^{k})|\geq \varepsilon \}=0,k=1,2,...$$
+因此用样本矩估计总体矩，从而得到总体分布中参数的一种估计。如用样本均值估计总体均值。矩法的优点是简单易行，并不需要事先知道总体是什么分布，缺点是当总体类型已知时，没有充分利用分布提供的信息，且矩估计量不具有唯一性。
+
+例1 设某药厂一天中发生着火现象的次数X服从参数为$\lambda$的Poisson分布，$\lambda$未知，有以下样本值，试用矩法估计参数$\lambda$。
+
+着火的次数                 0  1  2  3  4  5  6
+----                      -- -- -- -- -- -- --
+发生k次着火的天数$n_{k}$  75 90 54  22  6  2  1
+
+解 $EX=\lambda,A_{1}=\frac{1}{n}\sum_{i=1}^{n}X_{i}=\bar{X}$,
+
+令$\bar{X}=\lambda$则$\bar{\lambda }=\bar{x}=\frac{1}{250}(0\times 57+1\times 90+...+6\times 1)=1.22$，
+
+所以$\bar{X}=\lambda$,估计值$\hat{\lambda }=1.22$
+
+例2 正态分布N（0,1）的矩估计
+```{r}
+x<-rnorm(100) #产生N（0,1）的100个随机数
+mu<-mean(x)   #对N(mu,sigma)中的mu做矩估计
+sigma<-var(x) #这里的var并不是样本方差的计算函数，而是修正的样本方差，其实也就是x的总体方差
+mu
+sigma
+```
+
+### 极大似然估计法（MLE）  
+它是建立在极大似然原理的基础上的一个统计方法，极大似然原理的直观想法是：一个随机试验如有若干个可能的结果A，B，C，…。若在一次试验中，结果A出现，则一般认为试验条件对A出现有利，也即A出现的概率很大。当从模型总体随机抽取n组样本观测值后，最合理的参数估计量应该是使得从模型中抽取该n组样本观测值的概率最大。在任一次随机抽取中，样本观测值都以一定的概率出现。如果已经知道总体的参数，当然由变量的频率函数可以计算其概率。如果只知道总体服从某种分布，但不知道其分布参数，通过随机样本可以求出总体的参数估计。
+
+例3 对MASS包中的geyser数据，该数据采集自美国黄石公园内的一个名叫Old Faithful 的喷泉。“waiting”就是喷泉两次喷发的间隔时间，“duration”当然就是指每次喷发的持续时间。在这里，我们只用到“waiting”数据
+```{r}
+panderOptions('table.split.table', Inf)
+pander(head(geyser))
+```
+```{r}
+hist(geyser$waiting,freq = F) #从图中可以看出，其分布是两个正态分布的混合。
+```
+用如下的分布函数来描述该数据
+$$f(x)=pN(x_i;\mu_1,\sigma_1)+(1-p)N(x_i;\mu_2,\sigma_2)$$
+该函数中有5个参数$p、\mu_1、\sigma_1、\mu_2、\sigma_2$需要确定。上述分布函数的对数极大似然函数为：
+$$l=\sum_{i=1}^n\log \{pN(x_i;\mu_1,\sigma_1)+(1-p)N(x_i;\mu_2,\sigma_2)\}$$
+在R中定义对数似然函数
+```{r}
+LL<-function(params,data) #定义log-likelihood函数,参数"params"是一个向量，依次包含了五个参数：p,mu1,sigma1,#mu2,sigma2.#参数"data"，是观测数据。
+{
+t1<-dnorm(data,params[2],params[3])  #这里的dnorm()函数是用来生成正态密度函数的。
+t2<-dnorm(data,params[4],params[5])
+f<-params[1]*t1+(1-params[1])*t2
+ll<-sum(log(f))  #混合密度函数,log-likelihood函数
+return(-ll) #nlminb()函数是最小化一个函数的值，但我们是要最大化log-likeilhood函数，所以需要在“ll”前加个“-”号。
+}
+#参数估计
+hist(geyser$waiting,freq = F)
+lines(density(geyser$waiting)) #初始值为p=0.5,mu1=50,sigma1=10,mu2=80,sigma2=10
+geyser.res<-nlminb(c(0.5,50,10,80,10),LL,data=geyser$waiting,lower=c(0.0001,-Inf,0.0001,-Inf,-Inf,0.0001),upper=c(0.9999,Inf,Inf,Inf,Inf))
+```
+估计结果
+```{r}
+geyser.res$par #查看拟合的参数
+X<-seq(40,120,length=100)
+p<-geyser.res$par[1]
+mu1<-geyser.res$par[2]
+sig1<-geyser.res$par[3]
+mu2<-geyser.res$par[4]
+sig2<-geyser.res$par[5]
+f<-p*dnorm(X,mu1,sig1)+(1-p)*dnorm(X,mu2,sig2) #将估计的参数函数代入原密度函数。
+hist(geyser$waiting,probability=T,col=0,ylab="Density", #作出数据的直方图
+     ylim=c(0,0.04),xlab="Eruption waiting times")
+lines(X,f) #画出拟合的曲线
+```
+
+###最小二乘法
+当从模型总体随机抽取n组样本观测值后，最合理的参数估计量应该使得模型能最好地拟合样本数据，即实际值与估计值的距离最小，主要用于线性统计模型中的参数估计问题。
+
+例4 用最小二乘法估计线性回归模型
+```{r}
+x <- c(5.05, 6.75, 3.21, 2.66)
+y <- c(1.65, 26.5, -5.93, 7.96)
+lsfit(x, y)$coefficients #或者lm(y ~ x)$coefficients
+plot(x, y)
+abline(lsfit(x, y)$coefficients, col="red")
+```
+
+###EM算法
+EM算法是一种在观测到数据后，用迭代法估计未知参数的方法。可以证明EM算法得到的序列是稳定单调递增的。这种算法对于截尾数据或参数中有一些不感兴趣的参数时特别有效。EM算法的步骤为：E-step（求期望）：利用对隐藏变量的现有估计值，计算其最大似然估计值。M-step（求极值）：最大化在 E 步上求得的最大似然值来计算参数的值，重复以上两步，直至收敛即可得到theta的MLE。可以看到对于一个参数的情况，EM仅仅只是求解MLE的一个迭代算法。
+```{r}
+sim.x <- c()  
+sim.y <- c()  
+
+# 用循环产生2000个点
+for (i in 1:2000) {
+    # first draw to determine which normal distribution is used
+  first.draw = rmultinom(1, 1, c(0.1, 0.2, 0.7))[, 1]
+  y = which(first.draw == 1)
+  sim.y[i] = y
+  
+  # second draw to generate X from corresponding distribution
+  if (y == 1) {
+    x = rnorm(1, mean = 0, sd = 1)
+    sim.x[i] = x
+  }
+  if (y == 2) {
+    x = rnorm(1, mean = 10, sd = 5)
+    sim.x[i] = x
+  }
+  if (y == 3) {
+    x = rnorm(1, mean = -10, sd = 1)
+    sim.x[i] = x
+  }
+}
+plot(density(sim.x), main = "Density plot of sim.x")
+
+mix.model <- normalmixEM(sim.x, lambda = c(0.3, 0.3, 0.4), mu = c(-20, 0, 20), sigma = c(1, 1, 1), k = 3)
+summary(mix.model)
+plot(mix.model, which = 2, density = TRUE)
+```
+
+###Bootstrap法 
+以原始数据为基础的模拟抽样统计推断法,可用于研究一组数据的某统计量的分布特征,特别适用于那些难以用常规方法导出对参数的区间估计、假设检验等问题。“Bootstrap”的基本思想是:在原始数据的围内作有放回的再抽样,样本容量仍为n,原始数据中每个观察单位每次被抽到的概率相等,为1，…,n,所得样本称为bootstrap样本。于是可得到参数Η的一个估计值Η(b),这样重复若干次,记为B。设B=1000,就得到该参数的1000个估计值,则参数Η的标准误的bootstrap估计。简而言之就是：就是从样本中重复抽样。
+```{r}
+gauss<-rnorm(1000,4,10)
+boot<-0
+for(i in 1:1000){boot[i]=mean(sample(gauss,replace=T))}
+summary(boot)
+summary(gauss)
+sd(boot)
+```
+
+
+##区间估计
+由于点估计不能说明估计值与真实值的偏差到底有多大，也不能说明这个估计有多大的可行度，这些问题需要区间估计予以解决。区间估计是依据抽取的样本，根据一定的正确度与精确度的要求，构造出适当的区间，作为总体分布的未知参数或参数的函数的真值所在范围的估计。求置信区间常用的三种方法：1.利用已知的抽样分布.利用区间估计与假设检验的联系。3.利用大样本理论。 
+
+设总体X的分布中含有未知参数$\theta,\alpha$是任意给定的正数$(0< \alpha < 1)$，如果能从样本除服确定出两个统计量$\hat{\theta }_{1}(x_{1},x_{2},...,x_{n}),\hat{\theta }_{2}(x_{1},x_{2},...,x_{n})$，使得
+$$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha $$
+成立，我们称$1-\alpha$为置信度或置信概率，区间$\hat{\theta }_{1},\hat{\theta }_{2}$为参数$\theta$的置信度为$1-\alpha$的置信区间。分别称$\hat{\theta }_{1},\hat{\theta }_{2}$为置信上线和置信下线。
+置信度为0.95是指100组样本值所得置信区间的实现中，约有95个能覆盖$\theta$，而不是说一个实现以0.95的概率覆盖了$\theta$。区间的宽度反应了估计的精度，区间越小，精度越高。区间估计中精确性和可靠性是相互矛盾的。当样本容量一定时，提供估计的可靠性，将降低估计的精度，相反，提高估计的精确性，将降低估计的可靠性。实际使用中，总是在保证一定的可靠度的情况下尽可能地提高其精度。
+区间估计的基本步骤
+1.选取一个合适的随机变量T,这个随机变量一方面包括了待估参数$\theta$，另一方面，它的分布是已知的；
+2.根据实际需要，选取合适的置信度$1-\alpha$；
+3.根据相应分布的分位数的概念，写出如下形式的概率表达式
+$P\left \{ T_{1}<T <T_{2}  \right \}=1-\alpha$
+4.将上式表达形式变为
+$P\left \{ \hat{\theta }_{1}<\theta <\hat{\theta }_{2}  \right \}=1-\alpha$
+5.写出参数$\theta$的置信区间$\hat{\theta }_{1},\hat{\theta }_{2}$
+
+### 单正态总体参数的区间估计
+
+#### 方差已知时的均值的区间估计
+总体方差已知，均值的置信度为$1-\alpha$的单侧置信上限$\bar{X}+\frac{\sigma }{\sqrt{n}}z_{1-\alpha }$,单侧置信下线$\bar{X}-\frac{\sigma }{\sqrt{n}}z_{1-\alpha }$。
+
+例5 某单位随机抽样的15位员工的身高分别为: 159 158 164 169 161 161 160 157 158 163 161 154 166 168 159,  假设身高服从方差为4的正态分布, 要求估计该单位员工身高均值的置信区间，置信水平为95%。
+
+```{r}
+z.test<-function(x,sigma,conf.level=0.95,u0=0,alt="two.sided"){
+  result<-list()
+  mean<-mean(x)
+  a=1-conf.level
+  n <- length(x)
+  z<-(mean-u0)/(sigma/sqrt(n))
+  p<-pnorm(z,lower.tail=F)
+  result$z<-z
+  result$p.value<-p
+  if(alt=="two.sided"){
+    result$p.value<-2*p
+  }
+  else if (alt == "greater"|alt =="less" ){
+    result$p.value<p
+  }
+  result$interval<-c(mean-sigma*qnorm(1-a/2,0,1)/sqrt(n),mean+sigma*qnorm(1-a/2,0,1)/sqrt(n))
+  result
+}
+
+x<-c(159,158,164,169,161,161,160,157,158,163,161,154,166,168,159)
+result<-z.test(x,4) #默认95%的置信区间
+result
+```
+
+#### 方差未知时的均值的区间估计
+总体方差未知，均值的置信度为$1-\alpha$的置信区间为$\bar{X}+\frac{\sigma }{\sqrt{n}}t_{1-\alpha },\bar{X}-\frac{\sigma }{\sqrt{n}}t_{1-\alpha }$。
+方差未知时我们直接利用R语言的t.test( )来求置信区间。
+例6 假设不知道例5中总体的方差，要求估计该单位员工身高均值的置信区间，置信水平为95%。
+```{r}
+t.test(x)
+```
+
+#### 方差的区间估计
+方差置信水平$1-\alpha$的置信区间为$\left ( \frac{(n-1)S^{2}}{\chi_{1-\alpha /2}^{2}(n-1)},\frac{(n-1)S^{2}}{\chi_{\alpha/2}^{2}(n-1)} \right )$
+例7 假设不知道例5中总体的方差，要求估计该单位员工身高方差的置信区间，置信水平为95%。
+```{r}
+chisq.var.test<-function(x,conf.level=0.95,alt="two.sided",sigma0=1)   #默认95%的置信区间 双侧检验
+{
+  result<-list()
+  n <- length(x)
+  a=1-conf.level
+  v<-var(x)
+  result$interval<-c((n-1)*v/qchisq(1-a/2,n-1,lower.tail=T),(n-1)*v/qchisq(a/2,n-1,lower.tail=T))
+  chi2<-(n-1)*v/sigma0
+  result$chi2<-chi2
+  p<-pchisq(chi2,n-1)
+  if(alt=="two.sided")
+    result$p.value<-2*min(pchisq(chi2,n-1),pchisq(chi2,n-1,lower.tail=F))
+  else
+    result$p.value<-pchisq(chi2,n-1,lower.tail=F)
+  result
+}
+
+chisq.var.test(x)
+```
+
+### 两正态总体参数的区间估计
+####均值差$\mu _{1}-\mu_{2}$的置信区间
+##### 两方差都已知时两均值差的置信区间
+两方差已知$\mu _{1}-\mu_{2}$的置信水平$1-\alpha$的置信区间为
+$(\bar{X}-\bar{Y}-z_{1-\alpha /2}\sqrt{\frac{\sigma_{1}^{2} }{n_{1}}+\frac{\sigma_{2}^{2} }{n_{2}}},\bar{X}-\bar{Y}+z_{1-\alpha /2}\sqrt{\frac{\sigma_{1}^{2} }{n_{1}}+\frac{\sigma_{2}^{2} }{n_{2}}})$
+
+例8 为比较两种药品的降糖效果, 选择20名条件相似的受试者, 分别服用甲、乙两种药品后，测得甲组的血糖为6.48 4.00 5.54 6.89 5.14 4.60 3.67 4.32 4.80 7.50,乙组的血糖为4.16 10.77  9.08  5.95  6.36  3.77  5.18  6.76  3.86  3.63。假定甲乙两组血糖均服从正态分布，甲组的方差为5.0，乙组的方差为5.2，试求这两组平均血糖差的置信区间(取$\alpha=0.05$)
+```{r}
+two.sample.ci<-function(x,y,sigma1,sigma2,conf.level=0.95){
+  m= length(x)
+  n = length(y)
+  xbar=mean(x)-mean(y) 
+  alpha = 1 - conf.level
+  zstar= qnorm(1-alpha/2)* (sigma1/m+sigma2/n)^(1/2)
+  xbar +c(-zstar, +zstar)
+}
+
+x <- c(6.48,4.00,5.54,6.89,5.14,4.60,3.67,4.32,4.80,7.50)
+y <- c(4.16,10.77,9.08,5.95,6.36,3.77,5.18,6.76,3.86,3.63)
+sigma1<-5.0
+sigma2<-5.2
+
+two.sample.ci(x,y,sigma1,sigma2)
+```
+##### 两方差都未知但相等时两均值差的置信区间
+两方差未知$\mu _{1}-\mu_{2}$的置信水平$1-\alpha$的置信区间为
+$(\bar{X}-\bar{Y}-t_{1-\alpha /2}\sqrt{\frac{\sigma_{1}^{2} }{n_{1}}+\frac{\sigma_{2}^{2} }{n_{2}}},\bar{X}-\bar{Y}+t_{1-\alpha /2}\sqrt{\frac{\sigma_{1}^{2} }{n_{1}}+\frac{\sigma_{2}^{2} }{n_{2}}})$
+
+例9 假设例8中两组的方差未知，试求这两组平均血糖差的置信区间(取$\alpha=0.05$)
+```{r}
+t.test(x,y,var.equal=TRUE) #两方差都未知但相等时两均值差的置信区间
+```
+#### 两方差比的置信区间
+$\sigma _{1}^{2}/\sigma _{1}^{2}$的置信水平$1-\alpha$的置信区间为$\begin{pmatrix}
+ \frac{S_{1}^{2}}{S_{2}^{2}}\frac{1}{F_{1-\alpha/2}(n_{1}-1,n_{2}-1)},\frac{S_{1}^{2}}{S_{2}^{2}}\frac{1}{F_{\alpha/2}(n_{1}-1,n_{2}-1)}
+\end{pmatrix}$
+
+例10 假设例9中两组的方差未知，试求这两组平均血糖方差比的置信区间(取$\alpha=0.05$)
+```{r}
+var.test(x,y)
+```
+
+##单总体比率$p$的区间估计
+$x$为容量为n的样本中具有某种特征的个体数量，则样本比例为$x/n$。当总体中的样品数足够多时，$x$近似服从二项分布$b(n,p)$ (实际上它是超几何分布),这时总体比例可用样本比例来估计,总体比例为$p$的置信水平$1-\alpha$的置信区间为$\left ( \hat{p}-z_{1-\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n},\hat{p}+z_{1-\alpha/2}\sqrt{\hat{p}(1-\hat{p})/n} \right )$
+
+例10 在某小学随机抽取了120人，发现其中34人有不同程度的视力下降，假定样本的数量服从正态分布，以95%的置信度, 估计这个小学视力下降比例。
+
+```{r}
+prop.test(34,120,correct=TRUE) #correct选项为是否做连续性校正
+binom.test(34,120)
+```
+
+##两总体比率差$p_{1}-p{2}$的区间估计
+在近似正态性下$p_{1}-p{2}$置信水平为$1-\alpha$的区间估计$(\hat{p_{1}}-\hat{p_{2}})\pm z_{1-\alpha/2}\sqrt{\frac{\hat{p_{1}}(1-\hat{p_{1}})}{n_{1}}+\frac{\hat{p_{2}}(1-\hat{p_{2}})}{n_{2}}}$
+
+例11 对某疾病进行调查。在甲地区调查了160人，有98人符合诊断标准，在乙地区调查了206人，有132人符合诊断标准。试以95%的可靠性对该病在两地差别作出区间估计。
+```{r}
+s <- c(98,132)
+t <- c(160,206)
+prop.test(s,t)
+```
+
+## 基于Bootstrap的区间估计
+对于大多数的统计量而言，计算置信区间的数学公式太过复制或者根本没有数学公式，因而没有计算置信区间的已知的解析形式的公式。采用Bootstrap方法，解析形式的数据公式是不必知道的。当样本不符合理论分布假设时，求样本统计量的置信区间就成为一个难题。而自助法(Bootstrap)的思路是对原始样本重复抽样产生多个新样本，针对每个样本求取统计量，然后得到它的经验分布，再通过求经验分布的分位数来得到统计量的置信区间，这种方法不需要对统计量有任何理论分布的假设。一般认为，只要样本具有代表性，采用自助法需要的原始样本只要20-30个,重复抽样1000次就能达到满意的结果。在R中进行自助法是利用boot扩展包，其流程如下：1.编写一个求取统计量的自定义函数 2.将上面的函数放入boot（）函数中进行运算，得到自助法的结果 3.用boot.ci()函数求取置信区间
+
+例12 对mtcars数据集中的mpg变量估算其中位数的置信区间，将wt和disp作为自变量，mpg 作为因变量，进行回归后对判定系数R-square，用自助法求它的95%置信区间。
+```{r}
+myfun <- function(data,indices){
+  d <- data[indices,]
+  rs <- median(d$mpg)
+  return (rs)
+}
+
+results=boot(data=mtcars,statistic=myfun ,R=1000) #results这个数据结构中包括了原始样本的统计(results$t0)和再抽样样本的统计量(results$t0)，
+boot.ci(results,conf=0.95,type=c('perc','bca')) 
+#其中conf表示置信水平，type表示了用何种算法来求区间，perc即使用百分位方法，bca表示adjusted bootstrap percentile，即对偏差进行了调整
+
+rsq=function(data,indices){
+d=data[indices,]
+fit=lm(formula=mpg~wt+disp,data=d)
+return(summary(fit)$r.square)
+}
+results=boot(data=mtcars,statistic=rsq,R=1000)
+print(results)
+plot(results) 
+#左侧的直方图表示了再抽样样本的统计量的经验分布，其中的虚线表示了原始样本的统计量，从中可以观察到偏差。右侧QQ图有助于判断经验分布是否正态。
+boot.ci(results,conf=0.95,type=c('perc','bca'))
+
+```
+
+例12 假定例10的样本数量的分布状况未知，以95%的置信度, 估计这个小学视力下降比例。
+
+```{r}
+p.test <- function(x,n)
+{
+  n <- rep(0,each=n)
+  n[seq(1,x)] <- 1
+  data <- as.data.frame(n)
+  
+  p <- function(data,indices)
+  {
+    d <- data[indices,]
+    ratio<- sum(d)/length(d)
+    return (ratio)
+  }
+  results=boot(data=data,statistic=p,R=1000)
+  boot.ci(results,conf=0.95,type=c('perc','bca'))
+}
+  
+p.test(34,120)
+```
+```{r echo=F}
+try(detach(package:MASS))
+try(detach(package:pander))
+try(detach(package:mixtools))
+try(detach(package:boot))
+```
+
+#样本容量估计
+```{r include=FALSE}
+library(TrialSize)
+library(pipeR)
+library(pander)
+library(expm)
+library(koRpus)
+library(ldbounds)
+```
+
+样本容量过小，信息不充分，所得指标不够稳定，抽样误差较大，结论的可靠性差，用于推断总体的精度差，检验效能低，会导致总体中存在的差异未能检验出来，出现假阴性的结果。样本容量过大，花费的人力、物力、财力和时间较大，还会增加工作中质量控制的难度，样本量过大还可能引入更多的混杂因素，对研究结果产生不良影响。常见样本容量的影响因素如下1.第一类错误的大小$\alpha$(或置信度为$1-\alpha$)，$\alpha$越小所需的样本容量越大。2.第二类错误的大小$\beta$，$\beta$越小，检验效能$1-\beta$越大，所需的样本量也越大，一般要求检验效能不低于0.8。在参数估计的样本容量估计中不设计$\beta$。3.容许误差d，是指研究者要求的或者客观存在的样本统计量和总体参数间或样本统计量间的差值，或专业上认为有意义的最小差值，容许误差越小，所需样本两越大。4.总体标准差s或者总体率p，常根据预实验以及既往资料进行估计，其值越大或远离0.5时，所需样本量越大。通常在抽样调查和临床试验的设计中，需要估算样本含量以保证结果的可靠。
+
+临床研究的目的不同 ,所采用的样本含量估算方法也不同。 在临床试验过程 ,需要区分是做显著性检验(significance test), 还是区间假设检验(interval hypotheses test)。显著性检验 (significance test)用于推断两个样本是否来自同一总体, 它的检验假设为两组相等的零假设 ,即样本来自同一总体。 其无效假设为$H_{0}\  \mu _{T}= \mu _{P}$,备择假设为$H_{1}\  \mu _{T}\neq \mu _{P}$ ,T(test)为试验组，P(placebo)为安慰剂组。临床试验中，对于两组疗效的评价 ,显著性检验结果不能评价差别的实际大小,更不能说明差别是否有临床实际意义 ,只能说明两组的疗效是否来自不同的总体。在临床中往往是要确认新药是否不差于或相当于甚至优于标准的有效药物 ,所以通常采用非劣效/等效/优效检验。它们的检验假设不再是一个点，而是一个区间，所以又可称之为“区间假设”(interval hypothesis)或“区间检验” (interval test) 。区间假设检验包括了等效性检验(equiv alencetest)、非劣效性检验(noninferiority test)与优效性检验(superiority test)。 非劣效性试验指主要研究目的是显示对试验药的反应在临床意义上不差于（非劣于）对照药的试验,如果治疗差异（试验药的疗效-对照药的疗效）>0，则试验药的疗效较好；治疗差异<0，则对照药疗效较好；如果允许试验药疗效比对照药疗效低一定范围，仍然认为两药疗效相当，即确定$\Delta$表示临床意义上判断疗效不差所允许的最大差异值，则如果治疗差异>-$\Delta$，便是试验药非劣效于对照药，此处的$\Delta$称为非劣效试验的判断界值（margin）。非劣效试验的原假设为$H_{0}\  \mu _{T}- \mu _{S}\geqslant -\delta$,备择假设为$H_{1}\  \mu _{T}- \mu _{S}< -\delta$，S(standard)为标准组，T(test)为试验组，通常用于与已上市的有效药物或标准治疗方案进行比较以求能提供一个新的治疗选择。等效性检验指主要研究目的是要显示两种或多种处理的反应间差异的大小在临床上并无重要性的试验，通常通过显示真正的差异在临床上可以接受的等效的上下界值之间来证实其原假设为$H_{0}\  |\mu _{T}- \mu _{S}|\geqslant \delta$，备择假设为$H_{0}\  |\mu _{T}- \mu _{S}|<  \delta$为等效标准，也称界值 ) ,只有两组假设同时成立 ,才认为等效，多见于对同一活性成分的生物等效性以及血浆无法测定时的临床等效验证。优效性试验指主要研究目的是显示所研究的药物的反应优于对比制剂（阳性或安慰剂对照），优效性试验的原假设为$H_{0}\  \mu _{T}- \mu _{S}\leqslant   \delta$,备择假设为$H_{1}\  \mu _{T}- \mu _{S}>  \delta$,通常用于具有某方面优势的在新研发的试验药，一般需要与安慰剂进行优效性试验以比较其真正的疗效和安全性，来判断其上市的利益风险。如果当前已有曾经优效性试验证实的有效药物的话，还常常与其进行比较，并判定待验证药物的疗效至少不差于（非劣于）已有有效药物作为其上市的最低标准。临床试验中，(临床)界值的选择，应由研究者与统计学家共同商定，是基于统计推理及临床判断的双重考虑；若无公认界值，可参考EMEA《Guideline on the choice of the non-inferiority margin》及《Issues on the selection of non-inferiority margin in clinical trials》等文献.
+
+随机对照临床试验（randomized clinical trial，RCT）是临床试验中比较重要的试验，根据设计方案，常分为平行设计、交叉设计、析因设计和序贯设计。除序贯设计不需事先估计样本含量外，其余设计均需要估计样本含量。(1) 平行设计(parallel design)：将研究对象随机分配到两组（或多组），分别接受不同的处理，两组同时开始进行研究，同时分析和比较研究结果。平行设计的双盲随机对照试验是临床试验的金标准。(2) 交叉设计（cross-over design）四队两组受试者使用两种不同的处理措施，然后将处理措施相互交换，最后将结果进行对比分析的方法。这种设计比平行设计检验效率更高，所需样本量也少。但第一阶段干预效应可能会对第二阶段有影响，产生遗留效应或其他交互效应，设计和分析比较复杂。还存在试验周期较长等不足。(3)析因设计（factorial design）是将两个或多个以上的处理因素的各水平进行组合，对各种可能的组合都进行实验，用以评价不同处理的单独作用和联合应用的交互效应。析因设计可以分析处理交互因素，但设计和分析也比较复杂。(4)序贯设计(sequential design)在试验前不规定样本，按照先后顺序用随机化方法分配进入实验组或对照组，每试验一个或一对受试者后，及时进行分析，一旦可以判定结果，即可停止试验。序贯设计符合临床患者陆续就医的实际，比较适合以单一指标做为结论依据的新药和老药或新药和安慰剂的配对比较，节省人力物力，但不适用于慢性病、多变量、长期随访等研究设计。在本章中，对微阵列数据基于族错误率(FWER)样本量计算和基于贝叶斯统计的样本量计算未能用R语言实现。
+
+##均数比较的样本量估计(Comparing Means)
+###单组设计(One-Sample Design)
+没有对照组的开放设计为单组设计，常用于治疗组数据与标准公认值比较或基线数据与治疗后数据的分析比较。
+####显著性性检验
+当标准差为$\sigma^{2}$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值（样本均值与某参考值的差值,或者，在配对设计中，配对个体观察值之差的均数，或试验组终点与基线之差的均数）为$\epsilon$,样本容量为$n= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
+
+例 已知某社区50~70岁男性的平均收缩压为158mmHg，标准差为18mmHg。用某新型药品治疗后，差值为10mmHg，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+OneSampleMean.Equality(0.05,0.1,18,10)
+```
+当标准差未知检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$,样本容量为$n= \frac{(t_{\alpha/2}+t_{\beta})^{2}\sigma ^{2}}{\epsilon ^{2}}$
+
+例 已知某社区50~70岁男性的平均收缩压总体方差未知，样本标准差为18mmHg，用某新型药品治疗后，差值为10mmHg，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+总体方差未知的情况下，一般采用t分布代替z分布。使用t分布时，假设了初始值，采用迭代算法。
+```{r}
+OneSampleMean.Equality2 <- function(alpha, beta, sigma, margin,m=1000)
+{
+  t0<-qt(alpha/2,m,lower.tail=FALSE)+qt(beta,m,lower.tail=FALSE)
+  n0 <- (t0*sigma/margin)^2
+  t1 <- qt(alpha/2,n0,lower.tail=FALSE)+qt(beta,n0,lower.tail=FALSE)
+  n1<-(t1*sigma/margin)^2
+  while(abs(n1-n0)>0.5){
+    n0<-((qt(alpha/2,n1,lower.tail=FALSE)+qt(beta,n1,lower.tail=FALSE))*sigma/margin)^2
+    n1<-((qt(alpha/2,n0,lower.tail=FALSE)+qt(beta,n0,lower.tail=FALSE))*sigma/margin)^2
+  }
+  n1
+}
+
+OneSampleMean.Equality2(0.05,0.1,18,10)
+```
+
+####非劣效/优效性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，$\delta$具有临床意义的界值,进行非劣效性检验，界值应为负值，若进行优效性检验，界值为正值。样本容量为$n= \frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}}{(\epsilon -\delta ) ^{2}}$
+
+例 一项临床试验研究新型降压药治疗高血压的作用，对某社区50~70岁平均收缩压为158mmHg，标准差为18mmHg的男性进行治疗，进行非劣性设计。如果认为有临床价值界值为10mmHg，差值为8mmHg,在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+OneSampleMean.NIS(0.05,0.1,18,8,-10)
+```
+####等效性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，$\delta$具有临床意义的界值,样本容量为$n= \frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}}{(\delta -|\epsilon|) ^{2}}$
+
+例 一项临床试验研究新型降压药治疗高血压的作用，对北京某社区50~70岁平均收缩压为158mmHg，标准差为18mmHg的男性进行治疗，进行等效性检验。如果认为有临床价值界值为10mmHg，差值为8mmHg,在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+OneSampleMean.Equivalence(0.05,0.1,18,8,10)
+```
+
+###两组平行设计(Two-Sample Parallel Design)
+####显著性性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{\epsilon ^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
+
+例 为研究某地正常成年男、女末稍血液的红细胞的差别，据文献报道，男性红细胞均数为465万/mm3 ，女性红细胞均数为422万/mm3，标准差为52万/mm3，1:1平行对照设计，取双侧$\alpha=0.05$,$\beta=0.1$，问要抽查多少人才能发现男女间红细胞的差别？ 
+
+```{r}
+n <- TwoSampleMean.Equality(0.05,0.1,52,1,43) #465-422=43
+n
+```
+每组样本量为31人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
+
+####非劣效/优效性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{(\epsilon-\delta)^{2}}$，$n_{t}=kn_{2}$,k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
+
+例 为研究某地正常成年男、女末稍血液的红细胞的差别，据文献报道，男性红细胞均数为465万/mm3 ，女性红细胞均数为422万/mm3，标准差为52万/mm3，1:1平行对照设计，取双侧$\alpha=0.05$,$\beta=0.1$，界值为10mmHg，进行非劣性设计，要抽查多少人才能发现男女间红细胞的差别？ 
+
+```{r}
+n <- TwoSampleMean.NIS(0.05,0.1,52,1,-10,43)
+n
+```
+每组样本量为17人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
+
+####等效性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n_{c}= \frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}(1+1/k)}{(\epsilon-|\delta|)^{2}}$，$n_{t}=kn_{2}$，k为实验组/对照组即$k=\frac{n_{t}}{n_{c}}$。
+
+例 为研究某地正常成年男、女末稍血液的红细胞的差别，据文献报道，男性红细胞均数为465万/mm3 ，女性红细胞均数为422万/mm3，标准差为52万/mm3，1:1平行对照设计，取双侧$\alpha=0.05$,$\beta=0.1$，界值为10mmHg，进行等效性设计，要抽查多少人才能发现男女间红细胞的差别？ 
+
+```{r}
+n <- TwoSampleMean.Equivalence(0.05,0.1,52,1,10,43)
+n
+```
+每组样本量为53人。若实验组和对照组方差齐性采用Pooled合并方差(Pooled varance)计算样本量；若两组方差不齐，则使用Welch–Satterthwaite方程对自由度进行近似的方法计算样本量。
+
+###两组交叉设计（Two-Sample Crossover Design）
+两组交叉设计的样本量估计公式也适用配对设计、交叉配对设计和随机区组配对设计。
+####显著性性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma ^{2}_{m}}{2\epsilon ^{2}}$。
+
+例 AAA 药品和对照药品治疗高血压，患者先服用对照药品 1 个月，洗脱2 周，再服用 AAA 1 个月，另一组反之。如果 AAA 能够比对照药品平均多降低收缩压 5mmHg（差值），则认为有推广价值。预试验差值标准差为 10。选用 α=0.05,Power=90%, 双侧显著性检验，需要多少样本含量? 
+
+```{r}
+TwoSampleCrossOver.Equality(0.05,0.1,10,5)
+```
+
+####非劣效/优效性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta})^{2}\sigma ^{2}_{m}}{2(\epsilon -\delta )^{2}}$。
+
+例 AAA 药品和对照药品治疗高血压，患者先服用对照药品 1 个月，洗脱2 周，再服用 AAA 1 个月，另一组反之。如果 AAA 能够比对照药品平均多降低收缩压 5mmHg（差值），则认为有推广价值。预试验差值标准差为 10。选用 α=0.05,Power=90%, 界值为1,双侧非劣效检验，需要多少样本含量? 
+
+```{r}
+TwoSampleCrossOver.NIS(0.05,0.1,10,-1,5)
+```
+
+####等效性检验
+当差值的标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon=\mu _{test}-\mu_{reference}$,样本容量为$n=n=\frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma ^{2}_{m}}{2(\epsilon -|\delta|)^{2}}$。
+
+例 AAA 药品和对照药品治疗高血压，患者先服用对照药品 1 个月，洗脱2 周，再服用 AAA 1 个月，另一组反之。如果 AAA 能够比对照药品平均多降低收缩压 5mmHg（差值），则认为有推广价值。预试验差值标准差为 10。选用 α=0.05,Power=90%, 界值为1,双侧等效性检验，需要多少样本含量? 
+
+```{r}
+TwoSampleCrossOver.Equivalence(0.05,0.1,10,1,5)
+```
+
+###多组设计(Multiple-Sample One-Way ANOVA)
+####平行设计 
+该设计考察的试验因素只有一个，并且该因素的水平(组数)$k\geqslant 3$,用来考察各组观察指标总体均数之间的差别是否有统计学意义。$\Delta =\frac{1}{\sigma ^{2}}\sum_{i=1}^{k}(\mu _{i}-\bar{\mu})^{2},\bar{\mu}=\frac{1}{k}\sum_{j=1}^{k}\mu_{j}$,样本量$n=\lambda/\Delta$,其中$\sigma$为标准差，k为组数，$\mu_{1}$为各组的平均数，$\bar{\mu}$为各组平均数的平均数。$\lambda$需要查询下表。
+
+$k$  $\alpha=0.01$  $\alpha=0.05$  $\alpha=0.01$  $\alpha=0.05$     
+---  ---            ---            ---            ---
+     $1-\beta=0.80$                $1-\beta=0.90$
+2    11.68          7.85           14.88	        10.51
+3    13.89	        9.64           17.43          12.66
+4    15.46	        10.91	         19.25	        14.18
+5    16.75	        11.94	         20.74	        15.41
+6    17.87	        12.83	         22.03	        16.47
+7    18.88	        13.63	         23.19	        17.42
+8    19.79	        14.36          24.24	        18.29
+9    20.64	        15.03	         25.22	        19.09
+10   21.43	        15.65	         26.13	        19.83
+11	 22.18	        16.25	         26.99	        20.54
+12	 22.89	        16.81	         27.8	          21.20
+13	 23.57	        17.34	         28.58	        21.84
+14	 24.22	        17.85	         29.32	        22.44
+15	 24.84	        18.34	         30.04	        23.03
+16	 25.44	        18.82	         30.73	        23.59
+17	 26.02	        19.27	         31.39	        24.13
+18	 26.58	        19.71	         32.04	        24.65
+19	 27.12          20.14	         32.66	        25.16
+20	 27.65          20.56	         33.27	        25.66
+
+例 用四种药品治疗高血压，已知四种药品降低收缩压的平均数分别是8.25,11.75,12和13。各药品降低收缩压的标准差都是3.5.在$\sigma=0.05,\beta=0.1$,双侧检验，需要多少样本？
+查表$\lambda=14.18$
+```{r}
+k <- c(2:20)
+dim <- c("alpha0.01beta0.2","alpha0.05beta0.2","alpha0.01beta0.1","alpha0.05beta0.1")
+data <- c(11.68,13.89,15.46,16.75,17.87,18.88,19.79,20.64,21.43,22.18,22.89,23.57,
+          24.22,24.84,25.44,26.02,26.58,27.12,27.65,7.85,9.64,10.91,11.94,12.83,13.63,
+          14.36,15.03,15.65,16.25,16.81,17.34,17.85,18.34,18.82,19.27,19.71,20.14,
+          20.56, 14.88,17.43,19.25,20.74,22.03,23.19,24.24,25.22,26.13,26.99,27.80,
+          28.58,29.32,30.04,30.73,31.39,32.04,32.66,33.27,10.51,12.66,14.18,15.41,
+          16.47,17.42,18.29,19.09,19.83,20.54,21.20,21.84,22.44,23.03,23.59,24.13,
+          24.65,25.16,25.66 )
+z <- array(data,c(19,4),dimnames<-list(k,dim))
+
+delta<- function(mu,sigma){
+  mu0 <- mean(mu)
+  return(sum((mu-mu0)^2)/sigma^2)
+}
+
+MutiSampleMean <- function(alpha, beta, sigma, k, mu){
+  lambda <- z[k-1,paste(paste("alpha",alpha,sep = ""),paste("beta",beta,sep = ""),
+                        sep = "")]
+  n <- lambda/delta(mu,sigma)
+}
+
+(MutiSampleMean(0.05,0.1,3.5,4,c(8.25,11.75,12,13)))
+```
+每组研究至少需要14名。
+
+####两两比较设计
+试验组为2个或以上，且设有对照的试验设计，主要观察指标为计量资料。当标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值,$\tau$ 的配对对比，样本量为$n_{ij}=\frac{2(z_{\alpha/(2\tau))}+z_{\beta})^2\sigma^{2}}{\epsilon ^{2}_{ij}}$。使用TrialSize包中的OneWayANOVA.pairwise()进行计算。
+
+例 试验药两剂量的降低收缩压的平均数分别30和35，对照的降低收缩压的平均数为20，两剂量降低收缩压的标准差分别是5.3和4.2,进行1：1：1的平行对照实验，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
+```{r}
+n1 <- OneWayANOVA.pairwise(0.05, 0.1, 2, 5.3, (30-20))
+n2 <- OneWayANOVA.pairwise(0.05, 0.1, 2, 4.2, (35-20))
+n <- max(n1,n2)
+n
+```
+每组需要7个例。
+
+####Williams设计(Multiple-Sample Williams Design)
+当交叉试验可使用的时期数与处理数相同时，采用广义拉丁方以尽量少的受试者来均衡一阶延滞作用的交叉设计为Williams设计。常见的Williams设计有三组设计（一个6×3的交叉设计）和四组设计（一个4*4的交叉设计）。当试验组是奇数，设计结果是$2k×k$交叉设计，当试验组是偶数，设计结果$k×k$交叉设计。
+
+#####显著性检验
+标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,$k$为组数，$\epsilon$为两组的差值，样本量$n=\frac{(z_{\alpha/2}+z_{\beta})\sigma^2_{d}}{k\epsilon^{2}}$
+
+例 用三种药品治疗高血压，预实验已知三种药品（A、B、C）降低收缩压分别为8.25,11.75,12,各药品降低收缩压的标准差均为3.5。williams设计为三交叉对照实验，三交叉的处理顺序排列组合为ABC,ACB,BAC,BCA,CAB,CBA共6个序列，$\alpha=0.05$，$\beta=0.1$,双侧显著性检验，需要多少样本？
+
+```{r}
+n1 <- MeanWilliamsDesign.Equality(0.05,0.1,3.5,6,(8.25-11.25))
+n2 <- MeanWilliamsDesign.Equality(0.05,0.1,3.5,6,(8.25-12))
+n3 <- MeanWilliamsDesign.Equality(0.05,0.1,3.5,6,(11.75-12))
+
+n  <- max(n1,n2,n3)
+n
+```
+研究的每个序列至少需要343例。
+
+#####非劣效/优效性检验
+标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,$k$为组数，$\epsilon$为两组的差值，$\delta$为界值，样本量$n=\frac{(z_{\alpha}+z_{\beta})\sigma^2_{d}}{k(\epsilon-\delta)^{2}}$
+
+例 用三种药品治疗高血压，预实验已知三种药品（A、B、C）降低收缩压分别为8.25,11.75,12,各药品降低收缩压的标准差均为3.5。williams设计为三交叉对照实验，三交叉的处理顺序排列组合为ABC,ACB,BAC,BCA,CAB,CBA共6个序列，界值为5，$\alpha=0.05$，$\beta=0.1$,双侧显著性检验，需要多少样本？
+
+```{r}
+n1 <- MeanWilliamsDesign.NIS(0.05,0.1,3.5,6,-5,(8.25-11.25))
+n2 <- MeanWilliamsDesign.NIS(0.05,0.1,3.5,6,-5,(8.25-12))
+n3 <- MeanWilliamsDesign.NIS(0.05,0.1,3.5,6,-5,(11.75-12))
+
+n  <- max(n1,n2,n3)
+n
+```
+研究的每个序列至少需要12例。
+
+#####等效性检验
+标准差为$\sigma$,检验功效为$1-\beta$，置信度为$1-\alpha$,$k$为组数，$\epsilon$为两组的差值，$\delta$为界值，样本量$n=\frac{(z_{\alpha}+z_{\beta/2})\sigma^2_{d}}{k(\delta-|\epsilon|)^{2}}$
+
+例 用三种药品治疗高血压，预实验已知三种药品（A、B、C）降低收缩压分别为8.25,11.75,12,各药品降低收缩压的标准差均为3.5。williams设计为三交叉对照实验，三交叉的处理顺序排列组合为ABC,ACB,BAC,BCA,CAB,CBA共6个序列，界值为5，$\alpha=0.05$，$\beta=0.1$,双侧等效性检验，需要多少样本？
+
+```{r}
+n1 <- MeanWilliamsDesign.Equivalence(0.05,0.1,3.5,6,5,(8.25-11.25))
+n2 <- MeanWilliamsDesign.Equivalence(0.05,0.1,3.5,6,5,(8.25-12))
+n3 <- MeanWilliamsDesign.Equivalence(0.05,0.1,3.5,6,5,(11.75-12))
+
+n  <- max(n1,n2,n3)
+n
+```
+研究的每个序列至少需要14例。
+
+##率比较的样本量估计(Large Sample Tests for Proportions)
+###单组设计(One-Sample Design)
+####显著性检验
+当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$,样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}p(1-p)}{\epsilon ^{2}}$。
+
+例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%，在$\alpha=0.05$,$\beta=0.1$，双侧显著性检验，问需要多大的样本容量？
+```{r}
+OneSampleProportion.Equality(0.05,0.1,0.95,(0.95-0.85))  
+```
+研究需要50例。OneSampleProportion.Equality()函数中的delta相当于样本计算公式的$\epsilon$。
+
+####非劣效/优效性检验
+当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，界值$\delta$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}p(1-p)}{(\epsilon-\delta ) ^{2}}$。
+
+例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.1$，双侧非劣效检验，问需要多大的样本容量？
+
+```{r}
+OneSampleProportion.NIS2 <- function (alpha, beta, p, delta, margin) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * p * (1 - p)/(margin-delta)^2
+    n
+}
+OneSampleProportion.NIS2(0.05,0.1,0.95,-0.05,(0.95-0.85)) 
+```
+研究需要19例。TrialSize的作者在OneSampleProportion.NIS()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，但可以得到正确结果OneSampleProportion.NIS2(0.05,0.1,0.95,(0.95-0.85),-0.05) 。
+
+#### 等效性检验
+当总体率为$p$,检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon$，界值$\delta$,样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2})^{2}p(1-p)}{(\epsilon-|\delta|)^{2}}$。
+
+例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.1$，双侧等效性检验，问需要多大的样本容量？
+
+```{r}
+OneSampleProportion.Equivalence2 <- function(alpha, beta, p, delta, margin) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * p * (1 - 
+        p)/(delta - abs(margin))^2
+    n
+}
+OneSampleProportion.Equivalence2(0.05,0.1,0.95,0.05,(0.95-0.85))
+
+```
+研究需要206例。TrialSize的作者在OneSampleProportion.NIS()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，但可以得到正确结果OneSampleProportion.Equivalence(0.05,0.1,0.95,(0.95-0.85),0.05) 
+
+###两组平行设计(Two-Sample Parallel Design)
+####显著性检验
+$p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，样本容量为$n_{2}=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{\epsilon ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
+
+例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1显著行性设计在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+```{r}
+TwoSampleProportion.Equality(0.05,0.1,0.7,0.9,1,(0.7-0.9))
+```
+每组需要78例，TwoSampleProportion.Equality()函数中的delta相当于样本计算公式的$\epsilon$。
+
+####非劣效/优效性检验
+$p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，$\delta$为界值，样本容量为$n_{2}=\frac{(z_{\alpha}+z_{\beta })^{2}}{(\epsilon-\delta ) ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
+
+例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1非劣效设计，界值为5%，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
+
+```{r}
+TwoSampleProportion.NIS2 <- function (alpha, beta, p1, p2, k, delta, margin) 
+{
+    n2 <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * (p1 * (1 - p1)/k + p2 * (1 - p2))/(margin-delta)^2
+    n1 <- k * n2
+    n1
+}
+
+TwoSampleProportion.NIS2(0.05,0.1,0.7,0.9,1,-0.05,(0.7-0.9))
+```
+每组需要114例,TrialSize的作者在TwoSampleProportion.NIS()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，但可以得到正确结果TwoSampleProportion.NIS2(0.05,0.1,0.7,0.9,1,(0.7-0.9),-0.05).
+
+
+####等效性检验
+$p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率，差值为$\epsilon$，$\delta$为界值，样本容量为$n_{2}=\frac{(z_{\alpha}+z_{\beta/2})^{2}}{(\delta- |\epsilon|) ^{2}}[\frac{p_{1}(1-p_{1})}{k}+p_{2}(1-p_{2})]$,$n_{1}= kn_{2}$
+例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1等效性设计，界值为5%，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
+
+```{r}
+TwoSampleProportion.Equivalence2 <- function (alpha, beta, p1, p2, k, delta, margin) 
+{
+    n2 <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * (p1 * (1 - 
+        p1)/k + p2 * (1 - p2))/(delta- abs(margin))^2
+    n1 <- k * n2
+    n1
+}
+
+TwoSampleProportion.Equivalence2(0.05,0.1,0.7,0.9,1,0.05,(0.7-0.9))
+```
+每组需要144例,TrialSize的作者在TwoSampleProportion.Equivalence()函数中delta和margin代表的意义，与样本量计算公式有不相符之处，beta也未除以2.
+
+###两组交叉设计(Two-Sample Crossover Design)
+
+####显著性检验
+$\sigma$为两组率的差的标准差,$\epsilon$为试验组率-对照组率，样本容量为$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}\sigma^2_{d}}{2\epsilon ^{2}}$
+
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%, 双侧显著性检验，需要多少样本含量? 
+
+```{r}
+TwoSamplePropCrossOver.Equality <- function (alpha, beta, sigma, margin) 
+{
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/2*(margin^2)
+    n
+}
+
+TwoSamplePropCrossOver.Equality(0.05,0.1,10,0.2)
+```
+每组需要21例.
+
+####非劣效/优效性检验
+$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}\sigma^2_{d}}{2(\epsilon-\delta)^{2}}$
+
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧非劣效检验，需要多少样本含量? 
+
+```{r}
+TwoSamplePropCrossOver.NIS <- function (alpha, beta, sigma, delta,margin) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/2*(margin-delta)^2
+    n
+}
+
+TwoSamplePropCrossOver.NIS(0.05,0.1,10,-0.1,0.2)
+```
+每组需要38例。
+
+####等效性检验
+$\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{2(\delta-|\epsilon|)^{2}}$
+
+例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧等效性检验，需要多少样本含量? 
+
+```{r}
+TwoSamplePropCrossOver.Equivalence <- function (alpha, beta, sigma, delta,margin) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/2*(delta-abs(margin))^2
+    n
+}
+
+TwoSamplePropCrossOver.Equivalence(0.05,0.1,10,-0.1,0.2)
+```
+每组需要49例。
+
+###多组设计(One-Way Analysis of Variance)
+
+在试验因素只有一个，且该因素的水平$k\geqslant 3$时，为多组平行对照设计，又称单因素多水平设计（ANOVA）。
+
+####两两比较
+试验组为2个或以上，且设有对照的试验设计，主要观察指标为计数资料。检验功效为$1-\beta$，置信度为$1-\alpha$,差值为$\epsilon = \mu_{i} − \mu_{j}$取最小值，样本量为$n_{ij}=\frac{(z_{\alpha/(2\tau))}+z_{\beta})^2[p_{1}(1-p_{1})+p_{2}(1-p_{2})]}{\epsilon ^{2}_{ij}}$，$n=max{n_{ij}}$。上述公式适用了多组平行对照设计。
+
+例 试验药两剂量的有效率分别30%和35%，对照的有效率为20%，进行1：1：1的平行对照实验，在
+在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
+
+```{r}
+n1 <- OneWayANOVA.PairwiseComparison(0.05,0.1,2,0.3,0.2,(0.3-0.2))
+n2 <- OneWayANOVA.PairwiseComparison(0.05,0.1,2,0.35,0.2,(0.35-0.2))
+n <- max(n1,n2)
+n
+```
+每组需要459例。
+
+#### Williams设计(Williams Design)
+
+####显著性检验
+$\sigma$为标准差，$a$为组数，$\epsilon$为率差，样本容量为$n=\frac{(z_{\alpha/2}+z_{\beta })^{2}\sigma^2_{d}}{a\epsilon^{2}}$。
+
+例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，双侧差异性检验，需要多少样本？
+
+```{r}
+PorpWilliamsDesign.Equality <- function (alpha, beta, sigma, a, margin) 
+{
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/(a * 
+        margin^2)
+    n
+}
+
+PorpWilliamsDesign.Equality(0.05,0.1,0.5,6,(0.6-0.2))
+```
+每个研究需要至少3个病例。
+
+####非劣效/优效性检验
+$\sigma$为标准差，$a$为组数，$\epsilon$为率差，a为组数,样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}\sigma^2_{d}}{a(\epsilon-\delta)^{2}}$。
+
+例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，界值为5%，双侧非劣效检验，需要多少样本？
+
+```{r}
+PropWilliamsDesign.NIS <- function (alpha, beta, sigma, a, delta, margin) 
+{
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/(a * (margin - delta)^2)
+  n
+}
+
+PropWilliamsDesign.NIS (0.05,0.1,0.5,6,-0.05,(0.6-0.2))
+```
+每个研究需要至少2个病例。
+
+####等效性检验
+$\sigma$为标准差，$a$为组数，$\epsilon$为率差，a为组数,样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{2}\sigma^2_{d}}{a(\delta-|\epsilon|)^{2}}$。
+
+例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，界值为5%，双侧等效性检验，需要多少样本？
+
+```{r}
+PropWilliamsDesign.Equivalence <- function (alpha, beta, sigma, a, delta, margin) 
+{
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/(a * (delta-abs(margin ))^2)
+  n
+}
+
+PropWilliamsDesign.Equivalence (0.05,0.1,0.5,6,0.05,(0.6-0.2))
+```
+每个研究需要至少4个病例。
+
+### 相对危险度平行设计(Relative Risk—Parallel Design)
+两样本(两组)平行对照设计，基于相对危险度，通常用比值比或优势比（odds radtio，OR）表示$OR=\frac{p_{t}/(1-p_{t})}{p_{c}/(1-p_{c})}$，t为试验组，c为对照组。比值比大于1说明对结局有影响，比值比等于1说明对结局的影响没有区别。
+
+#### 显著性检验
+OR为比值比，$p_{T}$试验组率,$p_{C}$为对照粗率，样本量$n_{C}=\frac{(z_{\alpha/2}+z_{\beta})^{2}}{log^{2}(OR)}\begin{pmatrix}
+\frac{1}{\kappa p_{T}(1-p_{T})}+\frac{1}{\kappa p_{C}(1-p_{C})}
+\end{pmatrix}$,$\kappa=n_{T}/n_{C}$
+例 研究新型抗血小板药预防脑梗死再发的作用，和阿司匹林进行对照,以相对危险度为主要评价指标。预实验显示，新药能够预防20%的脑梗死再发，阿司匹林能够预防10%的脑梗死再发。在$\alpha=0.05$,$\beta=0.1$，1：1双侧显著性检验，需要多少病例？
+
+```{r}
+OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
+RelativeRisk.Equality(0.05,0.1,OR,1,0.2,0.1)
+```
+试验组和对照组均需要277例。
+
+#### 非劣效/优效性检验
+OR为比值比，$p_{T}$试验组率,$p_{C}$为对照粗率，$\delta$为界值，样本量$n_{C}=\frac{(z_{\alpha}+z_{\beta})^{2}}{(log(OR)-\delta)^2}\begin{pmatrix}
+\frac{1}{\kappa p_{T}(1-p_{T})}+\frac{1}{p_{C}(1-p_{C})}
+\end{pmatrix}$
+例 研究新型抗血小板药预防脑梗死再发的作用，和阿司匹林进行对照，以相对危险度为主要评价指标。预实验显示，新药能够预防20%的脑梗死再发，阿司匹林能够预防10%的脑梗死再发。在$\alpha=0.05$,$\beta=0.1$，1：1双侧非劣效检验，界值为10%，需要多少病例？
+
+```{r}
+OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
+RelativeRisk.NIS(0.05,0.1,OR,1,0.2,0.1,-0.1)
+```
+试验组和对照组均需要179例。
+
+
+#### 等效性检验
+OR为比值比，$p_{T}$试验组率,$p_{C}$为对照粗率，$\delta$为界值,样本量$n_{C}=\frac{(z_{\alpha}+z_{\beta/2})^{2}}{(\delta-log(OR))^2}\begin{pmatrix}
+\frac{1}{\kappa p_{T}(1-p_{T})}+\frac{1}{p_{C}(1-p_{C})}
+\end{pmatrix}^{-1}$
+
+例 研究新型抗血小板药预防脑梗死再发的作用，和阿司匹林进行对照，以相对危险度为主要评价指标。预实验显示，新药能够预防20%的脑梗死再发，阿司匹林能够预防10%的脑梗死再发。在$\alpha=0.05$,$\beta=0.1$，1：1双侧等效性检验，界值为10%，需要多少病例？
+
+```{r}
+OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
+RelativeRisk.Equivalence(0.05,0.1,OR,1,0.2,0.1,0.1)
+```
+试验组和对照组均需要372例。
+
+### 相对危险度交叉设计(Relative Risk—Crossover Design)
+交叉设计与随机平行对照设计相比，需要的样本量较少，但该设计的前提是所治疗疾病在停药后基本会回复到用药前的状态，中间停药时间（洗脱期）的长度基本清楚。
+
+####显著性检验
+OR为比值比，$\sigma^{2}_{d}$为差值的标准差。样本量为$n=\frac{(z_{\alpha/2}+z_{\beta})^{2}\sigma^{2}_{d}}{log^{2}(OR)}$
+
+例 某新型药品治疗头痛后7日再发率为20%，标准治疗头痛后7日再发率为10%，以相对为危险度为主要评价指标,标准差为50%，两组交叉对照1：1设计，在在$\alpha=0.05$,$\beta=0.1$，1：1双侧显著性检验，需要多少病例？
+
+```{r}
+OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
+RelativeRiskCrossOver.Equality <- function (alpha, beta, sigma, or) 
+{
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/(log(or))^2
+    n
+}
+RelativeRiskCrossOver.Equality(0.05,0.1,0.5,OR)
+```
+每组至少需要4例，TrialSize包中RelativeRiskCrossOver.Equality()函数在sigma处有误，没有取平方。
+
+####非劣效/优效性检验
+OR为比值比，$\sigma^{2}_{d}$为差值的标准差，$\delta$为界值。样本量为$n=\frac{(z_{\alpha}+z_{\beta})^{2}\sigma^{2}_{d}}{[log^{2}(OR)-\delta]^{2}}$
+
+例 某新型药品治疗头痛后7日再发率为20%，标准治疗头痛后7日再发率为10%，以相对为危险度为主要评价指标，两组交叉对照1：1设计，在在$\alpha=0.05$,$\beta=0.1$，1：1双侧非劣效性检验，界值为10%，需要多少病例？
+
+```{r}
+OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
+RelativeRiskCrossOver.NIS <- function (alpha, beta, sigma, or,delta) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/(log(or) - delta)^2
+    n
+}
+RelativeRiskCrossOver.NIS(0.05,0.1,0.5,OR,-0.1)
+```
+每组至少需要3例，TrialSize包中RelativeRiskCrossOver.NIS()函数在sigma处有误，没有取平方。
+
+####等效性检验
+OR为比值比，$\sigma^{2}_{d}$为差值的标准差,$\delta$为界值。样本量为$n=\frac{(z_{\alpha}+z_{\beta/2})^{2}\sigma^{2}_{d}}{(\delta-|log^{2}(OR)|)^{2}}$
+
+例 某新型药品治疗头痛后7日再发率为20%，标准治疗头痛后7日再发率为10%，以相对为危险度为主要评价指标，两组交叉对照1：1设计，在$\alpha=0.05$,$\beta=0.1$，1：1双侧等效性检验，界值为10%，需要多少病例？
+
+```{r}
+OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
+RelativeRiskCrossOver.Equivalence <- function (alpha, beta, sigma, or, delta) 
+{
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/(delta- abs(log(or)))^2
+    n
+}
+RelativeRiskCrossOver.Equivalence(0.05,0.1,0.5,OR,0.1)
+```
+每组至少需要3例，TrialSize包中RelativeRiskCrossOver.Equivalence()函数在sigma处有误，没有取平方。
+
+##计数资料的精确检验(Exact Tests for Proportions)
+
+###二项分布（Binomial Test）
+二项分布检验常用于但组设计情况，其样本量估计方法适合较小样本计数资料的精确检验。二项分布检验样本量和临界值（Critical Value r）的估算表如下，在$\alpha=0.05$,$P_{1}-P_{0}=0.15$时，查下表，$1-\beta=0.80$为第三和第四列，$1-\beta=0.90$为第五和第六列。
+
+$P_{0}$ $P_{1}$ r    n     r     n
+---     ---     ---  ---   ---   ---
+0.05    0.20    3	   27    4     38
+0.10    0.25	  7	   40    9     55
+0.15	  0.30    11	 48    14    64
+0.20    0.35	  16	 56    21    77
+0.25	  0.40    21	 62    27    83
+0.30    0.45  	26	 67    35    93
+0.35	  0.50    30	 68    41    96
+0.40    0.55	  35	 71    45    94
+0.45	  0.60	  38	 70    52    98
+0.50    0.65	  41	 69    54    93
+0.55	  0.70	  45	 70    58    92
+0.60	  0.75	  43	 62    58    85
+0.65	  0.80	  41	 55    55    75
+0.70    0.85	  39	 49    54    69
+0.75	  0.90	  38	 45    46    55
+0.80    0.95	  27	 30    39    44
+
+在$\alpha=0.10$,$P_{1}-P_{0}=0.15$时，查下表，$1-\beta=0.80$为第三和第四列，$1-\beta=0.90$为第五和第六列。
+
+$P_{0}$ $P_{1}$ r    n     r     n
+---     ---     ---  ---   ---   ---
+0.05    0.20    2    21	   3	   32
+0.10	  0.25    5    31	   6	   40
+0.15    0.30    8	   37	   11	   53
+0.20	  0.35    12   44	   16	   61
+0.25    0.40    15	 46	   20	   64
+0.30	  0.45    19	 50	   26	   71
+0.35    0.50    21	 49	   30	   72
+0.40	  0.55    24	 50    35	   75
+0.45    0.60    28	 53	   39	   75
+0.50	  0.65    31	 53	   41	   72
+0.55    0.70    31	 49	   44	   71
+0.60	  0.75    32	 47	   43	   64
+0.65    0.80    33	 45    44	   61
+0.70	  0.85    29	 37	   41	   53
+0.75    0.90    25	 30	   33	   40
+0.80	  0.95    22	 25	   28	   32
+
+在$\alpha=0.05$,$P_{1}-P_{0}=0.20$时，查下表，$1-\beta=0.80$为第三和第四列，$1-\beta=0.90$为第五和第六列。
+
+$P_{0}$ $P_{1}$ r    n     r     n
+---     ---     ---  ---   ---   ---
+0.05    0.25	  2	   16	   3	   25
+0.10	  0.30	  5	   25	   6	   33
+0.15	  0.35	  7	   28	   9	   38
+0.20	  0.40	  11	 35	   14	   47
+0.25	  0.45	  13	 36	   17	   49
+0.30	  0.50	  16	 39	   21	   53
+0.35	  0.55	  19	 41	   24	   53
+0.40	  0.60	  22	 42	   28	   56
+0.45	  0.65	  24	 42	   30	   54
+0.50	  0.70	  23	 37	   32	   53
+0.55	  0.75	  25	 37	   33	   50
+0.60	  0.80	  26	 36	   32	   45
+0.65	  0.85	  24	 31	   32	   42
+0.70	  0.90	  23	 28	   30	   37
+0.75	  0.95	  20	 23	   25	   29
+0.80	  1.00	  13	 14	   13	   14
+
+在$\alpha=0.10$,$P_{1}-P_{0}=0.20$时，查下表，$1-\beta=0.80$为第三和第四列，$1-\beta=0.90$为第五和第六列。
+
+$P_{0}$ $P_{1}$ r    n     r     n
+---     ---     ---  ---   ---   ---
+0.05    0.25	  2    16	   2	   20
+0.10	  0.30	  3	   18	   4	   25
+0.15	  0.35	  5	   22	   7	   32
+0.20	  0.40	  7	   24	   10	   36
+0.25	  0.45	  9	   26	   13	   39
+0.30	  0.50	  12	 30	   15	   39
+0.35	  0.55  	13	 29	   19	   44
+0.40	  0.60	  15	 30	   20	   41
+0.45	  0.65  	16	 29	   24	   44
+0.50	  0.70	  17	 28	   23	   39
+0.55	  0.75	  19	 29	   25	   39
+0.60	  0.80	  17	 24	   25	   36
+0.65	  0.85	  16	 21	   24	   32
+0.70	  0.90	  17	 21	   20	   25
+0.75	  0.95	  13	 15	   17	   20
+0.80	  1.00	  10	 11	   10	   11
+
+例 预试验中某新型抗肿瘤药品治疗某癌症的治愈率为30%，标准治疗的治愈率为10%，单组设计，二项分布检验，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+```{r}
+p <- seq(0.05,0.80,by=0.05)
+dim <- c("beta0.2r","beta0.2n","beta0.1r","beta0.1n")
+dim3 <- c("p0.15alpha0.05","p0.15alpha0.10","p0.20alpha0.05","p0.20alpha0.10")
+data<- c(3,7,11,16,21,26,30,35,38,41,45,43,41,39,38,27,27,40,48,56,62,67,68,71,70,69,
+         70,62,55,49,45,30,4,9,14,21,27,35,41,45,52,54,58,58,55,54,46,39,38,55,64,77,
+         83,93,96,94,98,93,92,85,75,69,55,44,2,5,8,12,15,19,21,24,28,31,31,32,33,29,
+         25,22,21,31,37,44,46,50,49,50,53,53,49,47,45,37,30,25,3,6,11,16,20,26,30,35,
+         39,41,44,43,44,41,33,28,32,40,53,61,64,71,72,75,75,72,71,64,61,53,40,32,2,5,
+         7,11,13,16,19,22,24,23,25,26,24,23,20,13,16,25,28,35,36,39,41,42,42,37,37,
+         36,31,28,23,14,3,6,9,14,17,21,24,28,30,32,33,32,32,30,25,13,25,33,38,47,49,
+         53,53,56,54,53,50,45,42,37,29,14,2,3,5,7,9,12,13,15,16,17,19,17,16,17,13,
+         10,16,18,22,24,26,30,29,30,29,28,29,24,21,21,15,11,2,4,7,10,13,15,19,20,24,
+         23,25,25,24,20,17,10,20,25,32,36,39,39,44,41,44,39,39,36,32,25,20,11)
+
+z <- array(data,c(16,4,4),dimnames<-list(p,dim,dim3))
+
+BinProp <- function(alpha, beta,p0,p1){
+  col1<- paste(paste("beta",beta,sep=""),"n",sep="")
+  col2 <- paste(paste("beta",beta,sep=""),"r",sep="")
+  row <- paste(paste("p",format(p1-p0,digits = 2,nsmall = 2),sep = ""),
+               paste("alpha",alpha,sep = ""),sep="")
+  c(n=z[which(p==p0),col1,row],r=z[which(p==p0),col2,row])
+}
+
+BinProp(0.05,0.1,0.1,0.3)
+```
+需要33个病例，临界值为6。
+
+###Fisher’s精确检验(Fisher’s Exact Test)
+在两组平行对照设计中，当四格表中有理论数小于5,或者总观察数小于40时，需要Fisher‘s精确检验。样本含量的精确估计需要查询下表获得检验水平为0.05或为0.1,把握度为0.8或0.9时，不同率差的样本量。
+率差为0.25时，查询下表
+
+$p_{1}$    $p_{2}$    $alpha0.10beta0.20$    $alpha0.10beta0.10$    $alpha0.05beta0.20$   $alpha0.05beta0.10$
+---        ---        ---                    ---                    ---                   ---
+0.05       0.30       25                     33                     34                    42
+0.10       0.35       31                     41                     39                    52
+0.15       0.40       34                     48                     46                    60
+0.20       0.45       39                     52                     49                    65
+0.25       0.50       40                     56                     54                    71
+0.30       0.55       41                     57                     55                    72
+0.35       0.60       41                     57                     56                    77
+0.40       0.65       41                     57                     56                    77
+0.45       0.70       41                     57                     55                    72
+0.50       0.75       40                     56                     54                    71
+0.55       0.80       39                     52                     49                    65
+0.60       0.85       34                     48                     46                    60
+0.65       0.90       31                     41                     39                    52
+0.70       0.95       25                     33                     34                    42
+
+率差为0.30时，查询下表
+
+$p_{1}$    $p_{2}$    $alpha0.10beta0.20$    $alpha0.10beta0.10$    $alpha0.05beta0.20$   $alpha0.05beta0.10$
+---        ---        ---                    ---                    ---                   ---
+0.05       0.35       20                     26                     25                    33
+0.10       0.40       23                     32                     30                    39
+0.15       0.45       26                     35                     34                    45
+0.20       0.50       28                     39                     36                    47
+0.25       0.55       29                     40                     37                    51
+0.30       0.60       29                     40                     41                    53
+0.35       0.65       33                     40                     41                    53
+0.40       0.70       29                     40                     41                    53
+0.45       0.75       29                     40                     37                    51
+0.50       0.80       28                     39                     36                    47
+0.55       0.85       26                     35                     34                    45
+0.60       0.90       23                     32                     30                    39
+
+率差为0.35时，查询下表
+
+$p_{1}$    $p_{2}$    $alpha0.10beta0.20$    $alpha0.10beta0.10$    $alpha0.05beta0.20$   $alpha0.05beta0.10$
+---        ---        ---                    ---                    ---                   ---
+0.05       0.40       16                     21                     20                    25
+0.10       0.45       19                     24                     24                    31
+0.15       0.50       20                     28                     26                    34
+0.20       0.55       23                     29                     27                    36
+0.25       0.60       24                     29                     30                    36
+0.30       0.65       24                     33                     31                    40
+0.35       0.70       24                     33                     31                    40
+0.40       0.75       24                     29                     30                    36
+0.45       0.80       23                     29                     27                    36
+0.50       0.85       20                     28                     26                    34
+0.55       0.90       19                     24                     24                    31
+0.60       0.95       16                     21                     20                    25
+
+例 预试验中某新型抗肿瘤药品治疗某癌症的治愈率为35%，标准治疗的治愈率为10%，两组平行对照1：1设计，双侧差异性检验，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+dim1 <- c("p1","p2","alpha0.10beta0.20","alpha0.10beta0.10","alpha0.05beta0.20"
+          ,"alpha0.05beta0.10")
+p <- seq(1:14)
+data1 <-c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,
+          0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,
+          25,31,34,39,40,41,41,41,41,40,39,34,31,25,33,41,48,52,56,57,57,57,57,
+          56,52,48,41,33,34,39,46,49,54,55,56,56,55,54,49,46,39,34,42,52,60,65,
+          71,72,77,77,72,71,65,60,52,42)
+p0.25 <- array(data1,c(14,6),dimnames<-list(p,dim1))
+
+p <- seq(1:12)
+data2 <- c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.35,0.40,
+           0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,20,23,26,28,29,29,
+           33,29,29,28,26,23,26,32,35,39,40,40,40,40,40,39,35,32,25,30,34,36,
+           37,41,41,41,37,36,34,30,33,39,45,47,51,53,53,53,51,47,45,39)
+p0.30 <- array(data2,c(12,6),dimnames<-list(p,dim1))
+
+p <- seq(1:12)
+data3 <- c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.40,0.45,
+           0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,16,19,20,23,24,24,24,
+           24,23,20,19,16,21,24,28,29,29,33,33,29,29,28,24,21,20,24,26,27,30,31,
+           31,30,27,26,24,20,25,31,34,36,36,40,40,36,36,34,31,25)
+p0.35 <- array(data3,c(12,6),dimnames<-list(p,dim1))
+z <- list(p0.25=p0.25,p0.30=p0.30,p0.35=p0.35)
+
+FisherTest <- function(alpha,beta,p1,p2){
+  table <- paste("p",format(p2-p1,digits = 2,nsmall = 2),sep="")
+  row <- as.numeric(which(z[[table]][,1]==p1))
+  col <- paste(paste("alpha",alpha,sep=""),paste("beta",format(beta,nsmall=2),
+                                                 sep=""),sep="")
+  z[[table]][row,col]
+}
+
+FisherTest(0.05,0.1,0.10,0.35)
+```
+每组是少需要52例。
+
+###单组优化多阶段设计(Optimal Multiple-Stage Designs for Single Arm Trials)
+
+####最优化两阶段设计（Optimal Two-Stage Designs）
+该设计中，当出现了一定数量的失败后，容许实验结束。该设计的的样本量可以通过查询下表获得。
+
+```{r}
+data <- read.table("OptimalTwoStageDesigns",header = T)
+panderOptions('table.split.table',140)  #改变默认80的宽度
+panderOptions('digits', 2)
+pander(data)
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。最优化两阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+OptimalTwoStageDesigns <- function(alphap,betap,p0p,p1p){
+  data <- read.table("OptimalTwoStageDesigns",header = T)
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+OptimalTwoStageDesigns(0.05,0.1,0.20,0.40)
+```
+第一阶段供需19例，其中4例有效，则可以进行第二阶段的试验。第二阶段需继续做5例，达到24例，如果至少5例有效，则可进行进一步的研究。
+
+####灵活两阶段设计（Flexible Two-Stage Designs）
+该设计对两个阶段的病例数给出多个选择，优化灵活两阶段设计样本量和界值可查询下表。
+
+```{r}
+data <- read.csv("OptimalFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+#panderOptions('table.alignment.default','left')
+#panderOptions('table.split.cells',40)
+pander(data,justify = c('center','center','center','center', 'center', 'center')) #调整对齐方式
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化灵活两阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+OptimalFlexibleTwoStageDesigns <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("OptimalFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+OptimalFlexibleTwoStageDesigns(0.05,0.1,0.20,0.40)
+```
+该研究第一阶段需要18-20个病例，如果至少4例有效，则可进行第二阶段试验。第二阶段继续做28～30个病例，总数达到48例。如果13例有效，则可进行进一步研究。
+
+极小灵活两阶段设计样本量和界值可查询下表。
+
+```{r}
+data <- read.csv("MinimaxFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data,justify = c('center','center','center',
+                        'center', 'center', 'center'))
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化灵活两阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+MinimaxFlexibleTwoStageDesigns <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("MinimaxFlexibleTwoStage.csv",header=T)
+for(i in 1:length(data$p0)){
+  if(is.na(data$p0[i])==T){
+    data$p0[i]  <- data$p0[i-1] 
+    data$p1[i]  <- data$p1[i-1] 
+  }
+}
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+MinimaxFlexibleTwoStageDesigns(0.05,0.1,0.20,0.40)
+```
+该研究第一阶段需要27-29个病例，如果至少5例有效，则可进行第二阶段试验。第二阶段继续做16个病例，总数达到43-45例。如果13例有效，则可进行进一步研究。
+
+####优化三阶段设计（Optimal Three-Stage Designs）
+该设计的基本模式和两阶段相同。其样本含量和临界值，Ensign等可查询下表
+
+```{r}
+data <- read.csv("OptimalThreeStageDesignsEnsign.csv",header=T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+Chen扩展的样本量和临床界值可查询下表
+
+```{r}
+data <- read.csv("OptimalThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化三阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+OptimalThreeStageDesignsEnsign<- function(alphap,betap,p0p,p1p){
+  data <- read.csv("OptimalThreeStageDesignsEnsign.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+  
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+
+OptimalThreeStageDesignsChen <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("OptimalThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+  
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+OptimalThreeStageDesignsEnsign(0.05,0.1,0.20,0.40)
+OptimalThreeStageDesignsChen(0.05,0.1,0.20,0.40)
+```
+依据Ensign法，该研究第一阶段需要9名病例，如果是少有1例有效，则可以进行第二阶段研究。第二阶段继续做14例，达到23例，如果至少4例有效，则可以进行第三阶段的研究。第三阶段继续做31例，达到54例，如果至少有15例有效，则可进行进一步研究。Chen法的结果解释类似。
+
+极小三阶段设计需要的样本两最小，其样本含量和临界值可查询下表
+```{r}
+data <- read.csv("MinimaxThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+panderOptions('digits', 2)
+panderOptions('table.split.table',500)  
+pander(data)
+```
+
+例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。极小三阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
+
+```{r}
+MinimaxThreeStageDesignsChen <- function(alphap,betap,p0p,p1p){
+  data <- read.csv("MinimaxThreeStageDesignsChen.csv",header = T)
+  
+  for(i in 1:length(data$p0)){
+    if(is.na(data$p0[i])==T){
+      data$p0[i]  <- data$p0[i-1] 
+      data$p1[i]  <- data$p1[i-1] 
+    }
+  }
+  
+  data%>>%
+    subset(p0==p0p)%>>%
+    subset(p1==p1p)%>>%
+    subset(alpha==alphap)%>>%
+    subset(beta==betap)%>>%
+    return()
+}
+
+MinimaxThreeStageDesignsChen(0.05,0.1,0.20,0.40)
+```
+该研究第一阶段需要16名病例，如果是少有2例有效，则可以进行第二阶段研究。第二阶段继续做12例，达到28例，如果至少6例有效，则可以进行第三阶段的研究。第三阶段继续做17例，达到45例，如果至少有13例有效，则可进行进一步研究。
+
+####多组灵活设计（Flexible Designs for Multiple-Arm Trials）
+该设计需要事先规定一个有临床意义的界值$[-\delta,\delta]$，如果率的差值大于$\delta$
+，那么，率大的组被选择，如果率的差值小于或者等于$\delta$，在选择过长中就需要考虑其他因素。此种设计，不是比较各组之间和好坏，而是尽可能正确的选择出优势治疗的存在，以便进一步研究。两组灵活设计的样本量，在$\delta= 0.05\,  \rho= 0 \, or\,  \rho = 0.5$可查询下表，$\lambda$为预先指定的阈值。
+```{r}
+data <- read.csv("FlexibleDesignsforTwoArm.csv",header = T)
+pander(data)
+```
+
+例 一新型抗肿瘤药品与现有标准治疗对照进行二期临床试验，如果新型药品的有效率达35%，标准治疗有效率为20%，两组灵活设计，在$\delta=0.05$,$\rho=0$，$\lambda=0.90$需要多少病例？
+
+```{r}
+FlexibleDesignsforTwoArm <- function(p1p,p2p){
+  data <- read.csv("FlexibleDesignsforTwoArm.csv",header = T)
+  data%>>%
+    subset(p1==p1p)%>>%
+    subset(p2==p2p)%>>%
+    return()
+}
+
+FlexibleDesignsforTwoArm(0.20,0.35)
+```
+每组至少需要57例。
+
+多组灵活设计，在$\delta= 0.05\,  \lambda= 0.8 \, or\,  \lambda = 0.9$可查询下表，$\lambda$为预先指定的阈值
+```{r}
+data <- read.csv("FlexibleDesignsforMultipleArm.csv",header = T)
+pander(data)
+```
+例 一新型抗肿瘤药品与两个标准治疗对照进行二期临床试验，预计新型药品比对照的有效率高30%（$\epsilon=0.3$），三组灵活设计，在$\delta=0.05$,$\rho=0$，$\lambda=0.90$需要多少病例？
+
+```{r}
+FlexibleDesignsforMultipleArm<- function(lambdap,epsilonp){
+  data <- read.csv("FlexibleDesignsforMultipleArm.csv",header = T)
+  data%>>%
+    subset(lambda==lambdap)%>>%
+    subset(epsilon==epsilonp)%>>%
+    return()
+}
+
+FlexibleDesignsforMultipleArm(0.9,0.3)
+```
+每组至少需要77例。
+
+##拟合优度和列联表检验的样本量估计（Tests for Goodness-of-Fit and Contingency Tables）
+临床试验中，当计数资料的指标有多个类别，而不是二分类时，适合的检验方法通常为拟合优度检验、独立性检验（也称列联表检验）和categorical shift检验。
+
+###拟合优度检验 (Tests for Goodness-of-Fit)，样本含量估算公式
+$$n=\delta _{\alpha ,\beta }  \begin{bmatrix}
+ \sum_{k=1}^{r}\frac{(p_{k}-p_{k,0})^{2}}{p_{k,0}}
+\end{bmatrix}^{-1}$$,$p_{k}$为实验组每个分类的率，$p_{k,0}$为文献中每个分类的的率，$\delta_{\alpha ,\beta }$通过$F_{r-1}(\chi_{\alpha ,r-1}^{2}|\delta )=\beta$计算,$\delta =\underset{n \to \infty }{lim}\sum_{k=1}^{r}\frac{n(p_{k}-p_{k,0})^{2}}{p_{k,0}}$，r为分类的个数。
+
+例 一探索性临床试验（pilot study），研究一降压药的临床疗效。预试验表明该药治疗高血压的显效率、进步率和无效率分别玩儿20%，60%和20%。文献报道，现有降压药的显效率、进步率和无效率分别为25%，45%和30%。单组设计，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+
+```{r}
+gof.Pearson(0.05,0.2,c(0.2,0.6,0.2),c(0.25,0.45,0.30),3)
+```
+该研究需要104例。
+
+###单层独立性检验(Test for Independence—Single Stratum)
+对于没有分层的r×c列联表数据（two-way），即单程列连数据，在进行样本量估计常用以下两种方法。
+
+####Pearson’s Test
+Pearson检验的样本量计算公式如下，
+$$n=\delta _{\alpha ,\beta }\begin{bmatrix}
+\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{(p_{ij}-p_{i}p_{j})^{2}}{p_{i}p_{j}}
+\end{bmatrix}^{-1}$$，$\delta _{\alpha ,\beta }$ 通过$$ F_{(r-1)(c-1)}(\chi _{\alpha,(r-1)(c-1))}^{2}|\delta)=\beta $$计算,$\delta =\underset{n \to \infty }{lim}\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{n(p_{ij}-p_{i.}p_{.j})^{2}}{p_{i.}p_{j.}}$，r代表横向分类数据的个数，c代表纵向分类数据的个数。
+
+例 一新型降压要与对照药进行探索行临床试验，其结果如下
+
+分组    无效    有效    显效  
+---     ---      ---     ---
+试验组  2        7       1
+对照组  2        5       3
+
+为验证差别的存在，设计较大规模的临床实验，两组平行1：1对照，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+
+```{r error=FALSE}
+gof.Pearson.twoway <- function (alpha, beta, trt, ctl, r, c) 
+{
+  p.ij <- rbind(trt, ctl)/(sum(trt) + sum(ctl))
+  b = 0
+  noncen = 0
+  for (i in 1:1000) {
+    b[i + 1] <- pchisq(qchisq(alpha, df = (r-1)*(c-1), ncp = 0, 
+                              lower.tail = FALSE), df = (r-1)*(c-1), ncp = i/100)
+    noncen = rbind(noncen, c(i, b[i], b[i + 1]))
+  }
+  delta = noncen[which(noncen[, 2] > beta & noncen[, 3] < 
+                         beta)]/100
+  n <- delta * (as.numeric(chisq.test(p.ij)$statistic))^-1
+  return(n)
+}
+
+gof.Pearson.twoway(0.05, 0.2, c(0.2,0.7,0.1), c(0.2,0.5,0.3), 2, 3)
+```
+该研究每组需要`r round(gof.Pearson.twoway(0.05, 0.2, c(0.2,0.7,0.1), c(0.2,0.5,0.3), 2, 3),0)`例。TrialSize包中gof.Pearson.twoway()方法对自由度计算有误。
+
+####似然比检验(Likelihood Ratio Test)
+似然比检验的样本量计算公式等价于Pearson检验样本量计算公式。
+
+###多层独立性检验(Test for Independence—Multiple Strata)
+多中心临床实验不仅可以保障实验结果的可重复性和代表性，而且也有利于受试着在期望时间内入选。多中心临床实验属于多层列联表数据，当反映率是二分类资料时，CMH检验（Cochran-Mantel-Haenszel Test）是常用的检验方法。
+
+分组    0            1            合计
+---     ---          ---          ---
+处理1   $n_{h,10}$   $n_{h,11}$   $n_{h,1.}$
+处理2   $n_{h,20}$   $n_{h,21}$   $n_{h,2.}$
+合计    $n_{h,.0}$   $n_{h,.1}$   $n_{h,..}$
+
+其样本含量估计公式：$$\delta=lim\begin{vmatrix}
+\frac{\sum _{h=1}^{H}\pi_{h} (p_{h,11}-p_{h,1.}p_{h,.1})}{\sqrt{\sum _{h=1}^{H}\pi_{h}p_{h,1.}p_{h,2.}p_{h,.0}p_{h,.1}}}
+\end{vmatrix}$$,$$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{\delta ^{2}}$$，$n_{h,ij}$是在第h层（中心），经i处理后，出现j反应的个数，$p_{h,ij}$是在h层（中心），经i处理后，出现j反应的率，$\pi_{h}=n_{h}/n$。此方法只使用于多中心临床实验中治疗反应数据是二分类的情况，对于多分类的数据，其样本量估算公式目前还没有可靠的方法。现在主要把p×r×c表合并成r*c表，用单层列联表样本量公式进行估算。
+
+例 一新型抗肿瘤药与安慰剂对照进行小规模多中心探索性临床试验，主要目标是观察不良时间的发生率，其结果如下
+
+分层    分组    反应无     反应有    合计
+---     ---     ---        ---      ---
+1       试验组  0.35       0.15     0.50
+        对照组  0.25       0.25     0.50
+2       试验组  0.30       0.20     0.50
+        对照组  0.20       0.30     0.50
+3       试验组  0.40       0.10     0.50
+        对照组  0.20       0.30     0.50
+4       试验组  0.35       0.15     0.50
+        对照组  0.15       0.35     0.50
+        
+基于以上数据，研究者希望设计一个较大规模的临床实验，两组平行1：1对照设计，每个分层的样本数量相同，即$\pi=1/4$，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+
+```{r}
+CMH.Equality <- function(alpha,beta,p,h){
+  pi <- 1/h
+  numerator <- function(p){
+    sum <- pi*(p[1,2]-rowSums(p)[1]*colSums(p)[2])
+  }
+  
+  denominator <- function(p){
+    sum <- pi*rowSums(p)[1]*rowSums(p)[2]*colSums(p)[1]*colSums(p)[2]
+  }
+  
+  delta <- abs(sum(sapply(p,numerator))/sqrt(sum(sapply(p,denominator))))
+  
+  n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 /(delta)^2
+  n
+}
+
+p1 <- rbind(c(0.35,0.15),c(0.25,0.25))
+p2 <- rbind(c(0.30,0.20),c(0.20,0.30))
+p3 <- rbind(c(0.40,0.10),c(0.20,0.30))
+p4 <- rbind(c(0.35,0.15),c(0.15,0.35))
+p<-list(p1=p1,p2=p2,p3=p3,p4=p4)
+
+CMH.Equality(0.05,0.2,p,4)
+```
+该研究每组需要`r round(CMH.Equality(0.05,0.2,p,4))`例。
+
+###类别转换检验(Categorical Shift Test)
+临床试验中，研究试验先后二分类的数据的变化情况，通常采用McNemar检验和Stuart-Maxwell检验。
+
+####McNemar检验
+对于下表，McNemar检验所需的样本两计算公式$$n=\frac{[z_{\alpha /2}(\varphi +1)+z_{\beta }\sqrt{(\varphi+1)^{2}-(\varphi-1)^{2}\pi_{Discordant}}]^{2}}{(\varphi -1)^{2}\pi _{Discordant}}$$,$\varphi =p_{01}/p_{10}$,$\pi_{Discordant}=p_{01}+p_{10}$。$p_{01}=P(x_{i1=0,x_{i2}=1})$,$p_{10}=P(x_{i1}=1,x_{i2}=1)$。
+
+治疗前        治疗后阳性      治疗后阴性     合计
+---           ---             ---            ---
+阳性          $n_{00}$        $n_{01}$       $n_{0.}$
+阴性          $n_{10}$        $n_{11}$       $n_{1.}$
+合计          $n_{.0}$        $n_{01}$       $n_{..}$
+              
+例 某降血糖药物在餐前和餐后分别擦亮血糖值，根据临床预试验结果，治疗后有50%（$p_{10}=0.5$）低血糖患者转为正常，而20%（$p_{01}=0.2$）正常血糖转为低血糖，在$\alpha=0.05,\beta=0.2$时，双侧差异性检验，需要多少样本量？
+
+```{r}
+(McNemar.Test(0.05, 0.2, c(0.2/0.5), c(0.5+0.2)))
+```
+该研究至少需要`r round(McNemar.Test(0.05, 0.2, c(0.2/0.5), c(0.5+0.2)),0)`患者。
+
+####Stuart-Maxwell检验
+McNemar检验适合于二分类变量前后的比较，对于多分类变量，需要使用Stuart-Maxwell检验。其样本量计算公式如下：$$n=\delta _{\alpha ,\beta }\begin{bmatrix}
+\sum_{i<j}\frac{(p_{ij}-p_{ji})^2}{p_{ij}+p_{ji}}
+\end{bmatrix}^{-1}$$,$p_{ij}=P(x_{k1}=i,x_{k2}=j)$，$\delta =\underset{n \to \infty}{lim}n\sum _{i<j}\frac{(p_{ij}-p_{ji})^2}{p_{ij}+p_{ji}}$,$$F_{r(r-1)/2}(\chi _{\alpha ,r(r-1)/2}|\delta )=\beta $$。
+
+治疗前     治疗后1      治疗后2     ...     治疗后r
+---        ---          ---         ---     ---
+1          $n_{11}$     $n_{12}$    ...     $n_{1r}$
+2          $n_{21}$     $n_{22}$    ...     $n_{22}$
+...
+r          $n_{r1}$     $n_{r2}$    ...     $n_{rr}$
+合计       $n_{.1}$     $n_{.2}$    ...     $n_{.r}$
+           
+例 一个小规模的探索性临床试验研究了某药物对单核细胞数量（按照比正常范围高、在正常范围和低于正常范围）的影响，结果如下
+
+治疗前    治疗后低     治疗后正常    治疗后高
+---       ---          ---           ---
+低        3            4              4
+正常      2            2              3
+高        1            2              3
+
+可以看出，该药有一定的升高单核细胞数量的作用。为证实这一趋势的存在，研究着设计一个临床试验，在$\alpha=0.05,\beta=0.2$时，需要多少样本量？
+
+```{r}
+Stuart.Maxwell.Test <- function(alpha,beta, p.ij, p.ji, r){
+  b = 0
+  noncen = 0
+  
+  for (i in 1:2000) {
+    b[i + 1] <- pchisq(qchisq(alpha, df = r*(r - 1)/2, ncp = 0, 
+                              lower.tail = FALSE), df = r*(r - 1)/2, ncp = i/100)
+    noncen = rbind(noncen, c(i, b[i], b[i + 1]))
+  }
+  
+  delta = noncen[which(noncen[, 2] > beta & noncen[, 3] < beta)]/100
+  
+  temp <-array(0,c(r,r)) 
+  for (j in 1:r) {
+    for (i in 1:j) {
+      temp[i,j] <- (p.ij[i, j] - p.ji[j, i])^2/(p.ij[i, j] + p.ji[j, i])
+    }
+  }
+  n <- delta*sum(temp)^-1
+  n
+}
+
+
+alpha <- 0.05
+beta <- 0.2
+p.ij <- rbind(c(3, 4, 4), c(2, 3, 3), c(1, 2, 3))/25
+p.ji <- rbind(c(3, 4, 4), c(2, 3, 3), c(1, 2, 3))/25
+r <- 3
+
+Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r)
+```
+
+该研究至少需要`r round(Stuart.Maxwell.Test(alpha,beta, p.ij, p.ji, r),0)`例。TrialSize包中Stuart.Maxwell.Test()方法对自由度计算有误。
+
+###残留效应检验(Carry-Over Effect Test)
+残留效应是由于上一阶段的处理由于效应除去时间不足或其他原因干扰了下一阶段的处理效果，产生残留效应主要是由于第一阶段导致耐药性而产生的撤退效应、心理效应和患者身体状况因用药而改变所导致的遗留效应。在一些时候，研究者需要知道药物残留效应。其样本量估计公式如下：$$n=\frac{(z_{\alpha /2}+z_{\beta })^{2}(\sigma _{1}^{2}+\sigma _{2}^{2})}{\gamma ^{2}}$$ $\sigma _{1}$为AB顺序的标准差，$\sigma _{2}$为BA顺序的标准差，$\gamma$为AB和BA顺序残留效应的差值。
+
+例 根据预试验得到A、B两种药物交叉设计的参数，$\gamma$为0.89,$\sigma_{1}$为2.3,$\sigma_{2}$为2.4,为证实这一残留效应在，研究着设计一个临床试验，在$\alpha=0.05,\beta=0.2$时，需要多少样本量？
+```{r}
+(Carry.Over(0.05,0.2,2.3^2,2.4^2,0.89))
+```
+
+该研究至少需要`r round(Carry.Over(0.05,0.2,2.3^2,2.4^2,0.89))`例。
+
+##时间事件（生存分析）的样本量计算(Time-to-Event)
+临床实验中，某些试验的结果并不是均数和有效率或治愈率，而是某种医学事件的发生时间，如果某项治疗能够阻止或延缓这些事件的发生，便认为治疗是有效。从观察到事件发生的时间称为事件发生时间(time-to-event)，如果研究的是终点是死亡，那么事件发生时间成为生存时间 (survial time)。除了生存结局作为判定标准以外，只要能让病人存活时间延长，这种治疗也应当是被认为有效的。基本概念有：事件（Event）指研究中规定的生存研究的终点，在研究开始之前就已经制定好。根据研究性质的不同，事件可以是患者的死亡、疾病的复发、仪器的故障等。生存时间(Survival time)指从某一起点到事件发生所经过的时间。生存是一个广义的概念，不仅仅指医学中的存活，也可以是肿瘤手术到复发和接触毒物到毒性反应等。删失（Sensoring）指由于所关心的事件没有被观测到或者无法观测到，以至于生存时间无法记录的情况。常由两种情况导致：（1）失访；（2）在研究终止时，所关心的事件还未发生。生存概率(survival probability)：表示某单位时段开始时存活的个体到该时段结束时仍存活的可能性大小。生存率(survival rate)：指研究对象经历个时段后仍存活的概率，即生存时间大于等于的概率，用$P(T \geqslant t)$表示。生存函数（Survival distribution function）又叫累积生存率，表达式为$S（t）=P(T>t)$,其中T为生存时间，该函数的意义是生存时间大于时间点t的概率。t=0时S(t)=1，随着t的增加S(t)递减（严格的说是不增），1-S(t)为累积分布函数，表示生存时间T不超过t的概率,其近似等于生存时间长于t的患者数/患者总数，生存函数在某时点的函数值就是生存率。死亡概率函数：简称为死亡概率，常用F(t)表示。代表一个观察对象从开始观察到时间t 为止的死亡概率，它与生存函数的关系为F(t)=1－S(t)。风险率函数(hazard function)指t时刻尚存活的研究对象死于t时刻后一瞬间的概率，为条件概率,用$h(t)=\underset{\Delta \rightarrow 0}{lim}\frac{n(t)-n(t+\Delta t)}{n(t)\Delta t}$表示，T为观察对象的生存时间，n(t)为t时刻的生存人数，$n(t+\Delta t)$为$t+\Delta t$时刻的生存人数，它与生存函数、死亡密度函数的关系为h (t)= f (t) / S(t)。
+
+###基于指数模型的生存分析(Exponential Model)
+生存时间是指从某个起始事件开始到某个终点事件的发生(出现反应)所经历的时间。一般不服从正态分布，有时近似服从指数分布、Weibull分布、Gompertz分布等，多数情况下往往不服从任何规则的分布类型。
+
+####显著性检验
+在假定服从指数分布的情况下，检验两组终点指标(生存率)的差异有无显著性。显著性检验样本量计算公式为：$$n_{2}=\frac{(z_{\alpha /2}+z_{\beta })^{2}}{(\lambda _{1}-\lambda _{2})^{2}}
+\begin{bmatrix}
+\frac{\sigma ^{2}(\lambda _{1})}{k}+\sigma ^{2}(\lambda _{2})
+\end{bmatrix}
+$$ 其中$k=\frac{n_{1}}{n_{2}}$，$$\sigma ^{2}(\lambda _{i})=\gamma _{i}^{2}\begin{bmatrix}
+1+\frac{\lambda e^{-\lambda _{i} T}(1-e^{(\lambda _{i}-\gamma) T_{0}})}{(\lambda _{i}-\gamma)(1-e^{-\lambda T_{0}})}
+\end{bmatrix}^{-1}$$ $n_{1}$为第一组样本量，$n_{2}$为第二组样本量，$k$为第一组样本量和第二组样本量的比值，$\lambda_{1}$为第一组风险率，$\lambda_{2}$为第二组风险率，
+$\sigma$为标准差，$T$预期临床试验所用时间，即临床试验自启动至结束所用时间，可以月或年为单位，$T_{0}$预期受试者全部入组所用时间(与T保持一致即可)。
+
+例 假设研究两种移植方法对恶性淋巴瘤转化成白血病时间的影响。其中一组用同种异体移植，另一组用大剂量化疗后的自身骨髓移植。观察时间持续3年（$T=3，T_{0}=1$）。假设两组风险率分别为1（$\lambda_{1}$）和2($\lambda_{2}$)。在$\alpha=0.05,\beta=0.2$时，显著性检验，需要多少样本量？
+
+```{r}
+TwoSampleSurvival.Equality(0.05,0.2,1,2,1,3,1,0.00001)
+```
+每组至少需要`r round(TwoSampleSurvival.Equality(0.05,0.2,1,2,1,3,1,0.00001))`例。
+
+####非劣效/优效性检验
+在假定服从指数分布的情况下,检验两组终点（生存率）的差异是否非劣于/优于设定的界值。非劣效/优效性检验样本量计算公式为：$$n_{2}=\frac{(z_{\alpha}+z_{\beta })^{2}}{(\epsilon -\delta )^{2}}
+\begin{bmatrix}
+\frac{\sigma ^{2}(\lambda _{1})}{k}+\sigma ^{2}(\lambda _{2})
+\end{bmatrix}
+$$ 其中$k=\frac{n_{1}}{n_{2}}$，$$\sigma ^{2}(\lambda _{i})=\gamma _{i}^{2}\begin{bmatrix}
+1+\frac{\lambda e^{-\lambda _{i} T}(1-e^{(\lambda _{i}-\gamma) T_{0}})}{(\lambda _{i}-\gamma)(1-e^{-\lambda T_{0}})}
+\end{bmatrix}^{-1}$$ $n_{1}$为第一组样本量，$n_{2}$为第二组样本量，$k$为第一组样本量和第二组样本量的比值，$\lambda_{1}$为第一组风险率，$\lambda_{2}$为第二组风险率，
+$\sigma$为标准差，$T$预期临床试验所用时间，即临床试验自启动至结束所用时间，可以月或年为单位，$T_{0}$预期受试者全部入组所用时间(与T保持一致即可),$\epsilon$ 为第一组和第二组风险率之差。
+
+例 假设研究两种移植方法对恶性淋巴瘤转化成白血病时间的影响。其中一组用同种异体移植，另一组用大剂量化疗后的自身骨髓移植。观察时间持续3年（$T=3，T_{0}=1$）。假设两组风险率分别为1（$\lambda_{1}$）和2($\lambda_{2}$)。在$\alpha=0.05,\beta=0.2$时，优效性检验，界值0.2，需要多少样本量？
+
+```{r}
+TwoSampleSurvival.NIS(0.05,0.2,1,2,1,3,1,0.00001,0.2)
+```
+每组至少需要`r round(TwoSampleSurvival.NIS(0.05,0.2,1,2,1,3,1,0.00001,0.2))`例。
+
+####等效性检验
+在假定服从指数分布的情况下,检验两组终点（生存率）的等效性，等效性检验检验样本量计算公式为：$$n_{2}=\frac{(z_{\alpha}+z_{\beta/2 })^{2}}{(\delta-|\epsilon| )^{2}}
+\begin{bmatrix}
+\frac{\sigma ^{2}(\lambda _{1})}{k}+\sigma ^{2}(\lambda _{2})
+\end{bmatrix}
+$$ 其中$k=\frac{n_{1}}{n_{2}}$，$$\sigma ^{2}(\lambda _{i})=\gamma _{i}^{2}\begin{bmatrix}
+1+\frac{\lambda e^{-\lambda _{i} T}(1-e^{(\lambda _{i}-\gamma) T_{0}})}{(\lambda _{i}-\gamma)(1-e^{-\lambda T_{0}})}
+\end{bmatrix}^{-1}$$ $n_{1}$为第一组样本量，$n_{2}$为第二组样本量，$k$为第一组样本量和第二组样本量的比值，$\lambda_{1}$为第一组风险率，$\lambda_{2}$为第二组风险率，
+$\sigma$为标准差，$T$预期临床试验所用时间，即临床试验自启动至结束所用时间，可以月或年为单位，$T_{0}$预期受试者全部入组所用时间(与T保持一致即可)。
+
+例 假设研究两种移植方法对恶性淋巴瘤转化成白血病时间的影响。其中一组用同种异体移植，另一组用大剂量化疗后的自身骨髓移植。观察时间持续3年（$T=3，T_{0}=1$）。假设两组风险率分别为1（$\lambda_{1}$）和2($\lambda_{2}$)。在$\alpha=0.05,\beta=0.2$时，等效性检验，界值0.5，需要多少样本量？
+
+```{r}
+TwoSampleSurvival.Equivalence(0.05,0.2,1,2,1,3,1,0.00001,0.5)
+```
+每组至少需要`r round(TwoSampleSurvival.Equivalence(0.05,0.2,1,2,1,3,1,0.00001,0.5))`例
+
+###基于Cox比例风险模型的生存分析
+不直接考察生存函数与协变量(影响因素)的关系，而是用风险函数作为因变量。$$h(t)=h_{0}(t)exp(\beta _{1}X_{1}+\beta _{2}X_{2}+...+\beta _{m}X_{m})$$ 将风险函数表达为基准风险率函数和相应协变量函数的乘积。Cox模型的参数估计不依赖于基准风险率函数的分布类型，是一种半参数的模型，但必须满足比例风险假定（PH假定），任何两个个体的风险函数及基准风险函数之比，即风险比（HR）保持一个恒定的比例，与时间t无关。模型中协变量的效应不随时间改变而改变。协变量是否满足PH假定，最简单的方法是观察按该变量分组的生存曲线，若生存曲线交叉，提示不满足PH假定。
+
+####显著性检验
+两组平行对照设计，基于Cox比例风险模型进行生存分析，检验两组终点的差异有无显著性,其样本量计算公式：$$n=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}}{log^{2}(b)p_{1}p_{2}d}$$ $p_{1},p_{2}$分别代表第一组和第二组的风险率，b为两组的风险比，d代表观察到规定事件的比率。
+
+例 一临床试验用来比较一个新的治疗方法和传统治疗方法对延缓烧伤患者局部感染的作用。预试验中，传统方法和新方法的风险比为2(b=log(2)),80%的患者将被观察到局部感染(d=0.8),在$\alpha=0.05,\beta=0.2，p_{1}=p_{2}=0.5$时，两组1：1平行对照，显著性检验，需要多少样本量？
+
+```{r}
+Cox.Equality <- function (alpha, beta, loghr, p1, p2, d) 
+{
+  n = (qnorm(1-alpha/2) + qnorm(1 - beta))^2/(log(loghr)^2 * p1 * 
+                                                p2 * d)
+  n
+}
+
+Cox.Equality(0.05,0.2,2,0.5,0.5,0.8)
+```
+
+每组至少需要`r round(Cox.Equality(0.05,0.2,2,0.5,0.5,0.8))`例。Sample Size Calculations in Clinical Research书中对样本量公式有误（$z_{1-\alpha /2,z_{1-\beta }}$在书中错写为$z_{\alpha /2},z_{\beta }$），导致TrialSize包中Cox.Equality()函数计算错误。
+
+####非劣效/优效性检验
+两组平行对照设计，基于Cox风险比例模型进行生存分析，检验两组终点（生存率）的差异是否非劣于/优于设定的界值。$$n=\frac{(z_{1-\alpha}+z_{1-\beta })^{2}}{log^{2}(b-\delta )p_{1}p_{2}d}$$ $p_{1},p_{2}$分别代表第一组和第二组的风险率，b为两组的风险比，d代表观察到规定事件的比率，$\delta$代表具有临床意义的界值。
+
+例 一临床试验用来比较一个新的治疗方法和传统治疗方法对延缓烧伤患者局部感染的作用。预试验中，传统方法和新方法的风险比为2(b=log(2)),80%的患者将被观察到局部感染(d=0.8),在$\alpha=0.05,\beta=0.2，p_{1}=p_{2}=0.5$时，两组1：1平行对照，优效性检验，界值为0.5，需要多少样本量？
+
+```{r}
+Cox.NIS <- function (alpha, beta, loghr, p1, p2, d, margin) 
+{
+  n = (qnorm(1-alpha) + qnorm(1 - beta))^2/((log(loghr) - margin)^2 * p1 * p2 * d)
+  n
+}
+
+Cox.NIS(0.05,0.2,2,0.5,0.5,0.8,0.5)
+```
+
+每组至少需要`r round(Cox.NIS(0.05,0.2,2,0.5,0.5,0.8,0.5))`例。Sample Size Calculations in Clinical Research书中对样本量公式有误（$z_{1-\alpha ,z_{1-\beta }}$在书中错写为$z_{\alpha },z_{\beta }$）
+
+
+####等效性检验
+两组平行对照设计，基于Cox风险比例模型进行生存分析，检验两组终点（生存率）的等效性。$$n=\frac{(z_{1-\alpha}+z_{1-\beta/2 })^{2}}{log^{2}(\delta-|b| )p_{1}p_{2}d}$$ $p_{1},p_{2}$分别代表第一组和第二组的风险率，b为两组的风险比，d代表观察到规定事件的比率，$\delta$代表具有临床意义的界值。
+
+例 一临床试验用来比较一个新的治疗方法和传统治疗方法对延缓烧伤患者局部感染的作用。预试验中，传统方法和新方法的风险比为2(b=log(2)),80%的患者将被观察到局部感染(d=0.8),在$\alpha=0.05,\beta=0.2，p_{1}=p_{2}=0.5$时，两组1：1平行对照，等效性检验，需要多少样本量？
+
+```{r}
+Cox.Equivalence <- function (alpha, beta, loghr, p1, p2, d, margin) 
+{
+  n = (qnorm(1-alpha) + qnorm(1 - beta/2))^2/
+    ((margin - abs(log(loghr)))^2 * p1 * p2 * d)
+  n
+}
+
+Cox.Equivalence(0.05,0.2,2,0.5,0.5,0.8,0.5)
+```
+每组至少需要`r round(Cox.Equivalence(0.05,0.2,2,0.5,0.5,0.8,0.5))`例。Sample Size Calculations in Clinical Research书中对样本量公式有误（$z_{1-\alpha ,z_{1-\beta /2}}$在书中错写为$z_{\alpha },z_{\beta/2 }$）
+
+###基于Logrank检验的生存分析
+也称为时序检验，是在无效假设成立的前提下，根据两种处理不同生存时间的期初观察人数和理论死亡概率计算出的理论死亡数（期望死亡数）应该与实际死亡数相差不大；如果相差较大，则无效假设不成立，可以认为两条生存曲线间的差异有统计学意义。非劣效/优效性检验和等效性检验样本量估计困难，显著性其样本量估计公式如下$n=\frac{2d}{p_{1}+p_{2}}$,其中$d=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sum_{i=1}^{N}w_{i}^{2}\rho_{i}\eta _{i})}{(\sum_{i=1}^{N}w_{i}\rho _{i}\gamma _{i})^{2}}$。$w_{i}$分别为1,$n_{i}$,$\sqrt{n_{i}}$时，对应Log-rank、Wilcoxon和Tarone-Ware检验。
+
+例 一为期2年的某心血管药物的临床试验（Lakatos 1998），假设试验组年风险率为1（年事件发生率为$1-e^{-1}$）,对照组年风险率为0.5（年事件发生率为$1-e^{-0.5}$）,年失访率为3%，年不依从率为4%，对照组有5%患者选择了其他与试验组类似的治疗（drop-in）。试验组的总事件发生率83.7%，对照组总事件发生率62.7%。
+
+```{r}
+Logrank.test <- function(alpha, beta, k, year, loss, herate, hcrate, noncompliance, 
+    dropin, pe, pc) {
+    eeventrate <- 1 - exp(-herate)
+    ceventrate <- 1 - exp(-hcrate)
+    e <- matrix(c(0, 0, 1, 0))
+    c <- matrix(c(0, 0, 0, 1))
+    transition <- function(x, k) {
+        1 - (1 - x)^(1/k)
+    }
+    
+    T <- matrix(c(1, 0, 0, 0, 0, 1, 0, 0, transition(loss, k), transition(eeventrate, 
+        k), 1 - transition(noncompliance, k) - transition(eeventrate, k) - 
+        transition(loss, k), transition(noncompliance, k), transition(loss, 
+        k), transition(ceventrate, k), transition(dropin, k), 1 - transition(loss, 
+        k) - transition(ceventrate, k) - transition(dropin, k)), nrow = 4)
+    
+    
+    for (i in 1:(k * year)) {
+        tempe <- list(T %^% i %*% e)
+        tempc <- list(T %^% i %*% c)
+        if (i == 1) {
+            E <- tempe
+            C <- tempc
+            phi <- 1
+            eta <- phi/(1 + phi)^2
+            theta <- herate/hcrate
+            gamma <- phi * theta/(1 + phi * theta) - phi/(1 + phi)
+            rho <- (E[[i]][2] + C[[i]][2])/(pe + pc)  ##ρ
+        } else {
+            E <- append(E, tempe)
+            C <- append(C, tempc)
+            phi <- append(phi, (E[[i - 1]][3] + E[[i - 1]][4])/(C[[i - 
+                1]][3] + C[[i - 1]][4]))  ##φ
+            eta <- append(eta, phi[i]/(1 + phi[i])^2)  ##η
+            theta <- append(theta, log(1 - (E[[i]][2] - E[[i - 1]][2]))/log(1 - 
+                (C[[i]][2] - C[[i - 1]][2])))  ##θ
+            gamma <- append(gamma, phi[i] * theta[i]/(1 + phi[i] * theta[i]) - 
+                phi[i]/(1 + phi[i]))
+            rho <- append(rho, ((E[[i]][2] - E[[i - 1]][2]) + (C[[i]][2] - 
+                C[[i - 1]][2]))/(pe + pc))  ##ρ
+        }
+    }
+    t <- seq(from = 1/k, to = year, by = 1/k)
+    numerator <- 0
+    denominator <- 0
+    for (i in 1:(k * year)) {
+        numerator = numerator + rho[i] * eta[i]
+        denominator = denominator + rho[i] * gamma[i]
+    }
+    d <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * numerator/denominator^2
+    n <- 2 * d/(pe + pc)
+    n
+}
+
+Logrank.test(0.05, 0.2, 10, 2, 0.03, 1, 0.5, 0.04, 0.05, 0.627, 0.837)
+```
+两组共需要`r round(Logrank.test(0.05,0.2,10,2,0.03,1,0.5,0.04,0.05,0.627,0.837))`例。Sample Size Calculations in Clinical Research书中对$\theta$和$\gamma$的计算有误，矩阵T也有两个数字顺序反了！
+
+##成组序贯设计(Group Sequential Methods)
+传统的随机对照临床试验设计，要求试验开始前确定样本量, 并且只有当所有的受试者均完成入组之后才能进行数据的统计分析。序贯设计是一种节省样本的设计方法，通常事先不固定样本含量，而是按照受试者进入试验的次序，做一个（或者一个阶段）试验便进行一次分析，一旦发现达到预期结果，立即停止试验。序贯试验比较适合临床研究，因为临床研究的患者都是陆续到医院，可以一次纳入研究进行分析。这种逐个纳入受试对象，纳入一个便分析一个，下一个是否试验需要看上一个结果，花费时间较长，不适用急性传染病的研究，也不适用与显效迟缓的慢性病研究。成组序贯设计允许在试验过程中对已累积数据进行期中分析,评价试验药物的有效性和安全性,若已累积数据有足够证据说明试验药物有效或无效则可提前结束试验。与传统的试验设计方法相比,成组序贯设计具有更强的灵活性;由于期中分析为提前结束试验提供了可能性,成组序贯试验往往可以节约试验样本量,缩短试验周期，节约资金,而且更符合伦理学的要求。此外,从试验管理的角度来讲,成组序贯设计对数据的期中评价也可使研究者和监察员尽早发现试验中存在的问题,有利于改善试验质量。
+
+实际中采用较多成组序贯试验是分阶段试验，分阶段分析。要求将整个试验划分成k个连续的阶段，每个阶段内都有2n个受试者加入试验，并被随机分配到实验组和对照组，每个处理组均为n个。当第i（$i \leqslant k$）个阶段试验结束后，把1到i阶段实验结果累计进行统计分析，如果拒绝$H_{0}$,即可结束试验，否则继续下一阶段试验。如果到最后第k个阶段结束后，仍不能拒绝$H_{0}$，则可接受$H_{0}$。成组序贯试验适用于多个地区同时进行的多中心临床试验，每隔一定时间将累积的资料进行统计分析，如果效果显著可以提前结束试验，能有效节省样本量和成本，但需要在方案中事先确定期中分析的次数和时间，不可在研究过程中修改，而且在双盲试验中应分批揭盲，以免影响后期的研究。
+
+成组序贯试验中需要多次重复的显著性检验，这种检验将增加$I$类错误的概率，使得总显著水平上升。为使得总显著水平等于期望的$\alpha$，需要将每个阶段的显著行水平进行调整，调整后的显著性水平成为名义性显著水平(norminal significance level)，用$\ {\alpha}'$ 表示。各种方法的界值在R中可通过GroupSeq包中的groupseq(mode="c")或者groupseq(mode="g")方法获得。
+
+成组序贯设计中有两种概念的时间点划分方式, 一种是日历时间(Calendar time),另一种是信息时间(Information time)。日历时间是以试验持续时间的进度来决定何时进行期中分析; 信息时间的含义是指在某一观察时点观察到的样本量占计划总样本量的百分比, 以可观察到的信息量来决定何时进行期中分析, 例如三阶段成组序贯试验预计死亡600例, 可在观察到死亡人数300例、450例和600例, 即信息时间为0.5、0.75和1时进行统计描述。对于生存资料, 因为生存时间是生存分析的主要指标, 故应该使用信息时间来划分时间点, 具体计算是用某时观察到的死亡数与期望总死亡数的比值$t_{k}=\kappa /K$来估计。
+
+
+### Pocock’s Test
+该法对每一阶段均采用相同的临界值和名义显著水平，下表列出了不同阶段的统计量，如5个阶段的显著水平为0.05的成组序贯设计，每一阶段均采用临界值2.413，每一阶段名义显著水平小于`r 2*(1-pnorm(2.413))`，才能拒绝$H_{0}$
+
+```{r}
+data <- read.csv("Cp.csv",header = T)
+panderOptions('digits', 4)
+pander(data)
+```
+
+K期Pocock 检验的样本量计算，首先根据没有期中分析的设计计算固定样本量，然后乘以$R_{p}(K,\alpha ,\beta )$。固定样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{p}$可查询下表：
+
+```{r}
+data <- read.csv("Rp.csv",header = T)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} - \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，Pocock设计，每期需要多少病例？
+
+```{r}
+Pocock.Test <- function(alpha, beta, sigma1, sigma2, mu, k) {
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (sigma1^2 + sigma2^2)/(mu)^2
+    
+    data <- read.csv("Rp.csv", header = T)
+    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+        nsmall = 2), sep = ""), sep = "")
+    rp <- as.matrix(data)[k, col]
+    nmax <- rp * nfixed
+    n <- nmax/k
+    n
+}
+
+Pocock.Test(0.05, 0.1, 2, 2, 1, 5)
+```
+每期至少需要`r round(Pocock.Test(0.05,0.10,2,2,1,5))`例。
+
+### O’Brien and Fleming 检验
+该法对不同阶段采用不同的临界值，早期阶段临界值设定较高，越到后期临界值越低。该法早期阶段较为保守，除非P值特别小，否则早期通常难以拒绝$H_{0}$，但最后一个阶段P值接近总的检验水平。下表列出了每阶段最后一阶段的临界值，比如5阶段最后一阶段的临界值值为2.040,前4阶段可采用差表，其值分别为4.562,3.226,2.634和2.281，5个阶段对应的名义显著水平可用2*(1-pnorm())方法求出。
+
+```{r}
+data <- read.csv("Cb.csv",header = T)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+```
+
+K期O’Brien and Fleming’s 检验的样本量计算，首先根据没有期中分析的设计计算固定样本量，然后乘以$R_{b}(K,\alpha ,\beta )$。固定样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{b}$可查询下表：
+
+```{r}
+data <- read.csv("Rb.csv",header = T)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} - \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，O’Brien and Fleming’s设计，每期需要多少病例？
+
+```{r}
+OBF.Test <- function(alpha, beta, sigma1, sigma2, mu, k) {
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (sigma1^2 + sigma2^2)/(mu)^2
+    
+    data <- read.csv("Rb.csv", header = T)
+    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+        nsmall = 2), sep = ""), sep = "")
+    rb <- as.matrix(data)[k, col]
+    nmax <- rb * nfixed
+    n <- nmax/k
+    n
+}
+
+OBF.Test(0.05, 0.1, 2, 2, 1, 5)
+```
+每期至少需要`r round(OBF.Test(0.05,0.10,2,2,1,5))`例。
+
+### Wang and Tsiatis 检验
+该法是对Pocock和O’Brien and Fleming’s法的推广，其界值形状主要取决$\rho$和$\tau$参数，当$\rho=0,\tau=0$时，就是Pocock法，当$\rho=0.5,\tau=0$时,就是O’Brien and Fleming’s法。下表列出了每阶段的临界值
+
+```{r}
+data <- read.csv("Cwt.csv",header = T)
+panderOptions('digits', 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+```
+
+K期Wang and Tsiatis 检验的样本量计算，首先根据没有期中分析的设计计算固定样本量，然后乘以$R_{wt}(K,\alpha ,\beta,\Delta)$。固定样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{wt}$可查询下表：
+
+```{r}
+data <- read.csv("Rwt.csv", header = T)
+panderOptions("digits", 4)
+pandoc.table(data, use.hyphening = TRUE, split.cells = 8, justify = "center")
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} - \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，Wang and Tsiatis 设计，每期需要多少病例？
+
+```{r}
+WT.Test <- function(alpha, beta, sigma1, sigma2, mu, k, delta) {
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (sigma1^2 + sigma2^2)/(mu)^2
+    
+    data <- read.csv("Rwt.csv", header = T)
+    col <- paste(paste("delta", format(delta, nsmall = 2), sep = ""), paste("beta", 
+        format(beta, nsmall = 2), sep = ""), sep = "")
+    rwt <- as.matrix(data)[k, col]
+    nmax <- rwt * nfixed
+    n <- nmax/k
+    n
+}
+
+WT.Test(0.05, 0.1, 2, 2, 1, 5, 0.05)
+```
+每期至少需要`r round(WT.Test(0.05,0.10,2,2,1,5,0.05))`例。
+
+### Inner Wedge 检验
+上述三种成组序贯方法均可以在拒绝$H_{0}$接受$H_{1}$时停止试验，也就是说试验药如果有效时即可停止试验。Inner Wedge方法是一种接受$H_{0}$时，停止试验，即试验药无效时即可停止试验的一种方法。
+
+K期Inner Wedge 检验的样本量计算，首先根据没有期中分析的设计计算固定样本量，然后乘以$R_{w}(K,\alpha ,\beta,\Delta )$。固定样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{w}$可查询下表：
+
+```{r}
+data <- read.csv("Rw.csv",header = T)
+panderOptions('digits', 4)
+pander(data)
+```
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为1（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=1$），$\mu_{T} - \mu_{P} = 0.2$,$\Delta =0.25$,在$\alpha=0.05,\beta=0.20$时，Inner Wedge设计，每期需要多少病例？
+
+```{r}
+InnerWedge.Test <- function(alphap,betap,sigma1,sigma2,mu,kp,deltap){
+  nfixed <- (qnorm(1-alphap/2) + qnorm(1 - betap))^2*(sigma1^2+sigma2^2)/(mu)^2
+  data <- read.csv("Rw.csv",header = T)
+  data%>>%
+    subset(beta==betap)%>>%
+    subset(alpha==alphap)%>>%
+    subset(K==kp)%>>%
+    subset(delta==deltap)%>>%
+    subset(select=c(Rw))*nfixed/kp
+}
+
+InnerWedge.Test (0.05,0.20,1,1,0.2,5,0.25)
+```
+
+每期至少需要`r round(InnerWedge.Test (0.05,0.20,1,1,0.2,5,0.25))`例。
+
+###率比较的样本量估计
+基于率比较的样本量计算与均值比较的样本量计算基本过程类似，固定样本量计算公式略有不同，公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(p _{1}(1-p _{1})+p _{2}(1-p _{2}))}{(p _{1}-p _{2})^{2}}$$。
+
+例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的试验药的有效率为60%，安慰剂的有效率为50%,在$\alpha=0.05,\beta=0.20$时，分别进行Pocock、O’Brien and Fleming’s和Wang and Tsitis($\Delta=0.1$)设计，每期各需要多少病例？
+
+```{r}
+Pocock.Test.Binary <- function(alpha, beta, p1, p2, k) {
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + 
+        p2 * (1 - p2))/(p1 - p2)^2
+    data <- read.csv("Rp.csv", header = T)
+    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+        nsmall = 2), sep = ""), sep = "")
+    rp <- as.matrix(data)[k, col]
+    nmax <- rp * nfixed
+    n <- nmax/k
+    n
+}
+
+Pocock.Test.Binary(0.05, 0.2, 0.6, 0.5, 5)
+```
+
+```{r}
+OBF.Test.Binary <- function(alpha, beta, p1, p2, k) {
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + 
+        p2 * (1 - p2))/(p1 - p2)^2
+    data <- read.csv("Rb.csv", header = T)
+    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+        nsmall = 2), sep = ""), sep = "")
+    rb <- as.matrix(data)[k, col]
+    nmax <- rb * nfixed
+    n <- nmax/k
+    n
+}
+
+OBF.Test.Binary(0.05, 0.2, 0.6, 0.5, 5)
+```
+
+```{r}
+WT.Test.Binary <- function(alpha, beta, p1, p2, k, delta) {
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + 
+        p2 * (1 - p2))/(p1 - p2)^2
+    data <- read.csv("Rwt.csv", header = T)
+    col <- paste(paste("delta", format(delta, nsmall = 2), sep = ""), paste("beta", 
+        format(beta, nsmall = 2), sep = ""), sep = "")
+    rwt <- as.matrix(data)[k, col]
+    nmax <- rwt * nfixed
+    n <- nmax/k
+    n
+}
+
+WT.Test.Binary(0.05, 0.2, 0.6, 0.5, 5, 0.1)
+```
+
+Pocock、O’Brien and Fleming’s和Wang and Tsitis($\Delta=0.1$)设计，每期各需要各需要`r round(Pocock.Test.Binary(0.05, 0.2, 0.6, 0.5, 5))`例、`r round(OBF.Test.Binary(0.05, 0.2, 0.6, 0.5, 5))`例和`r round(WT.Test.Binary(0.05, 0.2, 0.6, 0.5, 5, 0.1))`例
+
+###时间事件数据（生存分析）
+对于生存数据资料,由于其资料的特殊性,如数据参数分布状态不明、截尾数据的存在、脱落病例处理的特殊性及受试者入组情况的影响等,该类型试验的样本量估计一直是临床试验中样本量估计问题中的难点。以时间事件为试验结果的成组序贯设计，为简单起见，仅Cox比例风险模型为例。固定样本量计算公式,$$I_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}}{\theta ^{2}}$$,最大样本计算公式$$I_{max}=I_{fixed}\times R_{B}(K,\alpha ,\beta )$$,样本量为$$n_{d}=\frac{I_{max}}{I_{k}}$$。
+
+例 一5期的比较某抗癌药及安慰剂疗效的成组序贯试验，以时间事件为试验结果，根据预试验$\theta=0.405$,在$\alpha=0.05,\beta=0.20$时，每期各需要多少病例？
+
+```{r}
+Cox.Test <- function(alpha, beta, theta, k) {
+    Ifixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/theta^2
+    data <- read.csv("Rb.csv", header = T)
+    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+        nsmall = 2), sep = ""), sep = "")
+    rb <- as.matrix(data)[k, col]
+    Imax <- Ifixed * rb
+    nd <- Imax/0.25  #theta接近零，对每一期，riA,k ≈ riB,k，Ik近似于0.25dk
+    nd
+}
+
+Cox.Test(0.05, 0.2, 0.405, 5)
+```
+
+每期各需要`r round(Cox.Test(0.05, 0.2, 0.405, 5))`例，实际应用中还需根据删失、风险等因素进行调整。
+
+###$\alpha$消耗函数
+常用的成组序贯试验有以下几种: Pocock法(常数界值)、O'Brien-Fleming法(非常数界值)和成组序贯可信区间法等 。 虽然这几种方法都能根据期中分析次数制定检验临界值,达到控制I类错误的目的,但是都严格依赖期中分析计划,需要在完成固定数目的患者随访之后进行,因此缺乏灵活性,在实际应用中有一定的局限性。$\alpha$消耗函数法则弥补了这一局限，$\alpha$消耗函数法根据信息比例(information fraction)分配I类错误 ,从而在控制I类错误的前提下 ,不再依赖固定的期中分析频率和间隔 ,更具有灵活性 。信息比例指的是期中分析时收集到的试验信息量占试验结束时预期全部试验信息量的比例。最常用的是Lan和DeMets在1983年提出的α消耗函数法;1990年Hwang等提出了$\gamma$族$\alpha$消耗函数法。采用Pocock (1977) 或O’Brian-Fleming (1979) 等的方法，应计划好期间分析的时间及次数，并据此定义提早停止试验的边界点 (boundary)。若停止试验原则采用Lan-DeMets (1994) 之$\alpha$消耗函数 ，则可以不预先设定时间及次数。
+
+$\alpha$消耗函数是随信息时间递增函数，当信息时间为0时，$\alpha$消耗函数的值为0,在信息时间为1时，$\alpha$消耗函数的值为$\alpha$。通常以$\alpha(s)$代表在s信息时间时，$\alpha$消耗函数的取值，该值表示在s信息时间时希望消耗的I类错误的概率。对一给定的$\alpha$消耗函数和一系列的标准统计量$Z_{k}，k=1,...,K$，相应的边界值$c_{k}，k=1,...,K$，有下面关系$$P(|Z_{1}|<c_{1},...,|Z_{k-1}|<c_{k-1},|Z_{k}|\geq c_{k})=\alpha (\frac{k}{K})-\alpha(\frac{k-1}{K})$$
+
+常见的$\alpha$消耗函数如下
+
+函数名             函数
+---                ---
+O’Brien-Fleming    $\alpha _{1}(s)=2\begin{Bmatrix}1-\Phi (z_{\alpha /2}\sqrt{s})\end{Bmatrix}$
+Pocock             $\alpha _{2}(s)=\alpha log[1+(e-1)s]$
+Lan-DeMets-Kim     $\alpha _{3}(s)=\alpha s^{\rho },\rho>0$
+Hwang-Shih         $\alpha _{4}(s)=\alpha \begin{bmatrix}(1-e^{\zeta s})/(1-e^{-\zeta})\end{bmatrix},\zeta\neq 0$
+
+R语言ldbounds包中bounds()函数可以计算$\alpha$消耗函数的界值。5阶段O'Brien Fleming方法的消耗函数的界值可如下获得
+
+```{r}
+options(digits = 4)
+time <- seq(0.2, 1, length = 5)
+obf.bd <- bounds(time, iuse = c(1, 1), alpha = c(0.025, 0.025))
+summary(obf.bd)
+plot(obf.bd)
+```
+
+time为信息时间，iuse为1表示O'Brien Fleming方法，为2表示Pocock方法，为3表示power family方法，为4表示Hwang-Shih-DeCani family方法。asf为指定的消耗函数，在iuse为5时alpha为I类错误概率，phi为选择power family方法和Hwang-Shih-DeCani family方法时，选择的$\rho$值和$\zeta$值。ztrun为选择的截取向量，默认为 c(-8,8)。
+
+类似的5阶段Opower family方法的消耗函数的界值可如下获得
+```{r}
+options(digits = 4)
+power.bd <- bounds(time, iuse = c(3,3), phi = c(2,2),alpha = c(0.025, 0.025))
+summary(power.bd)
+plot(power.bd)
+```
+
+结果中第一列Time为信息时间，第二列为Lower低界值，第三列Upper为高界值，Exit pr为名义的$\alpha$值可据此判断是否结束试验，Diff. pr.为本阶段与上一阶段$\alpha$值的差异。
+
+###样本量再估计
+在某些成组序贯试验的期中分析时，需要根据累计的数据对样本量进行再估计，应当注意盲目的进行再估计有可能造成偏移。Shih等提出完成50%样本两后，以率为观察结果的随机双盲样本量再估计方法,估计公式如下:$$n=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\hat{p_{1}}(1-\hat{p_{1}})+\hat{p_{2}}(1-\hat{p_{2}}))}{\Delta^{2}}$$,$\Delta=|\hat{p_{1}}-\hat{p_{2}}|$,$\hat{p_{1}}=\frac{\pi\hat{\theta _{1}}-(1-\pi)\hat{\theta _{2}}}{2\pi-1}$,$\hat{p_{2}}=\frac{\pi\hat{\theta _{2}}-(1-\pi)\hat{\theta _{1}}}{2\pi-1}$。
+
+例 两中心的临床实验，A中心以60%的概率将病人分配到试验组，B中心以40%的概率将病人分配到试验组，整个试验以40%的概率将病人分配到试验组，已完成的50%样本量的期中分析，A中心的有效率为60%，B中心的有效率为50%，请在$\alpha=0.05,\beta=0.10$时重新估计下一阶段所需样本量。
+
+根据$0.4p_{1} + 0.6p_{2} = 0.6$和$0.6p_{1} + 0.4p_{2} = 0.5$,可$p_{1}=0.3,p_{2}=0.8$
+```{r}
+GroupSeqReEstimation <- function(alpha, beta, p1, p2) {
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + p2 * 
+        (1 - p2))/(p1 - p2)^2
+    n
+}
+
+GroupSeqReEstimation(0.05, 0.1, 0.3, 0.8)
+```
+重新估计样本量后，共计所需`r 2*round(GroupSeqReEstimation(0.05, 0.1, 0.3, 0.8))`例。
+
+## 变异性比较的样本量估计(Comparing Variabilities)
+变异性通常分为个体内变异和个体间变异两类，个体内变异指在相同的试验条件下，同一个体多次重复测量值之间存在的差异。个体间变异指不同个体间由于异质性而存在的差异。
+
+###重复平行对照设计
+####显著性检验
+显著性检验的样本量需从下面公式中，
+$$\frac{\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha /2 ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内标准差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n。
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内标准差为0.3,R组个体内标准差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+ISV.Equality <- function(alpha, beta, sigma1, sigma2, m) {
+    ratio = sigma1/sigma2
+    n = 0
+    for (i in 1:1000) {
+        ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(alpha/2, 
+            i * (m - 1), i * (m - 1), lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
+    }
+    n
+}
+
+ISV.Equality(0.05, 0.2, 0.3, 0.45, 3)
+```
+需要`r round(ISV.Equality(0.05,0.2,0.3,0.45,3))`例。
+
+####非劣性/优效性
+非劣性/优效性检验的样本量需从下面公式中，
+$$\frac{\sigma ^{2}_{WT}}{\delta ^{2}\sigma ^{2}_{WR}}=\frac{F_{1-\beta ,n(m-1),n(m-1)}}{F_{\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内标准差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内标准差为0.3,R组个体内标准差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，在界值为-1.1时需要多少样本量？
+
+```{r}
+ISV.NIS <- function(alpha, beta, sigma1, sigma2, m, margin) {
+    ratio = sigma1/(sigma2 * margin^2)
+    n = 0
+    for (i in 1:1000) {
+        ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(alpha, 
+            i * (m - 1), i * (m - 1), lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
+    }
+    n
+}
+
+ISV.NIS(0.05, 0.2, 0.3, 0.45, 3, -1.1)
+```
+需要`r round(ISV.NIS(0.05,0.2,0.3,0.45,3,1.1))`例。
+
+####等效性
+等效性检验的样本量需从下面公式中，
+$$\frac{\delta ^{2}\sigma ^{2}_{WT}}{\sigma ^{2}_{WR}}=\frac{F_{\beta/2 ,n(m-1),n(m-1)}}{F_{1-\alpha ,n(m-1),n(m-1)}}$$解出n，$\sigma ^{2}_{WT}$和$\sigma ^{2}_{WR}$分别表示T和R的个体内标准差，T(test drug)和R(reference drug）分别表示测试药物和参比药物，T和R组的样本量相同均为n，$、delta$为界值。
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组的个体内标准差为0.3,R组个体内标准差为0.45,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，在界值为2时需要多少样本量？
+
+```{r}
+ISV.Equivalence <- function(alpha, beta, sigma1, sigma2, m, margin) {
+    ratio = margin^2 * sigma1/sigma2
+    n = 0
+    for (i in 1:1000) {
+        ratio.f = qf(beta/2, i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(1 - 
+            alpha, i * (m - 1), i * (m - 1), lower.tail = FALSE)
+        if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
+            n = i
+        }
+    }
+    n
+}
+
+ISV.Equivalence(0.05, 0.2, 0.3, 0.45, 3, 2)
+```
+需要`r round(ISV.Equivalence(0.05,0.2,0.3,0.45,3,2))`例。
+
+###简单随机效应模型
+根据Quan和Shih提出的随机效应模型，可以到处方差的估计公式 $\sigma _{i}^{*2}=\frac{1}{2m}\hat{CV_{i}^{2}}+\hat{CV_{i}^{4}}$
+
+####显著性检验
+显著性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R})^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异度，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差。
+
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异度为50%,对照组变异度70%,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+ISCV.Equality <- function(alpha, beta, CVt, CVr, m) {
+    sigma1 = 1/(2 * m) * CVt^2 + CVt^4
+    sigma2 = 1/(2 * m) * CVr^2 + CVr^4
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(CVt - 
+        CVr)^2
+    n
+}
+
+ISCV.Equality(0.05, 0.2, 0.7, 0.5, 2)
+```
+需要`r round(ISCV.Equality(0.05,0.2,0.7,0.5,2))`例。
+
+####非劣性/优效性检验
+非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(CV_{T}-CV_{R}-\delta)^{2}}$$,$CV_{T},CV_{R}$分别为T和R组的变异度，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
+
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异度为50%,对照组变异度70%,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，界值为0.1，需要多少样本量？
+
+```{r}
+ISCV.NIS <- function(alpha, beta, CVt, CVr, m, margin) {
+    sigma1 = 1/(2 * m) * CVt^2 + CVt^4
+    sigma2 = 1/(2 * m) * CVr^2 + CVr^4
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(CVt - 
+        CVr - margin)^2
+    n
+}
+
+ISCV.NIS(0.05, 0.2, 0.7, 0.5, 2, -0.1)
+```
+需要`r round(ISCV.NIS(0.05,0.2,0.7,0.5,2,-0.1))`例。
+
+####等效性检验
+非劣性/优效性检验样本量计算公式如下$$n=\frac{(\sigma _{T}^{*2}+\sigma _{R}^{*2})(z_{1-\alpha }+z_{1-\beta })^{2}}{(\delta-|CV_{T}-CV_{R}|)^{2} }$$,$CV_{T},CV_{R}$分别为T和R组的变异度，$\sigma _{T}^{*2},\sigma _{R}^{*2}$分别为T和R组方差，$\delta$为界值。
+
+例 设计一个2组每个个体重复2次的平行对照实验，根据预试验，治疗组的变异度为50%,对照组变异度70%,在$\alpha=0.05,\beta=0.20$时，1：1等效性设计，界值为0.1，需要多少样本量？
+
+```{r}
+ISCV.Equivalence <- function(alpha, beta, CVt, CVr, m, margin) {
+    sigma1 = 1/(2 * m) * CVt^2 + CVt^4
+    sigma2 = 1/(2 * m) * CVr^2 + CVr^4
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(margin - 
+        abs(CVt - CVr))^2
+    n
+}
+
+ISCV.Equivalence(0.05, 0.2, 0.7, 0.5, 2, 0.1)
+```
+需要`r round(ISCV.Equivalence(0.05,0.2,0.7,0.5,2,0.1))`例。
+
+###个体间变异的比较
+除了比较个体内变异和变异度外，实际工作中也需要比较个体间的变异。临床试验中，对个体进行重复测量通常难以实施，但测量不同处理的个体间变异和总变异却有实际应用价值。平行对照设计中估计变异的方法为修正大样本方法(modified large sample, MLS) ，交叉设计中，由于不满足独立性的要求，需要对MLS方法进行扩展。
+
+#### 平行可重复设计
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+InterSV.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m) {
+    sigma = 2 * (vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 + vwt^4/(m^2 * 
+        (m - 1)) + vwr^4/(m^2 * (m - 1))
+    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 - vbr^2)^2
+    n
+}
+
+InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
+```
+
+需要`r round(InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3))`例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
+
+
+```{r}
+InterSV.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 + 
+        vwt^4/(m^2 * (m - 1)) + margin^4 * vwr^4/(m^2 * (m - 1)))
+    n = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - margin^2 * 
+        vbr^2)^2
+    n
+}
+
+InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
+```
+
+需要`r round(InterSV.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1))`例。
+
+#### 交叉可重复设计
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n_{s}=\frac{\sigma^{*2}(z_{1-\alpha /2}+z_{1-\beta })^{2}}{(\sigma_{BT}^{2}-\sigma_{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+InterSV.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 - 2 * rho^2 * 
+        vbt^2 * vbr^2 + vwt^4/(m^2 * (m - 1)) + vwr^4/(m^2 * (m - 1)))
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - vbr^2)^2
+    ns
+}
+
+InterSV.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
+```
+总计需要`r round(InterSV.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2,0.75))`例，由于$n_{s}=n_{1}+n_{2}-2$，每组大约需要52例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\delta ^{2}\sigma _{BR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta ^{2}\rho ^{2}\sigma_{BT} ^{2}\sigma_{BR}^{2}+\frac{\sigma_{WT}^{4}}{m^{2}(m-1)}+\frac{\delta ^{4}\sigma _{WR}^{4}}{m^{2}(m-1)}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+
+```{r}
+InterSV.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 - 
+        2 * margin^2 * rho^2 * vbt^2 * vbr^2 + vwt^4/(m^2 * (m - 1)) + 
+        margin^4 * vwr^4/(m^2 * (m - 1)))
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - margin^2 * 
+        vbr^2)^2
+    ns
+}
+
+InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
+```
+
+总计需要`r round(InterSV.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2,-1.1,0.75))`例，由于$n_{s}=n_{1}+n_{2}-2$，每组大约需要29例。
+
+###总体变异的比较
+总体变异的估计可从标准的2×2交叉/平行设计或者重复的2×2m的交叉/平行设计中获得。
+
+####无重复的平行对照试验
+
+#####显著性检验
+显著性检验样本量计算公式需要解下公式$$\frac{\sigma _{TT}^{2}}{\sigma _{TR}^{2}}=\frac{F_{1-\beta,n-1,n-1}}{F_{\alpha /2,n-1,n-1}}$$，其中$\sigma _{TT}$和$\sigma _{TR}$为T组和R组的方差。
+
+例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，显著性设计需要多少样本量？
+
+```{r}
+Variabilities.Parallel.Equality <- function(alpha, beta, vtt, vtr) {
+    ratio = vtt^2/vtr^2
+    n = 0
+    for (i in 2:1000) {
+        ratio.f = qf(p = (1 - beta), i - 1, i - 1, lower.tail = FALSE)/qf(alpha/2, 
+            i - 1, i - 1, , lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
+    }
+    n
+}
+
+Variabilities.Parallel.Equality(0.05, 0.2, 0.55, 0.75)
+```
+每组需要`r round(Variabilities.Parallel.Equality(0.05, 0.2, 0.55, 0.75))`例。
+
+#####非劣性/优效性检验
+非劣性/优效性检验样本量计算公式需要解下公式$$\frac{\sigma _{TT}^{2}}{\delta ^{2}\sigma _{TR}^{2}}=\frac{F_{1-\beta,n-1,n-1}}{F_{\alpha ,n-1,n-1}}$$，其中$\sigma _{TT}$和$\sigma _{TR}$为T组和R组的方差，$delta$为界值。                                                                                                                                                                                                             
+
+例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，非劣性设计，在界值为1.1时，需要多少样本量？
+```{r}
+Variabilities.Parallel.NIS <- function(alpha, beta, vtt, vtr, margin) {
+    ratio = vtt^2/margin^2 * vtr^2
+    n = 0
+    for (i in 2:1000) {
+        ratio.f = qf(p = (1 - beta), i - 1, i - 1, lower.tail = FALSE)/qf(alpha, 
+            i - 1, i - 1, , lower.tail = FALSE)
+        if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
+            n = i
+        }
+    }
+    n
+}
+
+Variabilities.Parallel.NIS(0.05, 0.2, 0.55, 0.75, -1.1)
+```
+每组需要`r round(Variabilities.Parallel.NIS(0.05, 0.2, 0.55, 0.75, -1.1))`例。
+
+#####等效性检验
+等效性检验样本量计算公式需要解下公式$$\frac{\delta ^{2}\sigma _{TT}^{2}}{\sigma _{TR}^{2}}=\frac{F_{\beta/2,n-1,n-1}}{F_{1-\alpha ,n-1,n-1}}$$，其中$\sigma _{TT}$和$\sigma _{TR}$为T组和R组的方差，$delta$为界值。                                                                                                                                                                                                             
+
+例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，等效性设计，在界值为1.8时，需要多少样本量？
+```{r}
+Variabilities.Parallel.Equivalence <- function(alpha, beta, vtt, vtr, margin) {
+    ratio = margin^2 * vtt^2/vtr^2
+    n = 0
+    for (i in 2:1000) {
+        ratio.f = qf(beta/2, i - 1, i - 1, lower.tail = FALSE)/qf(p = (1 - 
+            alpha), i - 1, i - 1, , lower.tail = FALSE)
+        if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
+            n = i
+        }
+    }
+    n
+}
+
+Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75, 1.8)
+```
+每组需要`r round(Variabilities.Parallel.Equivalence(0.05, 0.2, 0.55, 0.75,1.8))`例。
+
+####重复的平行对照试验
+
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+Variabilities.Parallel.Rep.Equality <- function(alpha, beta, vbt, vwt, 
+    vbr, vwr, m) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 + (m - 1) * 
+        vwt^4/m^2 + (m - 1) * vwr^4/m^2)
+    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        (vbr^2 + vwr^2))^2
+    n
+}
+
+Variabilities.Parallel.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
+```
+
+需要`r round(Variabilities.Parallel.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3))`例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\delta ^{4}\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个3组每个个体重复3次的平行对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20$时，1：1非劣性设计，需要多少样本量？
+
+
+```{r}
+Variabilities.Parallel.Rep.NIS <- function(alpha, beta, vbt, vwt, vbr, 
+    vwr, m, margin) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 + 
+        (m - 1) * vwt^4/(m^2) + margin^4 * (m - 1) * vwr^4/(m^2))
+    n = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        margin^2 * (vbr^2 + vwr^2))^2
+    n
+}
+
+Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1)
+```
+
+需要`r round(Variabilities.Parallel.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3, -1.1))`例。
+
+####标准2×2交叉设计
+
+#####显著性检验
+显著性检验样本量计算公式如下，
+$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2(\sigma _{TT}^{4}+\sigma _{TR}^{4}-2\rho^{2}\sigma _{BT}^{2}\sigma_{BR} ^{2})$
+
+例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1显著性检验设计，需要多少样本量？
+
+```{r}
+Variabilities.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2)^2 + (vbr^2 + vwr^2)^2 - 2 * rho^2 * vbt^2 * 
+        vbr^2)
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 1)
+```
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r round((Variabilities.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 1)+2)/2)`例。
+
+####非劣性/优效性检验
+样本量计算公式如下
+非劣性/优效性检验$$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2(\sigma _{TT}^{4}+\delta ^{4}\sigma _{TR}^{4}-2\delta ^{2}\rho^{2}\sigma _{BT}^{2}\sigma_{BR} ^{2})$
+
+例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1非劣性检验设计，在界值为1.1的情况下需要多少样本量？
+
+```{r}
+Variabilities.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, margin, 
+    rho) {
+    sigma = 2 * ((vbt^2 + vwt^2)^2 + margin^4 * (vbr^2 + vwr^2)^2 - 2 * 
+        margin^2 * rho^2 * vbt^2 * vbr^2)
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        margin^2 * (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, -1.1, 1)
+```
+
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r round((Variabilities.Cross.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, -1.1, 1)+2)/2)`例。
+
+####重复2×2m交叉设计
+#####显著性检验
+$$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\rho^2\sigma _{BT}^{2}\sigma _{BR}^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1显著性设计，需要多少样本量？
+
+```{r}
+Variabilities.Cross.Rep.Equality <- function(alpha, beta, vbt, vwt, vbr, 
+    vwr, m, rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 - 2 * rho^2 * 
+        vbt^2 * vbr^2 + (m - 1) * vwt^4/m^2 + (m - 1) * vwr^4/m^2)
+    ns = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
+```
+
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r (round(Variabilities.Cross.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75))+2)/2`例。
+
+####非劣性/优效性检验
+非劣性/优效性检验样本量计算公式如下$$n= \frac{\sigma ^{*2}(z_{1-\alpha}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\delta ^{2}\sigma _{TR}^{2})^{2}}$$,其中$\sigma^{*2}=2\begin{bmatrix}(\sigma_{BT}^{2}+\frac{\sigma _{WT}^{2}}{m})^{2}+\delta ^{4}(\sigma _{BR}^{2}+\frac{\sigma_{WR}^{2}}{m})^{2}-2\delta^{2}\rho^{2}\sigma_{BT}^{2}\sigma_{BR}^{2}+\frac{(m-1)\sigma_{WT}^{4}}{m^{2}}+\delta ^{4}\frac{(m-1)\sigma _{WR}^{4}}{m^{2}}\end{bmatrix}$
+
+例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
+
+```{r}
+Variabilities.Cross.Rep.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, 
+    m, margin, rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 - 
+        2 * margin^2 * rho^2 * vbt^2 * vbr^2 + (m - 1) * vwt^4/(m^2) + 
+        margin^4 * (m - 1) * vwr^4/(m^2))
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+        margin^2 * (vbr^2 + vwr^2))^2
+    ns
+}
+
+Variabilities.Cross.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75)
+```
+
+由于$n_{s}=n_{1}+n_{2}-2$,每组需`r (round(Variabilities.Cross.Rep.NIS(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, -1.1, 0.75))+2)/2`例。
+
+##生物等效性(Bioequivalence)
+生物利用度(bioavailability)指药物吸收进入血液循环的程度和速度。通常它的吸收程度是用血浆药物浓度与时间曲线下的面积（AUC）表示的，不管曲线下的形状如何，曲线下面积越大，表示吸收越完全。而吸收速度是以用药后所能达到的最高血药浓度（峰浓度，$C_{max}$）与达到最高血药浓度的时间（达峰时间，$T_{max}$）比值。一般认为静脉注射的生物利用度是100%，如果把静脉注射(iv)与血管外给药(ev)的AUC值进行比较，并计算后者的生物利用度，即为绝对生物利用度。同一给药途径下，对不同制剂进行比较，即为相对生物利用度。
+
+生物等效性(bioequivalence, BE)是指统一种药物的不同制剂在相同实验条件下，给予相同剂量，其吸收程度和速度没有显著的差异，主要用于评价仿制药(generic drug)与专利药(brand-name drug)是否相当。FDA规定,例如仿制药与标准药,天然药与化学药,口服药与针剂,长效药与短效药,某药低剂量与高剂量的比较需要用生物等效性方法来评价。FDA规定,若仿制药品与注册药品间具有生物等效性,申报过程可按缩略申报程序进行,而不需要按新药申报程序进行,避免了耗时、昂贵的I、II、III期临床试验，所以生物等效性在新药临床试验中占有重要的地位。
+
+生物等效性与药剂等效性(pharmaceutical eqivalents)不同，药剂等效性是指统一药物相同剂量制成同一剂型，但非活性成分不一定相同，在含量、纯度、均度等符合同一规定标准的制剂。药剂等效性没有反映药物制剂在体内的情况。生物等效性均以试验品与参考品作比较, 二者应有相似的剂量形式, 并且它们在生物体内吸收的速率和延缓(吸收率和吸收度)没有显著的差别。目前关于生物等效性的实验设计与分析是基于以下假设的：两药物的吸收率和吸收度相同即认为生物等效, 它们的治疗效果也应是相同的。吸收率和吸收度是通过测量药代动力学响应, 如AUC和$C_{max}$而得到的。因此生物等效性应该是对于这些观测值所在总体分布而言的, 当它是正态分布或对数正态分布时 , 只要比较均数和变异就可以了。也就是说, 要看生物利用度是否是等效的, 需要把这些利用度数值作为总体参数在两种配方中的样本作统计推断 。1996年Chinchilli给出3个关于生物等效性定义群体生物等效性(population bioequivalence, PBE): 对于两药物有关的概率分布函数而言是生物等效性 ;平均生物等效性(average bioequivalence, ABE): 对于两药物有关的概率分布函数的均数或中位数而言是生物等效性 ;个体生物等效性(individual bioequivalence, IBE): 对于总体中大部分个体而言是生物等效性。ABE虽然保证平均效应相同，但不一定保证效应的变异度相同，即两总体的均值相同，但方差不一定相同。PBE能保证使用T药物和使用R药物所得效应，不仅其平均值相同，而且效应的变异度相同，即两总体的边缘分布相同。PBE虽保证其边缘分布相同，但对每个个体而言，使用T药物和使用R药物所得效应不一定相同。即个体与药物可能存在交互作用。IBE对每个个体而言，使用T药物和使用R药物所得效应值接近。从等效的程度看，IBE>PBE>ABE。从应用角度看，两个具有个体生物等效性的药物，具有药物可交替性(switchability),即某患者在服用某药物一段时间后，如果改用另一个与之具有个体等效性的药物，可以得到相同的效果。具有群体生物等效性的药物，具有处方可选择性(prescribability),即医生在给患者初次开药时可以任意选用，这对该类患者的群体来说效应是相同的。基于以上考虑，美国FDA较为提倡PBE和IBE。
+
+###平均生物等效性
+标准2(顺序)×2(时期) 交叉试验，即两种处理T和R, 则将受试对象随机分为两组, 第一组在第一时期接受T处理,在第二时期接受R处理,实验顺序为TR;第二组则相反,在第一时期接受R处理,在第二时期接受T处理, 实验顺序为 RT。平均生物等效性基于2×2交叉设计的样本量可用如下公式进行估计$$n=\frac{(z_{1-\alpha }+z_{1-\beta /2})^{2}\sigma _{1,1}^{2}}{2(\delta -|\epsilon |)^{2}}$$,其中$\delta$为平均等效界值在ln(8/10)到ln(10/8)之间，$\sigma _{1,1}$为个体内标准差，$\epsilon$为T和R的差值。
+
+例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的平均生物等效性试验，根据药代动力学的预试验，个体内标准差为0.4，平均等效界值为ln(10/8)约为0.2231，差值为0.05,$\sigma=0.4$,，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(ABE(0.05,0.2,0.4,0.223,0.05))
+```
+每组需要`r round((ABE(0.05,0.2,0.4,0.223,0.05)))`例。
+
+###群体生物等效性
+群体生物等效性基于2×2交叉设计的样本量可用如下公式进行估计$$n=\frac{\zeta (z_{1-\alpha}+z_{\beta })^{2}}{\lambda ^{2}}$$,其中$\zeta =2\delta ^{2}\sigma _{1,1}^{2}+\sigma _{TT}^{4}+(1+a)^{2}\sigma_{TR}^{4}-2(1+a)\rho ^{2}\sigma _{TT}^{2}\sigma_{TR}^{2}$,$\delta$为界值，$\sigma_{a,b}^{2}=\sigma_{D}^{2}+a\sigma _{WT}^{2}+b\sigma _{WT}^{2}$，$\rho$为个体间相关系数，a为1.74,$\delta$为AUC值的平均差。
+
+例 某研究者预设计一个2×2交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的群体生物等效性试验，根据药代动力学的预试验 $\sigma _{1,1}=0.2,\sigma _{tt}=\sqrt{0.17},\sigma_{tr}=\sqrt{0.17},\sigma _{bt}=0.4,\sigma_{br}=0.4,\rho=0.75,a=1.74,\delta=0.00,\lambda =-0.2966$ ,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966)
+```
+每组需要`r round(PBE(0.05,0.2,0.2,sqrt(0.17),sqrt(0.17),0.4,0.4,0.75,1.74,0.00,-0.2966))`例。
+
+###个体生物等效性
+个体生物等效性基于2×4交叉设计(TRTR，RTRT)的样本量可用如下公式$$\hat{\gamma }+\sqrt{\hat{U}}+\sqrt{\hat{U_{1-\beta }}}\leq 0$$,其中$$U=\begin{bmatrix}(|\hat{\delta}|+t_{0.05,n_{1}+n_{2}-2}\frac{\hat{\sigma} _{0.5,0.5}}{2}\sqrt{\frac{1}{n_{1}}+\frac{1}{n_{2}}})^{2}-\hat{\delta}^{2}\end{bmatrix}^{2}$$$$+\hat{\sigma} _{0.5,0.5}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}$$$$+0.5^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.95,n_{1}+n_{2}-2} ^{2}}-1)^{2}$$$$+(1.5+\theta _{IBE})^{2}\hat{\sigma}_{WT}^{4}(\frac{n_{1}+n_{2}-2}{\chi_{0.05,n_{1}+n_{2}-2} ^{2}}-1)^{2}$$，$$\gamma =\delta ^{2}+\sigma _{D}^{2}+\sigma _{WT}^{2}-\sigma _{WR}^{2}-\theta_{IBE}max\begin{Bmatrix}\sigma _{0},\sigma _{WR}^{2}\end{Bmatrix}$$，$$\sigma _{a,b}^{2}=\sigma _{D}^{2}+a\sigma _{WT}^{2}+b\sigma _{WR}^{2}$$，$\sigma_{WT}^{2},\sigma_{WR}^{2}$分别为T、R效应的个体内方差,$\sigma_{BT}^{2},\sigma_{BR}^{2}$分别为T、R效应的个体间方差，$\delta$为T和R效应的差值，$\sigma_{D}^{2}$为个体与药物的交互作用。
+
+例 某研究者预设计一个2×4交叉设计的、比较某种药物的吸入剂和皮下注射剂差异的个体生物等效性试验，根据药代动力学的预试验 $\sigma _{BT}=0.1,\sigma _{BR}=0.4,\sigma _{WT}=0.6,\sigma _{WR}=0.4,\delta=0,a=b=0.5,\theta_{IBE}=5.11,\rho=0.75$ ,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+IBE <- function(alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR, 
+    a, b, thetaIBE, rho) {
+    sigmaD <- sqrt(sigmaBT^2 + sigmaBR^2 - 2 * rho * sigmaBT * sigmaBR)
+    Sigma <- function(sigmaD, sigmaWT, sigmaWR, a, b) {
+        Sigma = sigmaD^2 + a * sigmaWT^2 + b * sigmaWR^2
+    }
+    U <- function(n, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, 
+        thetaIBE) {
+        U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, 
+            sigmaWR, 0.5, 0.5)/2 * sqrt(2/n))^2 - delta^2)^2 + Sigma(sigmaD, 
+            sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 
+            2 * n - 2) - 1)^2 + 0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - 
+            alpha, 2 * n - 2) - 1)^2 + (1.5 + thetaIBE)^2 * sigmaWR^4 * 
+            ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
+    }
+    gamma = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
+    n <- 0
+    for (i in 2:1000) {
+        bound = gamma + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, 
+            sigmaWR, a, b, thetaIBE)) + sqrt(U(i, alpha, beta, delta, sigmaD, 
+            sigmaWT, sigmaWR, a, b, thetaIBE))
+        if (round(bound, digits = 2) == 0) {
+            n = i
+        }
+    }
+    n
+}
+
+IBE(0.05, 0.2, 0, 0.1, 0.4, 0.6, 0.4, 0.5, 0.5, 5.11, 0.75)
+```
+
+每组需要`r round(IBE(0.05, 0.2, 0, 0.1, 0.4, 0.6, 0.4, 0.5, 0.5, 5.11, 0.75))`例，与Sample Size Calculation in Clinical Research书中的计算结果有差异。
+
+### 体外实验法
+体外实验法的样本量可用如下公式$$\hat{\zeta }+\sqrt{\hat{U}}+\sqrt{\hat{U_{1-\beta }}}\leq 0$$进行估算,其中$$U=\begin{bmatrix}(|\hat{\delta}|+z_{0.05}\sqrt{\frac{s_{BT}^{2}}{m_{T}}+\frac{s_{BR}^{2}}{m_{R}}})^{2}-\hat{\delta}^{2}\end{bmatrix}^{2}$$$$+s_{BT}^{4}(\frac{m_{T}-1}{\chi_{0.95,m_{T}-1} ^{2}}-1)^{2}$$$$+(1-n_{T}^{-1})^{2}s_{WT}^{4}(\frac{m_{T}(n_{T}-1)}{\chi_{0.95,m_{T}(n_{T}-1)} ^{2}}-1)^{2}$$$$+(1+\theta _{BE})^{2}s_{BR}^{4}(\frac{m_{R}-1}{\chi_{0.05,m_{R}-1} ^{2}}-1)^{2}+$$$$(1+c\theta _{BE})^{2}(1-n_{R}^{-1})^{2}s_{WR}^{4}(\frac{m_{R}(n_{R}-1)}{\chi_{0.05,m_{R}(n_{R}-1)}}-1)$$，$$\zeta =\delta ^{2}+\sigma _{T}^{2}-\sigma _{R}^{2}-\theta _{BE}max\begin{Bmatrix}\sigma _{0}^{2},\sigma _{R}^{2},\end{Bmatrix}$$，$\sigma_{WT}^{2},\sigma_{WR}^{2}$分别为T、R效应的个体内方差,$\sigma_{BT}^{2},\sigma_{BR}^{2}$分别为T、R效应的个体间方差，$\delta$为T和R效应的差值。
+
+例 某研究者预设计一个无重复的平行对照的体外实验法，根据药代动力学的预试验 $\sigma _{BT}=0.5,\sigma _{BR}=0.5,\sigma _{WT}=0.5,\sigma _{WR}=0.5,\delta=0,a=b=0.5,\theta_{BE}=15$ ,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+```{r}
+Vitro.BE <- function(alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR, 
+    thetaBE) {
+    U <- function(m, n, alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, 
+        sigmaWR, thetaBE) {
+        U = ((abs(delta) + qnorm(alpha) * sqrt(sigmaBT^2/m + sigmaBR^2/m))^2 - 
+            delta^2)^2
+        +(sigmaBT^2 + sigmaWT^2)^2 * ((m - 1)/qchisq(1 - alpha, m - 1) - 
+            1)^2
+        +(1 + thetaBE)^2 * (sigmaBR^2 + sigmaWR^2)^2 * ((m - 1)/qchisq(alpha, 
+            m - 1) - 1)^2
+    }
+    sigmaT = sqrt(sigmaBT^2 + sigmaWT^2)
+    sigmaR = sqrt(sigmaBR^2 + sigmaWR^2)
+    gamma = delta^2 + sigmaT^2 - sigmaR^2 - thetaBE * sigmaR^2
+    n <- 0
+    for (i in 2:1000) {
+        bound = gamma + sqrt(U(i, 1, alpha, 0.05, delta, sigmaBT, sigmaBR, 
+            sigmaWT, sigmaWR, thetaBE))
+        +sqrt(U(i, 1, alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR, 
+            thetaBE))
+        if (round(bound, digits = 2) == 0) {
+            n = i
+        }
+    }
+    n
+}
+
+Vitro.BE(0.05, 0.2, 0, 0.5, 0.5, 0.5, 0.5, 1)
+```
+
+每组需要`r round(Vitro.BE(0.05, 0.2, 0, 0.5, 0.5, 0.5, 0.5, 1))`例
+
+##剂量反应研究(Dose Response Studies)
+II期临床试验目的在于对新药的安全性和有效性进行初步评价，并通过对剂量反应关系的研究，为III期临床实验给药剂量方案的制定提供依据。实际中，I期临床试验的剂量反应关系关注安全性，II期临床试验的剂量反应关系关注有效性。剂量反应关系研究主要包括：确认不同剂量组之间是否存在剂量反应关系，剂量反应关系曲线的形状如何，最佳剂量应该为多少？剂量反映关系的研究通常采用随机平行对照设计，通过测量方差来证明药物的有效性，通过Williams方法比较实验组和对照组的最小有效剂量（MED），通过模型来证明剂量反应关系，通过最大耐受剂量（MTD）说明最优剂量。
+
+###计量资料（Continuous Response）
+基于线性对比法的样本量可根据$$N=\begin{bmatrix}\frac{(z_{1-\alpha }+z_{1-\beta })\sigma }{\varepsilon }\end{bmatrix}^{2}\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}$$进行估计，$\sigma$为标准差，$\varepsilon =\sum_{i=0}^{k}c_{i}u_{i}$,$c_{i}$为分组情况，但应使得$\sum c_{i}=0$,$u_{i}$为各组相对于基线提高的百分率。
+
+例 为某药物设计一个4组平行对照剂量反应试验，其中有1个对照组，3个试验组（剂量分别为20mg, 40mg,60mg），根据预实验，$\sigma=0.22,c_{0}= −6, c_{1} = 1, c_{2}= 2, c_{3} = 3,u_{0}= 0.05, u_{1} = 0.12, u_{2}= 0.14, u_{3} = 0.16$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+mui=c(0.05,0.12,0.14,0.16)
+ci=c(-6,1,2,3)
+(Dose.Response.Linear(alpha=0.05,beta=0.2,sigma=0.22,mui=mui,ci=ci,fi=1/4))
+```
+每组需要`r round((Dose.Response.Linear(alpha=0.05,beta=0.2,sigma=0.22,mui=mui,ci=ci,fi=1/4)))/4`例。
+
+###二分类变量（Binary Response）
+结果为二分类的样本量可根据$$N\geq \begin{bmatrix}\frac{z_{1-\alpha }\sqrt{\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}\bar{p}(1-\bar{p})}+z_{1-\beta}\sqrt{\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}p_{i}(1-p_{i})}}{\varepsilon }\end{bmatrix}^{2}$$进行估计，$\varepsilon =\sum_{i=0}^{k}c_{i}p_{i}$,$c_{i}$为分组情况，但应使得$\sum c_{i}=0$,$p_{i}$为各组的反应率。
+
+例 为某药物设计一个4组平行对照剂量反应试验，其中有1个对照组，3个试验组（剂量分别为20mg, 40mg,60mg），根据预实验，$\sigma=0.22,c_{0}= −6, c_{1} = 1, c_{2}= 2, c_{3} = 3,p_{0}= 0.05, p_{1} = 0.12, p_{2}= 0.14, p_{3} = 0.16$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+pi=c(0.05,0.12,0.14,0.16);
+ci=c(-6,1,2,3);
+(Dose.Response.binary(alpha=0.05,beta=0.2,pi=pi,ci=ci,fi=1/4))
+```
+每组需要`r round((Dose.Response.binary(alpha=0.05,beta=0.2,pi=pi,ci=ci,fi=1/4)))/4`例。
+
+###时间事件数据（Time-to-Event Endpoint）
+分析结果为时间事件样本量可根据$$N\geq \begin{bmatrix}\frac{z_{1-\alpha }\sigma _{0}\sqrt{\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}}+z_{1-\beta}\sqrt{\sum_{i=0}^{k}\frac{c_{i}^{2}}{f_{i}}\sigma _{i}}}{\varepsilon }\end{bmatrix}^{2}$$进行估计，其中$\sigma ^{2}(\lambda _{i})=\lambda _{i}^{2}\begin{bmatrix}1+\frac{e^{-\lambda _{i}T}(1-e^{\lambda _{i}T_{0}})}{T_{0}\lambda _{i}}\end{bmatrix}^{-1}$,
+$T_{0}$为试验的纳入时间，$T$为整个试验时间，$c_{i}$为分组情况，但应使得$\sum c_{i}=0$。
+
+例 某抗肿瘤药物进行II期临床实验，设计1个对照组，1个低剂量组，1个高剂量组和1个联合治疗组，研究结果为患者的生存时间。假定试验的纳入时间为9个月，总实验时间为16个月，估计四组的中位生存时间为14,20,22和24个月（相应的风险率为0.0495/月,0.0347/月,0.0315/月和0.0289/月）。在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+Ti=c(14,20,22,24);
+ci=c(-6,1,2,3);
+(Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,T=16,Ti=Ti,ci=ci,fi=1/4))
+```
+
+每组需要`r round((Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,T=16,Ti=Ti,ci=ci,fi=1/4)))/4`例。
+
+###最小有效剂量（MED）
+基于Williams检验的最小有效剂量样本量可根据$$n=\frac{2\sigma ^{2}[t_{k}(\alpha )+z\beta ]^{2}}{\Delta ^{2}}$$进行计算，$t_{k}(\alpha )$ 依赖于自由度。
+
+例 某研究者设计一个Williams方法检测最小有效计量的剂量反映实验，根据预试验$\sigma=0.22,t_{3}(\alpha)=1.75,\Delta=0.11$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(Dose.Min.Effect(0.05,0.2,1.75,0.22,0.11))
+```
+
+每组需要`r round(Dose.Min.Effect(0.05,0.2,1.75,0.22,0.11))`例。
+
+###Cochran-Armitage 趋势检验
+Cochran-Armitage 趋势检验样本量可根据$$n=\frac{n^{*}}{4}\begin{bmatrix}1+\sqrt{1+\frac{2\Delta}{An_{0}^{*}}}\end{bmatrix}^{2}$$进行计算，其中$$n^{*}\begin{Bmatrix}z_{1-\alpha }\sqrt{k(k^{2}-1)pd}+z_{1-\beta }\sqrt{\sum b_{i}^{2}p_{i}q_{i}}\end{Bmatrix}^{2}$$,$b_{i}=i-0.5k,D=\sum b_{i}p_{i}$。$p_{i}$为每组的反应率,$A=\sum r_{i}p_{i}(d_{i}-\hat(d)),p=1/N\sum n_{i}p_{i},q=1-p,r_{i}=n_{i}/n_{0}$
+
+例 某研究者设计一个4组Cochran-Armitage趋势检测的剂量反映实验，根据预试验$p_{1}=0.1,p_{2}=0.3,p_{3}=0.5,p_{4}=0.7,d_{1}=1,d_{2}=2,d_{3}=3,d_{4}=4,n_{1}=n_{2}=n_{3}=n_{4}=10$,在$\alpha=0.05,\beta=0.20，\Delta=1$时，需要多少样本量？
+
+```{r}
+pi=c(0.1,0.3,0.5,0.7)
+di=c(1,2,3,4)
+ni=c(10,10,10,10)
+
+Cochran.Armitage.Trend(alpha=0.05,beta=0.2,pi=pi,di=di,ni=ni,delta=1)
+```
+
+每组需要`r round(Cochran.Armitage.Trend(alpha=0.05,beta=0.2,pi=pi,di=di,ni=ni,delta=1))`例。
+
+###爬坡试验(Dose Escalation Trials)
+多数抗肿瘤药物的治疗指数很窄，为避免较高的起始剂量可能出现严重毒性，过低的起始剂量造成的试验周期延长和资源浪费，通常使用爬坡试验的方法。根据各剂量组人数分配策略变化，非参数的爬坡试验设计又被称为 “M+N”试验设计或“A+B”试验设计。全部受试者被随机分配至若干组，每组均包含若干名受试者。同组的受试者服用相同剂量水平的受试药物。按照随机分配方案逐组进入试验的流程，各组内受试者服用且只服用一次某剂量水平的受试药物。不论是否探测到预期的药物响应，均记录其药物响应结果。当在某一剂量水平药物响应人数满足整体试验停止的条件时，整 体试验过程结束并获得探索的目标剂量。在探索剂量限制性毒性(DLT，dose limiting toxicity)和最大耐受剂量（MTD，maximum tolerable dose）时以爬坡试验“3+3”设计应用为广泛，即每次进入试验过程的一组受试者都是3名，某剂量水平最多6名受试者服用药物。爬坡试验设计整体剂量爬升规则又可以分为TER策略（traditional escalation rules）与STER 策略（strict traditional escalation rules）两种不同的剂量爬升策略。TER策略与STER策略的最大区别仅仅在于：当在$x_{j}$剂量水平探测到受试药物毒性响应时，遵循TER剂量爬升策略的Ⅰ期临床试验并不允许在$x_{j-1}$剂量水平继续纳入受试者进行试验，而要求直接停止试验，此时认为剂量水平$x_{j}$为预期的目标剂量水平。而遵循STER剂量爬升规则的临床试验则要求在$x_{j-1}$剂量水平继续纳入受试者进行试验，以观察$x_{j-1}$剂量水平受试者整体的毒性反应，从而才能推断目标剂量。相对于TER规则而言，遵循STER规则的Ⅰ期临床试验获得的目标剂量更加保守，使得目标剂量被高估的可能性降低。在评价研发药物安全性、探索药物毒性指标MTD的Ⅰ期临床试验中，这一点就显得更加重要，使得STER 规则的应用更加广泛 。
+
+A+B TER策略设计的样本量可依据$$N_{j}=\sum_{i=0}^{n-1}N_{ji}P_{i}^{*}$$进行估计，其中$$N_{ji}= \begin{cases} \frac{AP_{0}^{j}+(A+B)Q_{0}^{j}}{P_{0}^{j}+Q_{0}^{j}}& \text{if }j< i+1\\ \frac{A(1-P_{0}^{j}-P_{1}^{j})+(A+B)(P_{1}^{j}-Q_{0}^{j})}{1-P_{0}^{j}-Q_{0}^{j}}& \text{if } j=i+1 \\0 & \text{if } j>i+1 \end{cases}$$,$$P_{0}^{j}=\sum_{k=0}^{C-1}\bigl(\begin{smallmatrix}\\ A\\k\end{smallmatrix}\bigr)p_{j}^{k}(1-p_{j})^{A-k}$$,$$Q_{0}^{j}=\sum_{k=C}^{D}\sum_{m=0}^{E-k}\bigl(\begin{smallmatrix}\\ A\\k\end{smallmatrix}\bigr)p_{j}^{k}(1-p_{j})^{A-k}\bigl(\begin{smallmatrix}\\B\\m\end{smallmatrix}\bigr)p_{j}^{m}(1-p_{j})^{B-m}$$,$$P_{n}^{*}=\prod _{j=1}^{n}(P_{0}^{j}+Q_{0}^{j})$$。
+
+A+B STER策略设计的样本量可依据$$N_{j}=N_{jn}P_{n}^{*}+\sum_{i=0}^{n-1}\sum_{k=i+1}^{n}N_{jik}P_{ik}$$进行估计，其中$$N_{jik}= \begin{cases} \frac{AP_{0}^{j}+(A+B)Q_{0}^{j}}{P_{0}^{j}+Q_{0}^{j}}& \text{if }j< i\\ A+B & \text{if }i\leq j<k\\ \frac{A(1-P_{0}^{j}-P_{1}^{j})+(A+B)(P_{1}^{j}-Q_{0}^{j})}{1-P_{0}^{j}-Q_{0}^{j}}& \text{if } j=k \\0 & \text{if } j>k \end{cases}$$,$$P_{i}^{*}=\sum _{k=i+1}^{n}p_{ik}$$,$$p_{ik}=(Q_{0}^{i}+Q_{0}^{i})(1-P_{0}^{k}-Q_{0}^{k})\left (\prod_{j=1}^{i-1}(P_{0}^{j}+Q_{0}^{j}) \right )\prod_{j=i+1}^{k-1}Q_{2}^{j}$$,$$P_{n}^{*}=\prod _{j=1}^{n}(P_{0}^{j}+Q_{0}^{j})$$。
+
+例 爬坡试验“3+3”设计，根据预试验某抗肿瘤药物7种剂量(10 15 23 34 51 76 114)的剂量限制性毒性分别为0.01 0.014 0.025 0.056 0.177 0.594 0.963，请估计每种剂量的样本量?
+
+```{r}
+DLT=c(0.01,0.014,0.025,0.056,0.177,0.594,0.963)
+# 3+3 TER策略设计
+AB.withoutDescalation(A=3,B=3,C=1,D=1,E=1,DLT=DLT)
+# 3+3 STER策略设计
+AB.withDescalation(A=3,B=3,C=1,D=1,E=1,DLT=DLT)
+```
+
+##微阵列研究(Microarray Studies)
+微阵列数据样本含量较小，而变量数非常多，传统的t检验和Wilcoxon检验在应用时需要进行调整，为克服多重比较的问题，按控制指标可分为控制FWER(family-wise error rate ,族错误率), 控制FDR(fasle discover rate , “错误发现率”) 等;按控制的操作程序可分为:单步(single-step)法 , 逐步(step-wise)法,基于再抽样(resampling -based)的方法等;按学派主要分为频率学派方法和Bayes学派的方法等。
+
+多重检验是传统的多重比较概念的推广，通过对同一问题的多变量反复检验来验证$H_{0}$假设，该假设是一系列的假设(a family of hypotheses),并非单一假设，如任意基因的组间表达无差异。
+
+###错误发现率(False Discovery Rate)
+设同时对m个假设进行检验，其中$m_{0}$个是正确的，R表示检验结果为阳性的假设个数，具体如下表
+
+              不拒绝$H_{0}$      拒绝$H_{0}$      合计
+---           ---                 ---             ---
+$H_{0}$为真   U                   V               $m_{0}$
+$H_{1}$为真   T                   S               $m-m_{0}$
+合计          m-R                 R               m
+
+其中，m在假设检验前已知，R是可观察的随机变量，而U、V、S、T是不可观察的随机变量，FDR的定义为$$FDR= \begin{cases}E(V/R) & \text{if } R \neq \\0 & \text{if } R=0\end{cases}$$,即为拒绝$H_{0}$的结果中错误这所占的比例。
+FDR设计，单侧固定效应检验样本量估计公式为$$n=\begin{bmatrix}\frac{(z_{\alpha ^{*}}+z_{\beta ^{*}})^{2}}{a_{1}a_{2}\delta ^{2}}\end{bmatrix}+1$$其中$\alpha ^{*}=\frac{r_{1}f}{m_{0}(1-f)}$,$\beta ^{*}=1-r_{1}/m_{1}$,$a_{2}=1-a_{1}$。f为错误发现率，$r_{1}$为是实际拒绝的数量，$a_{k}$为两组分配比，m为测试基因的总数，$m_{1}$为预后基因的数量，$\delta_{j}$预后基因效应的大小。单侧可变效应检验需解$$h(n)=0$$这个方程，其中$h(n)=\sum _{j\in M_{1}}\Phi (z_{\alpha ^{*}}-\delta _{j}\sqrt{na_{1}a_{2}})-r_{1}$,$a^{*}=r_{1}f/{m_{0}(1-f)}$。
+
+例 设计一个4000个候选基因的微阵列(m=4000)研究，预计两组之间有40($m_{1}$=40)个不同表达的基因,实际拒绝基因数约为24($r_{1}$=40)，单侧固定效应设计，预计错误发现率为0.01,在$\delta=1,a_{1}=a_{2}=0.5$时，需要多少样本量？
+
+```{r}
+OneSide.fixEffect(m=4000,m1=40,delta=1,a1=0.5,r1=24,fdr=0.01)
+```
+每组需要`r round(OneSide.fixEffect(m=4000,m1=40,delta=1,a1=0.5,r1=24,fdr=0.01))/2`例。
+
+例 设计一个4000个候选基因的微阵列(m=4000)研究，预计两组之间有40($m_{1}$=40)个不同表达的基因,实际拒绝基因数约为24($r_{1}$=40)，单侧可变效应设计，预计错误发现率为0.01，$\delta_{j}= \begin{cases} 1& \text{if } 1\leq i \leq 20\\ 1/2& \text{if } 21\leq i \leq 40\end{cases}$,$,在$a_{1}=a_{2}=0.5$时，需要多少样本量？
+```{r}
+delta=c(rep(1,40/2),rep(1/2,40/2))
+OneSide.varyEffect(100,150,4000,40,delta,0.5,24,0.01)
+```
+每组需要`r round(OneSide.varyEffect(100,150,4000,40,delta,0.5,24,0.01)$s2)/2`例。
+
+双侧固定效应检验样本量估计公式为$$n=\begin{bmatrix}\frac{(z_{\alpha ^{*}/3}+z_{\beta ^{*}})^{2}}{a_{1}a_{2}\delta ^{2}}\end{bmatrix}+1$$,其中其中$\alpha ^{*}=\frac{r_{1}f}{m_{0}(1-f)}$,$\beta ^{*}=1-r_{1}/m_{1}$。双侧可变效应检验需解$$h(n)=0$$这个方程，其中$h(n)=\sum _{j\in M_{1}}\Phi (z_{\alpha ^{*}/2}-|\delta| _{j}\sqrt{na_{1}a_{2}})-r_{1}$,$a^{*}=r_{1}f/{m_{0}(1-f)}$。
+
+例 设计一个4000个候选基因的微阵列(m=4000)研究，预计两组之间有40($m_{1}$=40)个不同表达的基因,实际拒绝基因数约为24($r_{1}$=40)，双侧固定效应设计，预计错误发现率为0.01,在$\delta=1,a_{1}=a_{2}=0.5$时，需要多少样本量？
+
+```{r}
+TwoSide.fixEffect(m=4000,m1=40,delta=1,a1=0.5,r1=24,fdr=0.01)
+```
+每组需要`r round(TwoSide.fixEffect(m=4000,m1=40,delta=1,a1=0.5,r1=24,fdr=0.01))/2`例。
+
+例 设计一个4000个候选基因的微阵列(m=4000)研究，预计两组之间有40($m_{1}$=40)个不同表达的基因,实际拒绝基因数约为24($r_{1}$=40)，双侧可变效应设计，预计错误发现率为0.01，$\delta_{j}= \begin{cases} 1& \text{if } 1\leq i \leq 20\\ 1/2& \text{if } 21\leq i \leq 40\end{cases}$,$,在$a_{1}=a_{2}=0.5$时，需要多少样本量？
+```{r}
+delta=c(rep(1,40/2),rep(1/2,40/2))
+TwoSide.varyEffect(s1=100,s2=200,m=4000,m1=40,delta=delta,a1=0.5,r1=24,fdr=0.01)
+```
+每组需要`r round(TwoSide.varyEffect(s1=100,s2=200,m=4000,m1=40,delta=delta,a1=0.5,r1=24,fdr=0.01)$s2)/2`例。
+
+##非参数检验(Nonparametrics)
+非参数检验不依赖参数进行的假设检验。适用于未知分布型、偏态资料、等级性资料等的假设检验。非参数检验在应用上无严格的限制条件，适用范围广，对数据的要求不像参数检验那样严格。
+
+###单组位置检验(One-Sample Location Problem)
+单组位置检验样本量估计公式为$$n=\frac{(z_{1-\alpha /2}\sqrt{12}+z_{1-\beta }\sqrt{p_{3}+4p_{4}-4p_{2}^{3}})^{2}}{1/4-p_{2}}$$,其中$p_{2}=P(|z_{i}|>=|z_{j}|,z_{i}>0)$,$p_{3}=P(|z_{i}|>=|z_{j1}|,|z_{i}|>=|z_{j2}|,z_{i}>0)$,$p_{4}=P(|z_{j1}|>=|z_{i}|>=|z_{j2}|>=0,z_{i}>0)$。
+
+例 某预防更年期骨质疏松症药物,进行单组位置检验，根据5例的预试验，$p_{2}=0.3,p_{3}=0.4,p_{4}=0.05$,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(Nonpara.One.Sample(0.05,0.2,0.3,0.4,0.05))
+```
+需要`r round((Nonpara.One.Sample(0.05,0.2,0.3,0.4,0.05)))`例。
+
+
+###两组位置检验(Two-Sample Location Problem)
+两组位置检验样本量估计公式为$$n_{2}=\frac{(z_{1-\alpha/2}\sqrt{\kappa(\kappa+1)/12}+z_{1-\beta}\sqrt{\kappa^{2}(p_{2}-p_{1}^{2})+\kappa(p_{3}-p_{1}^{2})})^{2}}{\kappa^{2}(1/2-p_{1})^2}$$,其中$n_{1}=\kappa n_{2}$,$p_{1}=P(y_{i}>x_{i})$,$p_{2}=P(y_{i}\geq x_{j1} \sim and \sim y_{i}\geq x_{j2})$,$p_{3}=P(y_{i1}\geq x_{j} \sim and \sim y_{i2}\geq x_{j})$。
+
+例 某降低胆固醇药物，进行两组平行对照位置检验，根据预试验，$p_{2}=0.7,p_{3}=0.8,p_{4}=0.8$，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(Nonpara.Two.Sample(0.05,0.2,1,0.7,0.8,0.8))
+```
+需要`r round((Nonpara.Two.Sample(0.05,0.2,1,0.7,0.8,0.8)))`例。
+
+###独立性检验(Test for Independence)
+独立性检验样本量估计公式为$$n=\frac{4(z_{1-\alpha}/3+z_{1-\beta}\sqrt{2p_{2}-1-(2p_{1}-1)^{2}})^{2}}{(2p_{1}-1)^2}$$，其中$p_{1}=P((x_{1}-x_{2})(y_{1}-y_{2})>0)$,$p_{2}=P((x_{1}-x_{2})(y_{1}-y_{2})(x_{1}-x_{3})(y_{1}-y_{3})>0)$。
+
+例 某预试验中观察到，随着x变量增大，y变量也有增大的趋势，设计一临床试验，以验证以上猜想。根据预试验，$p_{1}=0.6,p_{2}=0.7$，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(Nonpara.Independ(0.05,0.2,0.6,0.7))
+```
+需要`r round(((Nonpara.Independ(0.05,0.2,0.6,0.7))))`例。
+
+##其他研究(Sample Size Calculation in Other Areas)
+
+###QT/QTc
+QT间期是指心室去极化和复极化的时程，即QRS波群的起点到T波恢复到基线时终点的时程。心脏复极化延迟将产生特殊的心脏电生理环境，这种环境下，容易发生心律失常，最常见的是引发尖端扭转型室性心动过速（TdP），但也可发生其它类型室性快速心律失常。由于QT间期延长的程度可被看作是一个致心律失常危险性的相对的生物标记，通常QT间期延长与TdP之间存在一种定性关系，对于那些可能引发QT间期延长的药物更是如此。由于QT间期与心率呈负相关，因此，常规通过各种公式将测得的QT间期校正为较少心率依赖的QTc间期。然而，尚不明确心律失常的发生与QT间期或QTc绝对值增加之间是否存在必然联系。大多数引发TdP的药物都可明显引起QT/QTc间期的延长（后称作QT/QTc）。由于QT/QTc间期延长是与提高发现心律失常敏感性有关的心电图表现，因此，新药在上市前进行充分的安全性评价应包括详细描述其对QT/QTc间期影响的特点。 
+
+####平行对照设计
+平行对照设计样本量估计公式为$$n=\frac{2(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异(between subject variance),$\sigma _{e}$，$\sigma _{e}$为个体内变异(between subject variance),d为临床差异。
+
+例 某非抗心律失常药物进行全面的心电图平行对照研究，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5$,每个个体重复3次，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.parallel(0.05,0.2,0.8,3,0.5)
+```
+每组需要`r round(QT.parallel(0.05,0.2,0.8,3,0.5))`例。
+
+####交叉对照设计
+交叉对照设计样本两估计公式为$$n=\frac{(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}-\gamma (z_{1-\alpha}+z_{1-\beta})^{2}}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异,$\sigma _{e}$，$\sigma _{e}$为个体内变异,d为临床差异，$\gamma =\sigma_{p}^{2}/(\sigma_{s}^{2}+\sigma_{e}^{2})$,$\sigma_{p}^{2}$为交叉设计的额外变异。
+
+例 某非抗心律失常药物进行全面的心电图交叉对照研究，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5，\gamma=0.002$,每个个体重复3次，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.crossover(0.05,0.2,0.8,3,0.5,0.002)
+```
+每组需要`r round(QT.crossover(0.05,0.2,0.8,3,0.5,0.002))`例。
+
+####有协变量平行对照设计
+有协变量平行对照设计样本量估计公式为$$n=\frac{(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}}\begin{bmatrix}\frac{(v_{1}-v_{2})^{2}}{\tau_{1} ^{2}+\tau_{2} ^{2}}+2\end{bmatrix}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异,$\sigma _{e}$，$\sigma _{e}$为个体内变异,d为临床差异，$v_{1},v_{2}$分别为第一组和第二组的均数，$\tau_{1},\tau_{2}$分别为第一组和第二组的方差。
+
+例 某非抗心律失常药物进行全面的心电图平行对照研究，已知该药$C_{max}$对QT/QTc间期有影响，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5$,每个个体重复3次,第一组和第二的均数均为1,方差分别为4,5，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.PK.parallel(0.05,0.2,0.8,3,0.5,1,1,4,5)
+```
+每组需要`r round(QT.PK.parallel(0.05,0.2,0.8,3,0.5,1,1,4,5))`例。
+
+####有协变量交叉对照设计
+有协变量交叉对照设计样本量估计公式为$$n=\frac{(z_{1-\alpha/2}+z_{1-\beta})^{2}}{\delta ^{2}-\gamma (z_{1-\alpha}+z_{1-\beta})^{2}}\begin{bmatrix}\frac{(v_{1}-v_{2})^{2}}{\tau_{1} ^{2}+\tau_{2} ^{2}}+1\end{bmatrix}(\rho+\frac{1-\rho}{K})$$，其中$\rho=\sigma _{s}^{2}/(\sigma _{s}^{2}+\sigma _{e}^{2})$，$K$为每个个体重复的次数，$\delta =d/(\sigma _{s}^{2}+\sigma _{e}^{2})$,$\sigma _{s}$为个体间变异,$\sigma _{e}$，$\sigma _{e}$为个体内变异,d为临床差异，$\gamma =\sigma_{p}^{2}/(\sigma_{s}^{2}+\sigma_{e}^{2})$,$\sigma_{p}^{2}$为交叉设计的额外变异，$v_{1},v_{2}$分别为第一组和第二组的均数，$\tau_{1},\tau_{2}$分别为第一组和第二组的方差。
+
+例 某非抗心律失常药物进行全面的心电图交叉对照研究，已知该药$C_{max}$对QT/QTc间期有影响，以明确对QT/QTc间期影响。根据预试验$\rho=0.8,\delta=0.5，\gamma=0.002$,每个个体重复3次,第一组和第二的均数均为1,方差分别为4,5，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QT.PK.crossover(0.05,0.2,0.8,3,0.5,0.002,1,1,4,5)
+```
+每组需要`r round(QT.PK.crossover(0.05,0.2,0.8,3,0.5,0.002,1,1,4,5))`例。
+
+###非随机化临床试验中的倾向得分
+非随机化实验中，对象的分配依赖于对象基线协变量(covariates)。例如病人是否会得到降血脂药物治疗，可能受到很多因子的影响（如中风严重程度、中风类型、有无其他血管性危险因子，甚至是年龄、性别、社经地位等），当这些因子也同时会影响预后时，它们就是潜在的干扰因子。如果有治疗和没有治疗的病人，其基本特性是不同的，两组就无法直接比较预后。倾向性得分分析中倾向得分(propensity score)则是一个机率（0~1），代表一个病人在其既有的基本特性（或干扰因子）下，得到药物治疗的机会。倾向得分关注对象在基本特性和有无药物治疗的关系，企图再造一个类似随机分配的情境。在随机试验中，每一个受试者得到治疗的倾向得分应该是0.5。在非随机的观察性研究，倾向得分就会因病人的基本特性而异。最常见的倾向得分来自logistic回归模型：将得到治疗与否当作是因变量，把基本特性的各个因子当作是自变量。倾向得分方法已经被广泛的应用到这些非随机对照试验中来降低由于混杂因素导致的选择性偏倚,从而保证组间基线数据的均衡可比。
+
+####权重分层分析法(WMH,weighted Mantel-Haenszel)
+权重分层分析法样本量估计公式为$$n=\frac{(\sigma_{0}z_{1-\alpha/2}+\sigma_{0}z_{1-\beta})^{2}}{\delta^{2}}$$,其中$\delta =(1-\phi )\sum _{j=1}^{J}w_{j}a_{j}b_{j1}b_{j2}\frac{p_{j1}q_{j1}}{q_{j1}+\phi p_{j1}}$,$\sigma _{1}^{2}=\sum_{j=1}^{J}w_{j}^{2}a_{j}b_{j1}b_{j2}(b_{j2}p_{j1}q_{j1}+b_{j1}p_{j2}q_{j2})$,$\sigma _{0}^{2}=\sum_{j=1}^{J}w_{j}^{2}a_{j}b_{j1}b_{j2}(b_{j1}p_{j1}+b_{j2}p_{j2})(b_{j1}q_{j1}+b_{j2}q_{j2})$,$\phi =p_{j2}q_{j1}/(p_{j1}q_{j2})$，J为层数，a为每层的样本数占总样本数的比例$a_{j}=n_{j}/n$，$b_{jk}=n_{jk}/n_{j}$ k为1,2代表采取的处理方式，假设以1组为对照$b_{j1}+b_{j2}=2$，p1为j层k处理的概率。
+
+例 某药物与传统药物对照的临床试验，主要评价指标为心血管事件，对基线变量进行组间均衡性检验发现基线变量 在试验药和对照药是不均衡的，设计层数为5的临床试验，根据预试验，每层的样本数占总样本数的比例为0.15 0.15 0.2 0.25 0.25，每层中处理组的分配比例分别为0.4 0.4 0.5 0.6 0.6，每层中出现反应的概率分别为0.5 0.6 0.7 0.8 0.9，在$\alpha=0.05,\beta=0.20，\phi=2$时，权重分层分析设计需要多少样本量？
+
+```{r}
+a=c(0.15,0.15,0.2,0.25,0.25)
+b=c(0.4,0.4,0.5,0.6,0.6)
+p1=c(0.5,0.6,0.7,0.8,0.9)
+
+(Propensity.Score.strata(alpha=0.05,beta=0.2,J=5,a,b,p1,phi=2))
+```
+需要`r round((Propensity.Score.strata(alpha=0.05,beta=0.2,J=5,a,b,p1,phi=2)))`例。
+
+####非分层分析法
+非分层分析法样本量估计公式为$$\tilde{n}=\frac{(\tilde{\sigma_{0}}z_{1-\alpha/2}+\tilde{\sigma_{1}}z_{1-\beta})^{2}}{(p_{1}-p_{2})^{2}}$$,$\delta =\sum _{j=1}^{J}a_{j}b_{j1}b_{j2}(p_{j1}-p_{j2})$,$\sigma _{1}^{2}=\sum_{j=1}^{J}a_{j}b_{j1}b_{j2}(b_{j2}p_{j1}q_{j1}+b_{j1}p_{j2}q_{j2})$,$\sigma _{0}^{2}=\sum_{j=1}^{J}a_{j}b_{j1}b_{j2}(b_{j1}p_{j1}+b_{j2}p_{j2})(b_{j1}q_{j1}+b_{j2}q_{j2})$ J为层数，a为每层的样本数占总样本数的比例$a_{j}=n_{j}/n$，$b_{jk}=n_{jk}/n_{j}$ k为1,2代表采取的处理方式，假设以1组为对照$b_{j1}+b_{j2}=2$，p1为j层k处理的概率。
+
+例 某药物与传统药物对照的临床试验，主要评价指标为心血管事件，对基线变量进行组间均衡性检验发现基线变量 在试验药和对照药是不均衡的，设计层数为5的临床试验，根据预试验，每层的样本数占总样本数的比例为0.15 0.15 0.2 0.25 0.25，每层中处理组的分配比例分别为0.4 0.4 0.5 0.6 0.6，每层中出现反应的概率分别为0.5 0.6 0.7 0.8 0.9，在$\alpha=0.05,\beta=0.20，\phi=2$时，非分层分析设计需要多少样本量？
+
+```{r}
+a=c(0.15,0.15,0.2,0.25,0.25)
+b=c(0.4,0.4,0.5,0.6,0.6)
+p1=c(0.5,0.6,0.7,0.8,0.9)
+
+(Propensity.Score.nostrata(alpha=0.05,beta=0.2,J=5,a,b,p1,phi=2))
+```
+
+需要`r round((Propensity.Score.nostrata(alpha=0.05,beta=0.2,J=5,a,b,p1,phi=2)))`例。
+
+###重复测量方差分析(ANOVA with Repeated Measures)
+重复测量设计的方差分析可以是同一条件下进行的重复测度，也可以是不同条件下的重复测量，可以考察：(1)各种处理之间是否存在显著性差异;(2)被试之间的差异;(3)各种处理与被试分组之间的交互作用。在平行对照设计的临床试验中，主要用于评价有效性和安全性。重复测量方差分析样本量估计公式为$$n\geq \frac{2\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta })}{\Delta ^{2}}$$,$\sigma ^{*2}$为各组分的方差总和。
+
+例 某治疗多发性硬化(MS)药物与传统药物在实验动物身上进行平行对照试验，每只实验动物记录3次重复的疾病得分，根据预试验$\sigma ^{*2}=1.25,\Delta=1.5$，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+(ANOVA.Repeat.Measure(0.05,0.2,1.25,1.5,3))
+```
+需要`r round((ANOVA.Repeat.Measure(0.05,0.2,1.25,1.5,3)))`例。
+
+###生存质量(Quality of Life,QOL)
+由于慢性非传染病较难治愈，很难采用治愈率来评价治疗效果，生存率的作用也有限（明显提高其生存时间较为困难），因此采用生存质量作为新药的评价的项目。生存质量分析样本量估计公式为$$n_{\delta }=\frac{c(z_{1-\alpha /2}+z\delta )}{\epsilon ^{2}}$$,$$n_{\phi }=\frac{c}{\Delta -\eta }(z_{1/2+1/2\phi }+z_{1-1/2\alpha })$$，取两个样本量计算公式计算结果的最大值，其中$\epsilon$差值，c为常数。
+
+例 某抗癌药进行以生存质量为结果进行临床试验，根据预试验$c=0.5,\epsilon=0.25,phi=0.1,eta=0.5$，在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
+
+```{r}
+QOL <- function (alpha, beta, c, epsilon,phi,eta) 
+{
+  n1 = c * (qnorm(1 - 1/2 * alpha) + qnorm(1 - beta))^2/epsilon^2
+  n2 = (c/(epsilon-phi)^2) * (qnorm(1/2+eta/2) + qnorm(1 - alpha/2))^2
+  n = max(n1, n2)
+  n
+}
+
+QOL(0.05,0.1,0.5,0.25,0.1,0.5)
+```
+需要`r round(QOL(0.05,0.1,0.5,0.25,0.1,0.5))`例。
+
+###衔接性设计(Bridging Studies)
+该设计主要评估“族群因素”（ethnic factors）对药品的影响，提供相关药动/药效学或疗效、安全、用法用量等临床试验数据，使得一国的临床实验数据能够外推至其他国家，减少重复的临床试验，迅速提供病患药品，以保障其权益。族群因素一般定义为与种族或与一群有共同特质和习性的人相关的因素，通常分为内因性（如遗传、生理等）和外因性（如文化、环境）。Chow等提出以敏感性指数（Sensitivity Index）作为指标，以外推安慰剂平行对照试验设计的试验结果。以敏感性指数设计的样本量估计公式为$$\tilde{P_{\Delta }}=E_{\delta,u}\begin{bmatrix}1-\tau _{n-2}(t_{n-2}|\frac{\Delta \delta }{u})-\tau_{n-2}(-t_{n-2}|\frac{\Delta \delta }{u})
+\end{bmatrix}$$，$Delta$为不同族群之间的敏感性指数。
+
+例 某药厂欲将某药推广至A国，进行平行对照的衔接性设计，以敏感性指数作为族群因素的考核指标，根据预试验$\Delta =2.92,SI=0.80$，在$\alpha=0.05$时，需要多少样本量？
+
+```{r}
+Sensitivity.Index <- function (alpha, deltaT,SI) 
+{
+  n = 3
+  for (i in 3:1000) {
+    t = qt(1 - alpha/2, i - 2)
+    p = 1 - pt(t, i - 2, deltaT) + pt(-t, i - 2, deltaT)
+    if (round(p, digits = 2) == round(SI, digits = 2)) {
+      n = i
+    }
+  }
+  n
+}
+
+Sensitivity.Index(0.05,2.92,0.80)
+```
+需要`r round(Sensitivity.Index(0.05,2.92,0.80))`例。
+
+###疫苗临床试验(Vaccine Clinical Trials)
+评价疫苗最重要的目标就是它的预防疾病的能力，通常需要大样本的安慰剂对照设计。相对发病减少率(ralative reduction in disease incidence,$pi$)被认为是疫苗有效性评价的重要指标，$\pi =\frac{p_{C}-p_{T}}{P_{C}}$,其中$p_{C}$和$p_{T}$分别代表试验组和对照组的发病率。
+
+#### 发病率较高的试验(Reduction in Disease Incidence)
+发病率较高的疫苗试验样本量可根据$$n=\frac{z_{1-\alpha /2}^{2}}{d^{2}}(\frac{1-p_{T}}{p_{T}}+\frac{1-p_{c}}{p_{c}})$$进行估计，其中$d=z_{1-\alpha/2}\sqrt{\frac{1-p_{T}}{np_{T}}+\frac{1-P_{C}}{np_{C}}}$。
+
+例 一研究者计划实施一个疫苗临床试验，与安慰剂对照，主要指标选择相对发病减少率，根据预试验，疫苗组发病率为1%，安慰剂组发病率为2%，在$\alpha=0.05,\beta=0.2$时，两组1：1平行对照，双侧差异性检验需要多少样本量？
+
+```{r}
+options(scipen=200) #取消科学计数
+(Vaccine.RDI(0.05,0.2,0.01,0.02))
+```
+每组需要`r round((Vaccine.RDI(0.05,0.2,0.01,0.02)))` 例。
+
+####发病率极低的试验(The Evaluation of Vaccine Efficacy with Extremely Low Disease Incidence)
+发病率极低的疫苗试验样本量可根据$$n=\frac{[z_{1-\alpha }\sqrt{\theta_{0}(1-\theta _{0})}+z_{1-\beta}\sqrt{\theta(1-\theta )}]^{2}}{(p_{T}+p_{C})(\theta -\theta _{0})^{2}}$$进行估计,其中$\theta =\frac{1-\pi}{1-\pi+n_{C}/n_{T}}$,$\theta_{0} =\frac{1-\pi_{0}}{1-\pi_{0}+n_{C}/n_{T}}$。
+  
+例 一研究者计划实施一个疫苗临床试验，与安慰剂对照，主要指标选择相对发病减少率，根据预试验，疫苗组发病率为0.1%，安慰剂组发病率为0.2%，$\theta_{0}=0.5,\theta=1/3$，在$\alpha=0.05,\beta=0.2$时，两组1：1平行对照，双侧差异性检验需要多少样本量？
+
+```{r}
+options(scipen=200)
+(Vaccine.ELDI(0.05,0.2,0.5,1/3,0.001,0.002))
+```
+每组需要`r round((Vaccine.ELDI(0.05,0.2,0.5,1/3,0.001,0.002)))`例。
+
+####综合疗效评价(Composite Efficacy Measure)
+疫苗不仅能预防针对疾病的发生，也能预防针对疾病引起的感染。综合疗效评价指标既包含了对疾病发生的评价，也包含了疾病的感染的评价。综合疗效评价的样本量可根据$$n=\frac{1}{\mu _{T}p_{T}-\mu_{R}p_{R}}$$$$\begin{bmatrix}z_{1-\alpha /2}\sqrt{2\mu_{*}^{2}p_{*}(1-p_{*})+2p_{*}(\sigma _{T}^{2}+\sigma _{C}^{2})}+z_{1-\beta}\sqrt{p_{T}(\sigma _{T}^{2}+\mu_{T}^{2}(1-p_{T}))+p_{R}(\sigma _{R}^{2}+\mu_{R}^{2}(1-p_{R}))}\end{bmatrix}^{2}$$进行估计,其中$\mu_{T},\mu_{C}$分别为试验组和对照组的均数，$\sigma _{T},\sigma _{C}$分别为试验组和对照组标准差。
+
+例 一研究者计划实施一个疫苗临床试验，与安慰剂对照，主要是表选择相对发病减少率，根据预试验，$\mu_{T}=0.2,\mu_{C}=0.3,p_{T}=0.1,p_{R}=0.2,\sigma _{T}^{2}=\sigma _{C}^{2}=0.15$，在$\alpha=0.05,\beta=0.2$时，两组1：1平行对照，双侧差异性检验需要多少样本量？
+
+```{r}
+(Vaccine.CEM(0.05,0.2,0.2,0.3,sqrt(0.15),sqrt(0.15),0.1,0.2))
+```
+每组需要`r (Vaccine.CEM(0.05,0.2,0.2,0.3,sqrt(0.15),sqrt(0.15),0.1,0.2))`例。
+```{r echo=F}
+try(detach(package:TrialSize))
+try(detach(package:pipeR))
+try(detach(package:pander))
+try(detach(package:expm))
+try(detach(package:koRpus))
+try(detach(package:ldbounds))
+```
