@@ -501,27 +501,141 @@ relweights(fit,col="lightgrey")
 
 例 quantreg包中自带数据集engel描述了食物支出与家庭收入之间关系，其数据格式如下，请完成分位数回归。
 ```{r}
+data(engel,package = "quantreg")
 pander(head(engel))
 ```
 
 ```{r}
 #进行分位数回归
-fit = rq(foodexp ~ income, tau = c(0.25,0.5,0.75), data = engel,method = "br")  
+fit = rq(foodexp ~ income, tau = c(0.1,0.25,0.5,0.75,0.9), 
+         data = engel,method = "br")  
 summary(fit)
 # 通过设置参数se，可以得到系数的假设检验
 summary(fit, se = "nid")  
+plot(fit)
 ```
  tau表示计算多个分位点的分位数回归结果，如tau = c(0.25,0.5,0.75)是同时计算25%、50%、75%分位数下的回归结果。method：进行拟合的方法，取值包括：默认值“br”，表示 Barrodale & Roberts算法的修改版；“fn”，针对大数据可以采用的Frisch–Newton内点算法；“pfn”，针对特别大数据，使用经过预处理的Frisch–Newton逼近方法；“fnc”，针对被拟合系数特殊的线性不等式约束情况； “lasso”和“scad”，基于特定惩罚函数的平滑算法进行拟合。 se = “rank”: 按照Koenker(1994)的排秩方法计算得到的置信区间，默认残差为独立同分布。注意的是，上下限是不对称的。se=”iid”: 假设残差为独立同分布，用KB（1978）的方法计算得到近似的协方差矩阵。se = “nid”: 表示按照Huber方法逼近得到的估计量。se=”ker”:采用Powell(1990)的核估计方法。se=”boot”:采用bootstrap方法自助抽样的方法估计系数的误差标准差。
+ 
+###穷人和富人的消费比较
+```{r}
+data(engel,package = "quantreg")
+attach(engel)
+z=rq(foodexp~income,tau=-1,data = engel) #tau不再[0,1]时，表示按最细分位点划分
+x.poor=quantile(income,0.1) #10%分位点的收入，穷人
+x.rich=quantile(income,0.9) #90%分位点的收入，富人
+ps=z$sol[1,] #每个分位点的tau值
+qs.poor=c(c(1,x.poor)%*%z$sol[4:5,]) #穷人的消费估计值
+qs.rich=c(c(1,x.rich)%*%z$sol[4:5,]) #富人的消费估计值
+par(mfrow=c(1,2))
+plot(c(ps,ps),c(qs.poor,qs.rich),type="n",     # type=”n”表示初始化图形区域，但不画图
+     xlab=expression(tau), ylab="quantile")
+plot(stepfun(ps,c(qs.poor[1],qs.poor)), do.points=F,
+     add=T)
+plot(stepfun(ps,c(qs.poor[1],qs.rich)), do.points=F,
+     add=T, col.hor="gray", col.vert="gray")
 
+ps.wts = ( c(0,diff(ps)) + c(diff(ps),0) )/2
+ap = akj(qs.poor, z=qs.poor, p=ps.wts)
+ar = akj(qs.rich, z=qs.rich, p=ps.wts)
+plot(c(qs.poor,qs.rich), c(ap$dens, ar$dens),
+     type="n", xlab="Food Expenditure", ylab="Density")
+lines(qs.rich,ar$dens,col="gray")
+lines(qs.poor,ap$dens,col="black")
+legend("topright", c("poor","rich"), lty=c(1,1),
+       col=c("black","gray"))
+par(mfrow=c(1,1))
+```
+穷人和富人的食品消费支出有明显的不同，穷人在不同分位点食品消费支出差别不大，富人不同分位点食品消费支出差别较大。右图表示，穷人消费支出集中于400左右，富人消费支出集中于800～1200.
 ###模型比较
 ```{r}
 # 比较不同分位点下，收入对食品支出的影响机制是否相同
-fit1 = rq(foodexp ~ income, tau = 0.25)
-fit2 = rq(foodexp ~ income, tau = 0.5)
-fit3 = rq(foodexp ~ income, tau = 0.75)
+fit1 = rq(foodexp ~ income, tau = 0.25, data = engel)
+fit2 = rq(foodexp ~ income, tau = 0.5, data = engel)
+fit3 = rq(foodexp ~ income, tau = 0.75, data = engel)
 anova(fit1,fit2,fit3)
 ```
 P值远小于0.05，故不同分位点下收入对食品支出的影响机制不同。
+不同分位点拟合曲线比较
+```{r}
+plot(income,foodexp,cex=0.25,type = "n",xlab = "Household Income",ylab = "Food Expenditure")
+points(income,foodexp,cex=0.5,col="blue")
+abline(rq(foodexp~income,tau = 0.5),col="blue")
+abline(lm(foodexp~income),lty=2,col="red")
+taus=c(0.1,0.25,0.75,0.9)
+for(i in 1:length(taus)){
+  abline(rq(foodexp~income,tau=taus[i]),col="gray")
+}
+detach(engel)
+```
+
+###残差形态检验
+```{r}
+#位值漂移模型：不同分位点估计结果之间的斜率相同或相近，截距不同
+KhmaladzeTest(foodexp ~ income, 
+              data = engel, taus = seq(.05,.95,by = .01),nullH = "location")
+KhmaladzeTest(foodexp ~ income, 
+              data = engel, taus = seq(.05,.95,by = .01),nullH = "location",se="ker")
+#位置-尺度漂移模型：不同分位点估计结果斜率和截距都不同
+KhmaladzeTest(foodexp ~ income, 
+              data = engel, taus = seq(.05,.95,by = .01),nullH = "location-scale")
+KhmaladzeTest(foodexp ~ income, 
+              data = engel, taus = seq(.05,.95,by = .01),nullH = "location-scale",se="ker")
+```
+Tn表示模型整体检验，THn表示每个自变量的检验。位值漂移模型的Tn值比位置-尺度漂移模型的Tn值大，拒绝位值漂移模型的概论较大，位值-尺度漂移模型更加合适。
+
+###分位数回归的分解
+分位数分解法对各个影响因素进行分解分析
+```{r warning=F}
+# MM2005分位数分解的函数
+MM2005 = function(formu,taus, data, group, pic=F){
+  # furmu 为方程，如foodexp~income
+  # taus 为不同的分位数
+  # data 总的数据集
+  # group 分组指标，是一个向量，用于按行区分data
+  # pic 是否画图，如果分位数比较多，建议不画图
+  engel1 = data[group==1,]
+  engel2 = data[group==2,]
+  # 开始进行分解
+  fita = summary( rq(formu, tau = taus, data = engel1 ) )
+  fitb = summary( rq(formu, tau = taus, data = engel2 ) )
+  tab = matrix(0,length(taus),4)
+  colnames(tab) = c("分位数","总差异","回报影响","变量影响")
+  rownames(tab) = rep("",dim(tab)[1])
+  for( i in 1:length(taus) ){
+    ya = cbind(1,engel1[,names(engel1)!=formu[[2]]] ) %*% fita[[i]]$coef[,1]
+    yb = cbind(1,engel2[,names(engel2)!=formu[[2]]] ) %*% fitb[[i]]$coef[,1]
+    # 这里以group==1为基准模型，用group==2的数据计算反常规模型拟合值
+    ystar = cbind(1,engel2[,names(engel2)!=formu[[2]]] ) %*% fita[[i]]$coef[,1]
+    ya = mean(ya)
+    yb = mean(yb)
+    ystar = mean(ystar)
+    tab[i,1] = fita[[i]]$tau
+    tab[i,2] = yb - ya
+    tab[i,3] = yb - ystar # 回报影响，数据相同，模型不同：模型机制的不同所产生的差异
+    tab[i,4] = ystar - ya # 变量影响，数据不同，模型相同：样本点不同产生的差异
+  }
+  # 画图
+  if( pic ){
+    attach(engel)
+    windows(5,5)
+    plot(income, foodexp, cex=0.5, type="n",main="两组分位数回归结果比较")
+    points(engel1, cex=0.5, col=2)
+    points(engel2, cex=0.5, col=3)
+    for( i in 1:length(taus) ){
+      abline( fita[[i]], col=2 )
+      abline( fitb[[i]], col=3 )
+    }
+    detach(engel)
+  }
+  # 输出结果
+  tab
+}
+
+data(engel,package = "quantreg")
+group = c(rep(1,100),rep(2,135))  # 取前100个为第一组，后135个第二组
+taus = c(0.05,0.25,0.5,0.75,0.95)  # 需要考察的不同分位点
+MM2005(foodexp~income, taus, data = engel, group=group, pic=F)
+```
 
 
 
