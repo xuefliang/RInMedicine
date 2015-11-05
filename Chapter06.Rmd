@@ -545,7 +545,8 @@ legend("topright", c("poor","rich"), lty=c(1,1),
        col=c("black","gray"))
 par(mfrow=c(1,1))
 ```
-穷人和富人的食品消费支出有明显的不同，穷人在不同分位点食品消费支出差别不大，富人不同分位点食品消费支出差别较大。右图表示，穷人消费支出集中于400左右，富人消费支出集中于800～1200.
+穷人和富人的食品消费支出有明显的不同，穷人在不同分位点食品消费支出差别不大，富人不同分位点食品消费支出差别较大。右图表示，穷人消费支出集中于400左右，富人消费支出集中于800～1200。
+
 ###模型比较
 ```{r}
 # 比较不同分位点下，收入对食品支出的影响机制是否相同
@@ -557,7 +558,8 @@ anova(fit1,fit2,fit3)
 P值远小于0.05，故不同分位点下收入对食品支出的影响机制不同。
 不同分位点拟合曲线比较
 ```{r}
-plot(income,foodexp,cex=0.25,type = "n",xlab = "Household Income",ylab = "Food Expenditure")
+plot(income,foodexp,cex=0.25,type = "n",
+     xlab = "Household Income",ylab = "Food Expenditure")
 points(income,foodexp,cex=0.5,col="blue")
 abline(rq(foodexp~income,tau = 0.5),col="blue")
 abline(lm(foodexp~income),lty=2,col="red")
