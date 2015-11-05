@@ -12,9 +12,9 @@ classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
 #如何使用
 相对于R在其他行业的流行，医学领域R应用更加少见，医学领域目前仍然以SPSS和SAS为主，本书主要目的在于介绍R在医学领域的应用。本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，在TeXLive环境下使用xelatex编译，所有的R语言代码都基于knitr运行和生成。本书的所有代码都在R 3.2 下经过严格的测试。其中测试的操作系统为Linux Mint 17.2。
+
 ##R的安装
 在Linux Mint下安装R，需要安装如下依赖库和编译库
-
 ```{r eval=FALSE}
 sudo apt-get install build-essential gfortran libxml2-dev 
 libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  
@@ -79,12 +79,12 @@ install.packages("blotter", repos="http://R-Forge.R-project.org")
 ```
 本书使用的R语言编译器是Rstudio，源代码托管于GitHub（https://github.com/xuefliang/RInMedicine）
 。
+
 ##Rstudio安装
 ```{r eval=FALSE}
 wget https://download1.rstudio.org/rstudio-0.99.486-amd64.deb
 sudo dpkg -i /home/xuefliang/Downloads/rstudio-0.99.486-amd64.deb
 ```
-
 ## TexLive2014安装
 ```{r eval=FALSE}
 mount -t iso9660 -o ro,loop,noauto texlive2014.iso /mnt 
@@ -97,7 +97,7 @@ MANPATH=/usr/local/texlive/2014/texmf-dist/doc/man:$MANPATH; export MANPATH
 INFOPATH=/usr/local/texlive/2014/texmf-dist/doc/info:$INFOPATH; export INFOPATH
 ```
 ## Fandol 字体
-```{r eval=FALSE}}
+```{r eval=FALSE}
 wget http://mirrors.ctan.org/fonts/fandol.zip
 #字体保存到 ~/.fonts 文件夹下
 mkdir ~/.fonts
