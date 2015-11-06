@@ -27,7 +27,6 @@ library(coin)
 library(e1071)
 library(lmPerm)
 library(pgirmess)
-library(vcd)
 library(plyr)
 library(boot)
 ```

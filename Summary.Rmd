@@ -6092,3 +6092,2490 @@ summary(model)
 ```{r echo=F}
 try(detach(package:mgcv))
 ```
+
+#方差分析
+```{r include=FALSE}
+library(car)
+library(DescTools)
+library(multcomp)
+library(pander)
+library(gplots)
+library(plyr)
+library(effects)
+library(phia)
+library(nlme)
+library(lme4)
+```
+
+方差分析（analysis of variation,简写为ANOVA）又称变异数分析或F检验,用于两个及两个以上样本均值差别的显著性检验,从函数的形式看，方差分析和回归都是广义线性模型的特例，回归分析lm()也能作方差分析。其目的是推断两组或多组数据的总体均值是否相同，检验两个或多个样本均值的差异是否有统计学意义。方差分析的基本思路为：将试验数据的总变异分解为来源于不同因素的相应变异，并作出数量估计，从而明确各个变异因素在总变异中所占的重要程度；也就是将试验数据的总变异方差分解成各变因方差，并以其中的误差方差作为和其他变因方差比较的标准，以推断其它变因所引起的变异量是否真实的一种统计分析方法。把对试验结果发生影响和起作用的自变量称为因素（factor），即我们所要检验的对象。如果方差分析研究的是一个因素对于试验结果的影响和作用，就称为单因素方差分析。因素的不同选择方案称之为因素的水平(level of factor)或处理(treatment)。因素的水平实际上就是因素的取值或者是因素的分组。样本数据之间差异如果是由于抽样的随机性造成的，称之为随机误差；如果是由于因素水平本身不同引起的差异，称之为系统误差。
+
+方差分析的基本前提各组的观察数据，要能够被看作是从服从正态分布的总体中随机抽得的样本。各组的观察数据，是从具有相同方差的总体中抽取得到的。观察值是相互独立的。 方差分析的原假设：$H_{0}\ \theta _{1}=\theta _{2}=...=\theta _{k}$          即因素的不同水平对实验结果没有显著差异或影响。备择假设：不是所有的$\theta _{i}$都相等$(i=1,2,...,k)$，即因素的不同水平对实验结果有显著差异或影响。
+
+aov()函数的语法为aov(formula,data=dataframe),formula可使用的特殊符号如下，其中y为因变量，A、B、C为自变量。
+
+符号    用法
+---     ---
+～      分隔符，左边为因变量，右边为自变量。例y～A+B+C
++       分隔自变量 
+：      表示交互项，如y～A+B+A:B
+*       表示所有可能的交互项，如y～A * B *C等价于y～A+B+C+A:B+A:C+B:C+A:B:C
+^       表示交互项达到的某个次数，如y～(A+B+C)^2等价于y～A+B+C+A:B+A:C+B:C
+.       表示包含除因变量以外的所有变量。如y～.
+
+常用的方差设计表达式如下，其中小写字母表示定量变量，大写字母表示组别因子，Subject是被试着的标识变量。
+
+设计                                                   表达式
+---                                                    ---
+单因素ANOVA                                            Y~A
+含但个协变量的单因素ANCOVA                             Y~x+A
+双因素ANOVA                                            Y~A*B
+含两个协变量的双因素ANCOVA                             Y~x1+x2+A*B
+随机化区组                                             y~B+A(B是区组因子)
+单因素组内ANOVA                                        y~A+Error(Subject/A)
+含单个组内因子(w)和单个组间因子(b)的重复测量ANOVA      Y~B*W+Error(Subject/W)
+
+组别间观测数相等的设计均衡设计(balanced design)，观测数不等的设计为非均衡设计(unbalanced design)。如果因子不止一个，且别是非平衡设计，或者存在协变量，表达式中的顺序会对结果造成影响。样本大小越不平衡，效应项的顺序对结果影响越大。通常，越基础的效应需要风在表达式的前面，如，先协变量，然后主效应，接着双因素的交互项，再接着是三因素的交互项。标准的anova()默认类型为序贯型，car包中的Anova()函数提供使用分层型和边界型(SAS和SPSS默认类型)的选项。
+
+##单因素方差分析（one-way ANOVA）
+单因素方差分析是指对单因素试验结果进行分析，检验因素对试验结果有无显著性影响的方法。单因素方差分析是用来检验多个平均数之间的差异，从而确定因素对试验结果有无显著性影响的一种统计方法。对于完全随机设计试验且处理数大于2时可以用单因素方差分析（等于2 时用t检验）。离差平方和的分解公式为：SST(总和)=SSR(组间)+SSE(组内)，F统计量为MSR/MSE，MSR=SSR/k-1,MSE=SSE/n-k。其中SST为总离差、SSR为组间平方和、SSE为组内平方和或残差平方和、MSR为组间均方差、MSE为组内均方差。
+
+例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
+
+```{r}
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
+    46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
+    45, 46, 44, 45, 46, 44, 43, 42, 45)
+c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48, 47, 44, 45, 46, 
+    45, 43, 44, 45, 46, 43, 42)
+dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20), 
+    rep("2", 25), rep("3", 23))))
+boxplot(length ~ site, data = dfCRp, xlab = "Sites", ylab = "Length")
+plot.design(length ~ site, fun = mean, data = dfCRp, main = "Group means")
+```
+箱形图中可观察到不同的因素对于因变量的影响。
+
+###假设检验
+方差分析需要一定的假设，即数据集应该符合正态和各组的方差相等，可以分别用shapiro.test和bartlett.test检验从P值观察到这两个假设是符合的。对于不符合假设的情况，我们就要用到非参数方法，例如Kruskal-Wallis秩和检验
+```{r}
+shapiro.test(dfCRp$length)
+bartlett.test(length ~ site,data = dfCRp) #Fligner-Killeen(fligner.test()函数)和Brown-Forsythe检验(HH包中的hov()函数)也可以用来检验方差齐性
+```
+正态性检验和方差齐性检验P值均大于0.05，可以认为数据满足正态性和方差齐性的要求。
+
+###oneway.test()和aov()函数进行方差分析
+```{r}
+aovCRp =aov(length ~ site, data = dfCRp)
+summary(aovCRp)
+#oneway.test(length ~ site, data=dfCRp, var.equal=TRUE)，与aov()结果基本相同。
+plotmeans(length ~ site,data =dfCRp ) #绘制有置信区间的组均值图
+par(mfrow=c(2,2))
+plot(aovCRp)
+par(mfrow=c(1,1))
+```
+用aov函数建立单因子方差模型，从结果的P值可看到各组均值有显著不同。Sum Sq = deviance (within groups, and residual)，总方差和（分别有groups和residual的），Mean Sq = variance (within groups, and residual)，平均方差和（分别有groups和residual的）。单因子方差分析结果显示F value = 3.24 ，Pr(>F) = 0.045，因此拒绝原假设，即认为三组组家兔血清ACE浓度在统计学上有显著差异。
+
+###模型比较
+```{r}
+(anovaCRp <- anova(lm(length ~ site, data=dfCRp)))
+anova(lm(length ~ 1, data=dfCRp), lm(length ~ site, data=dfCRp))
+anovaCRp["Residuals", "Sum Sq"]
+```
+比较不含有自变量和含有一个自变量site模型，含有site变量的模型结果较好(残差的总方差和较小)。
+
+###效果大小(Effect size)
+效果大小是指某个特定总体中的某种特殊的非零的数值,这个数值越大,就表明由研究者所处理的研究现象所造成的效果越大。效果大小本身可以被视为是一种参数:当原假设为真时,效果大小的值为零;当原假设为假时,效果大小为某种非零的值。因此,可以把效果大小视为某种与原假设分离程度的指标 。方差分析效果大小的含义也基本上与Z检验或t检验的效果大小的含义相同只不过它反映的是多组实验处理下不同组之间实验效果差异大小的指标。常用的指标如下$\eta^{2}=\frac{SS}{SS_{total}}$,$f=\sqrt{\frac{\eta^{2}}{1-\eta^{2}}}$,$\omega ^{2}=\frac{SS-DF*MSE}{SS_{total}+MSE}$。
+
+```{r}
+dfSSb <- anovaCRp["site",        "Df"]
+SSb   <- anovaCRp["site",        "Sum Sq"]
+MSb   <- anovaCRp["site",        "Mean Sq"]
+SSw   <- anovaCRp["Residuals", "Sum Sq"]
+MSw   <- anovaCRp["Residuals", "Mean Sq"]
+
+(etaSq <- SSb / (SSb + SSw))#   DescTools包中EtaSq(aovCRp, type=1)函数可以计算
+(omegaSq <- dfSSb * (MSb-MSw) / (SSb + SSw + MSw)) 
+(f <- sqrt(etaSq / (1-etaSq)))
+```
+
+$\eta^{2},\omega^{2},f^{2}$值如上，如$\eta^{2}$实验处理之后各组间平方和在总体平方和中所占的比重，$\eta^{2}$越大反映实验效果大。一般$\eta^{2}$大于0.14，就认为效果有大的效果。
+
+
+###多重比较
+方差分析只告诉我们这三组之间是不同的，但没有告诉哪两组之间有明显差别，此时需要使用TukeyHSD函数进行均值的多重比较分析，从结果中观察到有一个两两比较是不显著的。
+####计划好的多重比较(Planned comparisons - a-priori)
+在收集数据之前就已确定。它与实验目的有关，反映了实验者的意图。可以直接进行计划好的多重比较，不用考虑基本的“均值相等的 F-test”。
+```{r}
+cntrMat <- rbind("a-c"          =c(1,0,-1),
+                 "1/3*(a+b)-c"=c(1/3,1/3,-1),
+                 "b-c"          =c(0,1,-1))
+summary(glht(aovCRp, linfct=mcp(site=cntrMat), alternative="less"),
+        test=adjusted("none"))
+
+#pairwise.t.test(dfCRp$length, dfCRp$site, p.adjust.method="bonferroni") #结果与glht()函数类似。
+```
+依据事先实验的目的，进行多重比较，a组和c组，a、b组和c组的差异有显著意义。
+
+####非计划的多重比较(Planned comparisons - post-hoc)
+在查看数据之后，并且“均值相等的 F-test” 结果显著情况下才进行。它用于探究研究者感兴趣但头脑中没有特定假设。
+```{r}
+#ScheffeTest检验
+ScheffeTest(aovCRp, which="site", contrasts=t(cntrMat))  #DescTools包
+#Tukey HSD检验
+(tHSD <- TukeyHSD(aovCRp))
+plot(tHSD)
+```
+置信区间包含0说明差异不显著。
+
+multcomp包中glht()函数提供了多重均值更全面的方法，适用于线性模型和广义线性模型。下面的代码重现Tukey HSD检验。
+```{r}
+tukey <- glht(aovCRp, linfct=mcp(site="Tukey"))
+summary(tukey)
+plot(cld(tukey,level = .05),col="lightgrey") #cld()函数中level选项设置了使用显著水平0.05，即95%的置信区间
+```
+有相同字母的组（箱线图表示）说明均值差异不显著。
+
+###离群点检测
+```{r}
+outlierTest(aovCRp)
+```
+离群点检测结果显示，数据中没有离群点（当p>1时产生NA）。
+
+###残差的相关检验
+残差的正态性检验
+```{r}
+Estud <- rstudent(aovCRp)
+shapiro.test(Estud)
+qqnorm(Estud, pch=20, cex=2)
+qqline(Estud, col="gray60", lwd=2)
+```
+残差满足正态性的要求。
+
+残差的方差齐性检验，levene检验是对方差模型的残差进行组间齐性检验的，bartlett.test是对原始数据进行检验。
+```{r}
+plot(Estud ~ dfCRp$site, main="Residuals per group")
+leveneTest(aovCRp)
+```
+对模型的残差进行组间方差齐性检验，P值大于0.05满足残差方差齐性的要求。
+
+##单因素协方差分析(Analysis of covariance ,ANCOVA)
+单因素协方差分析在单因素方差分析的基础上包含一个或多个定量的协变量。
+
+例 multcomp包中litter数据集是怀孕小白鼠被分为四个小组，每个小组接受不同剂量（0、5、50和500）的药物处理dose为自变量，产下幼崽的体重weigth均值为因变量，怀孕时间gesttime为协变量。
+```{r}
+data(litter,package = "multcomp")
+pander(head(litter))
+ddply(.data = litter,.(dose),summarize,mean=mean(weight))
+```
+单因素协方差分析
+```{r}
+shapiro.test(litter$weight)
+bartlett.test(weight~dose,data = litter)
+ancova <- aov(weight~gesttime+dose,data = litter)
+summary(ancova)
+```
+数据满足正态性的要求,但不满足方差齐性的要求。ANCOVA检验结果表明怀孕时间gesttime与出生体重weight相关，在控制怀孕时间后，每种药物剂量dose下出生体重weight均值不同。
+
+###调整的组均值
+去除协变量效用的组均值，可以使用effects包中的effect()函数计算。
+```{r}
+effect("dose",ancova)
+```
+
+###多重比较
+```{r}
+contrast <- rbind("no drug vs drug"=c(3,-1,-1,-1)) #设定第一组和其他三组的均值进行比较
+summary(glht(ancova,linfct=mcp(dose=contrast)))
+```
+在未用药和用药条件下，出生体重有显著的不同。
+
+###检验回归斜率的同质性
+ANCOVA模型假定回归斜率相同，如果ANCOVA模型包含交互项，则需要对回归斜率的同质性进行检验。本例中假定四个处理组通过怀孕时间来预测出生体重的回归斜率都相同。
+```{r}
+summary(aov(weight~gesttime*dose,data = litter))
+```
+交互效应不显著，支持斜率相等的假设。如果交互效应显著，则意味怀孕时间和出生体重的关系依赖于药物剂量，需使用不需要假设回归斜率同质性的非参数ANCOVA方法，如sm包中的sm.ancova()函数。
+
+###结果可视化
+```{r}
+library(HH)
+ancova(weight~gesttime+dose,data = litter)
+```
+用怀孕时间预测出生体重的回归线相互平行，只是截距不同。随着怀孕时间的增加，出生体重也会增加。若用ancova(weight~gesttime*dose,data = litter)生成的图形将允许斜率和截距依据组别发生变化，对违背回归斜率同质性的实例比较有用。
+
+###I类型的平方和(Type I sum of squares)单因素协方差分析
+I类型的平方和效应根据表达式中先出现的效应做调整。A不做调整,B根据A调整,A:B交互项根据A和B调整。
+```{r}
+fitFull <- lm(weight~gesttime+dose,data = litter)
+fitGrp  <- lm(weight ~ dose,         data=litter)
+fitRegr <- lm(weight ~      gesttime, data=litter)
+anova(fitFull)
+```
+
+###II/III类型的平方和(Type II/III sum of squares)单因素协方差分析
+II类型的平方和效应根据同水平或低水平的效应做调整。A根据B调整,B依据A调整,A:B交互项同时根
+据A和B调整。III类型的平方和每个效应根据模型其他各效应做相应调整。A根据B和A:B做调整,A:B交互项根据A和B
+调整。
+```{r}
+fitFiii <- lm(weight~gesttime+dose,contrasts=list(dose=contr.sum), data=litter)
+Anova(fitFiii, type="III")
+```
+
+###基于II类型的平方和的模型比较
+```{r}
+anova(fitRegr, fitFull)
+anova(fitGrp,  fitFull)
+```
+RSS值较小的模型较好，以怀孕时间gesttime为协变量的单因素模型比仅含有药物剂量dose和怀孕时间gesttime的模型校好。
+
+###回归系数(Test individual regression coefficients)
+```{r}
+(sumRes <- summary(fitFull))
+confint(fitFull) #95%置信区间
+```
+
+###效果大小(Effect size)
+$\omega^{2}$基于II类型的平方和
+```{r}
+anRes <- anova(fitRegr, fitFull)
+dfGrp <- anRes[2, "Df"]
+dfE   <- anRes[2, "Res.Df"]
+MSgrp <- anRes[2, "Sum of Sq"] / dfGrp
+MSE   <- anRes[2, "RSS"] / dfE
+SST   <- sum(anova(fitFull)[ , "Sum Sq"])
+
+(omegaSqHat <- dfGrp*(MSgrp - MSE) / (SST + MSE))
+```
+效应$\omega^{2}$值如上。
+
+###调整的组均值
+```{r}
+aovAncova <- aov(weight~gesttime+dose,data = litter)
+YMjAdj <- effect("dose", aovAncova)
+summary(YMjAdj)
+```
+
+##双因素方差分析（Two-way ANOVA）
+研究两个因素的不同水平对试验结果的影响是否显著的问题就称作双因素方差分析，分别对两个因素进行检验，考察各自的作用，同时分析两个因素（因素A和因素 B）对试验结果的影响。如果因素A和因素B对试验结果的影响是相互独立的，则可以分别考察各自的影响，这种双因素方差分析称为无交互作用的双因素方差分析，也叫无重复双因素方差分析。无交互作用的双因素方差分析，相当于对每个因素分别进行单因素方差分析。如果因素A和因素B除了各自对试验结果的影响外，还产生额外的新影响，这种额外的影响称为交互作用，这时的双因素方差分析则称为有交互作用的双因素方差分析，也叫有重复双因素方差分析。可用于随机区组实验设计，用来分析两个因素的不同水平对结果是否有显著影响，以及两因素之间是否存在交互效应。
+
+例 基础安装中的ToothGrowth数据集是随机分配60只豚鼠,分别采用两种喂食方法supp(橙汁或维生素C),各喂食方法中抗坏血酸含量有三种水平dose(0.5mg、1mg或2mg),每种处理方式组合都被分配10只豚鼠,牙齿长度len为因变量。
+
+```{r}
+pander(head(ToothGrowth))
+attach(ToothGrowth)
+table(supp,dose)
+ddply(.data = ToothGrowth,.(supp,dose),summarise,mean=mean(len))
+ddply(.data = ToothGrowth,.(supp,dose),summarise,sd=sd(len))
+```
+table语句的预处理表明该设计是均衡设计(各设计单元中样本大小都相同),ddply语句处理可获得各单元的均值和标准差。
+
+###I型双因素方差分析(SS type I)
+```{r}
+aovCRFpq <- aov(len~ supp*dose, data=ToothGrowth)
+summary(aovCRFpq)
+par(mfrow=c(2,2))
+plot(aovCRFpq)
+par(mfrow=c(1,1))
+```
+得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
+
+###II/III型双因素方差分析(SS type II or III)
+```{r}
+ToothGrowth$supp <- as.factor(ToothGrowth$supp) #转为因子
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+fitIII <- lm(len ~ supp + dose + supp:dose, data=ToothGrowth,contrasts=list(supp=contr.sum, dose=contr.sum))
+Anova(fitIII, type="III")
+```
+得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
+
+###绘制边际均数及格均数图
+```{r}
+plot.design(len ~ supp*dose, data=ToothGrowth, main="Marginal means")
+interaction.plot(ToothGrowth$dose, ToothGrowth$supp,ToothGrowth$len,main="Cell means", col=c("red", "blue", "green"), lwd=2) #interaction.plot(f1, f2, y)展示双因素方差分析的交互效应，如果f1和f2是因子,作y的均值图,以f1的不同值作为x轴,而f2的不同值对应不同曲线;可以用选项fun指定y的其他的统计量(缺省计算均值,fun=mean)
+```
+
+gplots包中的plotmeans()函数来展示交互效应，HH包中interaction2wt()函数来展示交互效应
+```{r}
+plotmeans(len ~ interaction(supp, dose, sep = " "), 
+    connect = list(c(1, 3, 5), c(2, 4, 6)), 
+    col = c("red", "darkgreen"), 
+    main = "Interaction Plot with 95% CIs", 
+    xlab = "Treatment and Dose Combination")
+```
+
+```{r eval=F}
+library(HH)
+interaction2wt(len ~ supp * dose) #interaction2wt() 函数,因为它能展示任意复杂度设计(双因素方差分析、三因素方差分析等)的主效应(箱线图)和交互效应
+```
+
+###效果大小(Effect size estimate)
+```{r}
+EtaSq(aovCRFpq, type=1)
+```
+$\eta_{p}^{2}$值如上。
+
+###简单效应(Simple effects)
+简单效应指一个因素的不同水平在另一个因素的某个水平上的变异。phia包中testInteractions()可计算简单效应。
+```{r}
+testInteractions(aovCRFpq, fixed="dose", across="supp", adjustment="none")
+#testInteractions(aovCRFpq, fixed="supp", across="dose", adjustment="none")
+```
+喂食方法supp在剂量dose的0.5mg和1mg水平上的变异显著。同样的交换dose变量和supp变量后，剂量dose在喂食方法OJ和VC的水平上变异显著。
+
+###多重比较
+####计划好的主效应(Main effects)多重比较,计划比较(0.5mg、1mg)和2mg剂量，0.5mg和2mg剂量之间是否有差别
+```{r warning=FALSE}
+cMat <- rbind("c1"=c(1/2, 1/2,-1),"c2"=c(-1,0,1)) 
+aovCRFpq <- aov(len~ supp*dose, data=ToothGrowth)
+summary(glht(aovCRFpq), linfct=mcp(dose=cMat), alternative="two.sided",test=adjusted("bonferroni"))
+```
+结果显示0.5mg、1mg和2mg剂量，0.5mg和2mg剂量之间的差异显著。
+
+####非计划的多重比较
+非计划好的主效应多重比较,dose变量的两两比较。
+```{r}
+aovCRF <- aov(len~ supp*dose, data=ToothGrowth)
+TukeyHSD(aovCRF, which="dose")
+```
+
+multcomp包中的glht()函数
+```{r}
+tukey <- glht(aovCRF, linfct=mcp(dose="Tukey"))
+summary(tukey)
+confint(tukey) #95%置信区间
+```
+结果显示0.5mg和1mg剂量，0.5mg和2mg剂量之间的差异显著。
+
+###单元多重比较(Cell comparisons using the associated one-way ANOVA)
+```{r}
+ToothGrowth$comb <- interaction(ToothGrowth$dose, ToothGrowth$supp)
+aovCRFpqA <- aov(len ~ comb, data=ToothGrowth)
+cntrMat <- rbind("c1"=c(-1/2,  1/4, -1/2, 1/4, 1/4, 1/4),
+                 "c2"=c(   0,    0,   -1,   0,   1,   0),
+                 "c3"=c(-1/2, -1/2,  1/4, 1/4, 1/4, 1/4))
+summary(glht(aovCRFpqA, linfct=mcp(comb=cntrMat), alternative="greater"),
+        test=adjusted("none"))
+```
+计划的单元的多重比较中，未发现显著的差异。
+
+###非计划Scheffe检验
+```{r}
+ScheffeTest(aovCRFpqA, which="comb", contrasts=t(cntrMat)) #Post-hoc Scheffe tests using the associated one-way ANOVA
+ScheffeTest(aovCRFpq, which="dose", contrasts=c(-1, 1/2, 1/2)) #Post-hoc Scheffe tests for marginal means
+```
+
+###残差的相关检验
+
+###正态性检验
+```{r}
+Estud <- rstudent(aovCRFpq)
+qqnorm(Estud, pch=20, cex=2)
+qqline(Estud, col="gray60", lwd=2)
+shapiro.test(Estud)
+```
+P值大于0.05，可以认为残差满足正态性。
+
+```{r}
+plot(Estud ~ ToothGrowth$comb, main="Residuals per group")
+leveneTest(aovCRFpq)
+```
+P值大于0.05，可以认为残差满足方差齐性。
+
+##重复测量方差分析
+重复测量数据的方差分析是对同一因变量进行重复测量的一种试验设计技术。在给予一种或多种处理后，分别在不同的时间点上通过重复测量同一个受试对象获得的指标的观察值，或者是通过重复测量同一个个体的不同部位（或组织）获得的指标的观察值。重复测量数据在科学研究中十分常见，常用来分析该观察指标在不同时间点上的变化特点。分析前要对重复测量数据之间是否存在相关性进行球形检验。如果该检验结果为P﹥0.05，则说明重复测量数据之间不存在相关性，测量数据符合Huynh-Feldt条件，可以用单因素方差分析的方法来处理；如果检验结果P﹤0.05，则说明重复测量数据之间是存在相关性的，所以不能用单因素方差分析的方法处理数据。球形条件不满足时常有两种方法可供选择：（1）采用MANOVA（多变量方差分析方法）；（2）对重复测量ANOVA检验结果中与时间有关的F值的自由度进行调整。 
+
+在重复测量的方差分析中，实验对象被测量多次，所以会存在组内因子，组内因子要以下面的形式特别标明出来，其中B是组间因子，W是组内因子，subject是实验对象的ID，
+model=aov(Y ~ B * W + Error(Subject/W))
+上述方法的前提是对应组内因子不同水平的数据是等方差的，当传统方法的假设得不到满足时，则应用lme4包中lmer函数，利用混合效应模型来解决问题。
+
+###单因素重复测量方差分析(One-way repeated measures ANOVA)
+
+单因素重复测量方差分析通常只有组内因素，没有组间因素。
+例 将42名诊断为胎粪吸入综合症的新生儿患儿随机分为肺表面活性物质治疗组（PS组）和常规治疗组（对照组），每组各21例。PS组和对照组两组所有患儿均给予除用药外的其他相应的对症治疗。PS组患儿给予牛肺表面活性剂70mg/kg治疗。采集PS组及对照组患儿0小时，治疗后24小时和72小时静脉血2ml，离心并提取上清液后保存备用并记录血清中VEGF的含量变化情况。在治疗组，不同时间的记录的VEGF是否有差异？
+
+```{r}
+MAS <- read.csv("MAS.csv",header = T)
+pander(head(MAS))
+```
+
+####传统的重复测量方差分析(Traditional univariate approach)
+aov()函数在处理重复测量设计时,需要有长格式(long format)数据才能拟合模型，在长格式中,因变量的每次测量都要放到它独有的行中。reshape包可方便地将数据转换为相应的格式
+```{r}
+dfRBpL <- subset(MAS,treatment=="ps")
+dfRBpL$id <- as.factor(dfRBpL$id)
+aovRBp <- aov(value ~ time + Error(id/time), data=dfRBpL) #id和time需为因子
+summary(aovRBp)
+```
+在治疗组，不同时间记录的VEGF差异显著。
+
+####效果大小(Effect size estimate)
+```{r}
+EtaSq(aovRBp, type=1)
+```
+$\eta_{g}^{2}$值如上。
+
+####重复测量的宽格式数据 (Using Anova() from package car with data in wide format)
+car包中Anova()通常处理的数据集是宽格式(wide format),即列是变量,行是观测值,而且一行一个
+受试对象。
+```{r}
+dfRBpW <- reshape(dfRBpL, v.names="value", timevar="time", idvar="id",
+                  direction="wide")
+fitRBp   <- lm(cbind(value.time0, value.time24, value.time72) ~ 1, data=dfRBpW)
+inRBp    <- data.frame(time=gl(length(levels(dfRBpL$time)), 1))
+AnovaRBp <- Anova(fitRBp, idata=inRBp, idesign=~time)
+summary(AnovaRBp, multivariate=FALSE, univariate=TRUE)
+```
+在治疗组，不同时间记录的VEGF差异显著。
+
+####球形检验和校正(Using anova.mlm() and mauchly.test() with data in wide format)
+传统的重复测量方差分析假设任意组内因子的协方差矩阵为球形,并且任意组内因子两水平间的方差之差都相等.
+```{r}
+mauchly.test(fitRBp, M=~time, X=~1, idata=inRBp) #Mauchly球形检验
+anova(fitRBp, M=~time, X=~1, idata=inRBp, test="Spherical") ## 如果不满足球形假设，可用Greenhouse-Geisser和 Huynh-Feldt校正或者用多变量方差分析
+```
+P大于0.05，符合球形假设。
+
+####重复测量的多变量方差分析(Multivariate approach)
+$Hotelling's T^{2}$检验是单变量检验的推广，常用于两组均向量的比较。
+```{r}
+DVw<- data.matrix(subset(dfRBpW,select=c("value.time0", "value.time24", "value.time72")))
+diffMat <- combn(1:length(levels(dfRBpL$time)), 2, function(x) {DVw[ , x[1]] - DVw[ , x[2]]})
+DVdiff<- diffMat[ , 1:(length(levels(dfRBpL$time))-1), drop=FALSE]
+muH0 <- rep(0, ncol(DVdiff))
+HotellingsT2Test(DVdiff, mu=muH0)
+```
+P值小于0.05，可以认为不同时间记录的VEGF差异显著。
+
+####car包Anova()函数进行多变量方差分析
+多元方差分析(multivariate analysis of variance, MANOVA)是单变量方差分析和$Hotelling's T^{2}$检验的推广，用于多组均向量间的比较。
+```{r}
+summary(AnovaRBp, multivariate=TRUE, univariate=FALSE)
+```
+P值小于0.05，可以认为不同时间记录(time)的VEGF差异显著，截距(Intercept)差异显著，但无实际意义。
+
+###双因素重复测量方差分析(Two-way repeated-measures ANOVA)
+双因素重复测定资料中的因素是指一个组间因素（处理因素）和一个组内因素（时间因素）。组间因素是指分组或分类变量，它把所有受试对象按分类变量的水平分为几个组。组内因素是指重复测定的时间变量。
+
+例 将42名诊断为胎粪吸入综合症的新生儿患儿随机分为肺表面活性物质治疗组（PS组）和常规治疗组（对照组），每组各21例。PS组和对照组两组所有患儿均给予除用药外的其他相应的对症治疗。PS组患儿给予牛肺表面活性剂70mg/kg治疗。采集PS组及对照组患儿0小时，治疗后24小时和72小时静脉血2ml，离心并提取上清液后保存备用并记录血清中VEGF的含量变化情况。不同组间不同时间的记录的VEGF是否有差异？
+
+####传统的重复测量方差分析(Traditional univariate approach)
+aov()同样需要长格式数据。
+```{r}
+dfRBFpqL <- read.csv("MAS.csv",header = T)
+id <- factor(rep(1:21, times=2*3))  #dfRBFpqL$id <- as.factor(dfRBFpqL$id)这种法方法每组因子水平不是21，而是42
+dfRBFpqL$id <- id
+aovRBFpq <- aov(value ~ treatment*time + Error(id/(treatment*time)), data=dfRBFpqL)
+summary(aovRBFpq)
+
+with(dfRBFpqL,interaction.plot(time,treatment, value, type = "b", col = c("red", "blue"), pch = c(16, 18), main = "Interaction Plot for treatment and time"))
+
+boxplot(value ~ treatment*time, data = dfRBFpqL, col = (c("gold", 
+    "green")), main = "treatment and time", 
+    ylab = "value")
+```
+方差分析表明主效应time和交互效应treatment:time有显著性差异，主效应treatment无显著性差异。
+
+###宽格式数据
+```{r}
+dfTemp   <- reshape(dfRBFpqL, v.names="value", timevar="treatment",
+                    idvar=c("id", "time"), direction="wide")
+dfRBFpqW <- reshape(dfTemp, v.names=c("value.contrast", "value.ps"),
+                    timevar="time", idvar="id", direction="wide")
+
+fitRBFpq   <- lm(cbind(value.contrast.time0,value.ps.time0,value.contrast.time24,value.ps.time24,value.contrast.time72,value.ps.time72) ~ 1,data=dfRBFpqW)
+inRBFpq    <- expand.grid(treatment=gl(2, 1), time=gl(3, 1))
+AnovaRBFpq <- Anova(fitRBFpq, idata=inRBFpq, idesign=~treatment*time)
+summary(AnovaRBFpq, multivariate=FALSE, univariate=TRUE)
+```
+宽格式数据方差分析结果与长格式数据结果类似，但提供了mauchly.test检验，球形假设的条件不满足，同时给出了Greenhouse-Geisser和 Huynh-Feldt校正结果。
+
+### anova.mlm() 和 mauchly.test()
+```{r}
+anova(fitRBFpq, M=~treatment, X=~1, idata=inRBFpq, test="Spherical")
+anova(fitRBFpq, M=~treatment + time, X=~treatment, idata=inRBFpq, test="Spherical")
+anova(fitRBFpq, M=~treatment + time + treatment:time, X=~treatment + time,idata=inRBFpq, test="Spherical")
+mauchly.test(fitRBFpq, M=~treatment, X=~1, idata=inRBFpq)
+mauchly.test(fitRBFpq, M=~treatment + time, X=~treatment, idata=inRBFpq)
+mauchly.test(fitRBFpq, M=~treatment + time + treatment:time, X=~treatment + time, idata=inRBFpq)
+```
+
+###效果大小(Effect size estimates)
+```{r}
+EtaSq(aovRBFpq, type=1)
+```
+
+###简单效应(Simple effects)
+```{r}
+summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time0")))
+summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time24")))
+summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time72")))
+```
+
+###多元方法(Multivariate approach)
+```{r}
+summary(AnovaRBFpq, multivariate=TRUE, univariate=FALSE)
+```
+多元方法分析结果类似，主效应time具有显著性，交互效应交互效应treatment:time和treatment主效应无显著性。可以认为不同时间的记录的VEGF有差异，不同组见记录的VEGF无差异。
+
+##两级裂区设计（Two-way split-plot ANOVA）
+在一个区组上，先按第一个因素（主因素或主处理）的水平数划分主因素的试验小区，主因素的小区称为主区或整区，用于安排主因素；在主区内再按第二个因素（副因素或副处理）的水平数划分小区，安排副因素，主区内的小区称副区或裂区。从整个试验所有处理组合来说，主区仅是一个不完全的区组，对第二个因素来讲，主区就是一个区组，这种设计将主区分裂成副区，称为裂区设计。
+
+例 试验一种全身注射抗毒素对皮肤损伤的保护作用，将10只家兔随机等分两组，一组注射抗毒素，一组注射生理盐水作对照。之后，每只家兔取甲、乙两部位，随机分配分别注射低浓度毒素和高浓度毒素， 观察指标为皮肤受损直径。结果如下：
+
+家兔编号    注射药物（A）    毒素低浓度（B1）    毒素高浓度（B2）
+---         ---              ---                 ---
+1           抗毒素A1         15.75               19.00
+2                            15.50               20.75
+3                            15.50               18.50
+4                            17.00               20.50
+5                            16.50               20.00 
+6           生理盐水A2       18.25               22.25
+7                            18.50               21.50
+8                            19.75               23.50
+9                            21.25               24.75
+10                           20.75               23.75
+
+```{r}
+diameter<- c(15.75,15.50,15.50,17.00,16.50,19.00,20.75,18.50,
+             20.50,20.00,18.25,18.50,19.75,21.25,20.75,22.25,21.50,23.50,24.75,23.75)
+
+dfSPFpqL <- data.frame(id=factor(rep(1:5, times=4)),
+                       B=factor(rep(1:2,each=5,times=2)),
+                       A=factor(rep(1:2,each=10)),  
+                       Diameter=diameter)
+```
+
+```{r}
+aovSPFpq <- aov(Diameter ~ A*B + Error(id/B), data=dfSPFpqL)
+summary(aovSPFpq)
+```
+主因素和副因素均有统计学意义。
+
+###宽数据格式
+```{r}
+dfSPFpqW <- reshape(dfSPFpqL, v.names="Diameter", timevar="B",
+                    idvar=c("id", "A"), direction="wide")
+
+fitSPFpq   <- lm(cbind(Diameter.1, Diameter.2) ~ A, data=dfSPFpqW)
+inSPFpq    <- data.frame(B=gl(2, 1))
+AnovaSPFpq <- Anova(fitSPFpq, idata=inSPFpq, idesign=~B)
+summary(AnovaSPFpq, multivariate=FALSE, univariate=TRUE)
+```
+与长数据格式结果基本一致。
+
+###宽数据格式anova.mlm()和mauchly.test()
+```{r}
+anova(fitSPFpq, M=~1, X=~0, idata=inSPFpq, test="Spherical")
+anova(fitSPFpq, M=~B, X=~1, idata=inSPFpq, test="Spherical")
+mauchly.test(fitSPFpq, M=~B, X=~1, idata=inSPFpq)
+```
+
+###效果大小(Effect size estimates)
+```{r}
+EtaSq(aovSPFpq, type=1)
+```
+
+###简单效应
+```{r}
+#Between-subjects effect at a fixed level of the within-subjects factor
+summary(aov(Diameter ~ A, data=dfSPFpqL, subset=(B==1)))
+summary(aov(Diameter ~ A, data=dfSPFpqL, subset=(B==2)))
+#Within-subjects effect at a fixed level of the between-subjects factor
+summary(aov(Diameter ~ B + Error(id/B), data=dfSPFpqL,subset=(A==1)))
+summary(aov(Diameter ~ B + Error(id/B), data=dfSPFpqL,subset=(A==2)))
+```
+
+###计划的多重比较（Planned comparisons for the between-subjects factor）
+```{r}
+mDf    <- aggregate(Diameter ~ id + A, data=dfSPFpqL, FUN=mean)
+aovRes <- aov(Diameter ~ A, data=mDf)
+cMat <- rbind("1-2"=c(-1, 1))
+summary(glht(aovRes, linfct=mcp(A=cMat), alternative="greater"),
+        test=adjusted("none"))
+```
+主因素之间如果有多个分区的情况，其差异是否具有统计学意义可采取上述方法。
+
+##再裂区设计（Three-way split-plot ANOVA）
+在裂区设计中，若需再引进第三个因素时，可在副区内再分裂出第二副区，称为再裂区，然后将第三个因素的各个处理（称为副副处理），随机排列于再裂区内，这种设计称为再裂区设计（split-split plot design ）。3个以上的多因素试验采用裂区设计，试验起来很复杂，统计分析也麻烦，特别是因素之间有交互作用比较难以解释。
+
+例 观察18例不同分化程度的贲门癌患者的癌组织、癌旁组织、远离组织中碱性磷酸酶（ALP）的变化，一级单位处理为分化度（低分化、中分化和高分化，记为A1、A2和A3），二级单位处理是组织部位（癌组织、癌旁组织、远癌组织，记为B1、B2和B3），三级单位处理是活性剂（加与不加，记为C1和C2），数据如下：
+
+```{r}
+ALP <- read.csv("ALP.csv",header = T)
+pander(ALP)
+```
+
+###SPF-pq⋅r
+```{r}
+dfSPFpq.rL <-read.csv("ALP2.csv",header = T)
+dfSPFpq.rL$id <- as.factor(dfSPFpq.rL$id)
+dfSPFpq.rL$B <- as.factor(dfSPFpq.rL$B)
+dfSPFpq.rL$C <- as.factor(dfSPFpq.rL$C)
+dfSPFpq.rL$A <- as.factor(dfSPFpq.rL$A)
+
+aovSPFpq.r <- aov(DV ~ C*B*A + Error(id/C), data=dfSPFpq.rL)
+summary(aovSPFpq.r)
+```
+C、B级处理、C和B交互、A和B的交互均有统计学意义。
+
+####效果大小(Effect size estimates)
+```{r}
+EtaSq(aovSPFpq.r, type=1)
+```
+
+####宽格式数据
+```{r}
+dfSPFpq.rW <- reshape(dfSPFpq.rL, v.names="DV", timevar="C",
+                      idvar=c("id", "B", "A"), direction="wide")
+
+fitSPFpq.r   <- lm(cbind(DV.1, DV.2) ~ A*B, data=dfSPFpq.rW)
+inSPFpq.r    <- data.frame(C=gl(2, 1))
+AnovaSPFpq.r <- Anova(fitSPFpq.r, idata=inSPFpq.r, idesign=~C)
+summary(AnovaSPFpq.r, multivariate=FALSE, univariate=TRUE)
+```
+A、C、B级处理、C和B交互、A和B的的交互均有统计学意义。
+
+####宽数据格式anova.mlm()和mauchly.test()
+```{r}
+anova(fitSPFpq.r, M=~1, X=~0, idata=inSPFpq.r, test="Spherical")
+anova(fitSPFpq.r, M=~C, X=~1, idata=inSPFpq.r, test="Spherical")
+mauchly.test(fitSPFpq.r, M=~C, X=~1, idata=inSPFpq.r)
+```
+
+###SPF-p⋅qr
+```{r}
+aovSPFp.qr <- aov(DV ~ C*B*A + Error(id/(A*B)), data=dfSPFpq.rL)
+summary(aovSPFp.qr)
+```
+C、C和B交互均有统计学意义。
+
+####效果大小(Effect size estimates)
+```{r}
+EtaSq(aovSPFp.qr, type=1)
+```
+
+####宽格式数据
+```{r}
+dfW1       <- reshape(dfSPFpq.rL, v.names="DV", timevar="C",
+                      idvar=c("id", "B", "A"), direction="wide")
+dfSPFp.qrW <- reshape(dfW1, v.names=c("DV.1", "DV.2"),
+                      timevar="B", idvar=c("id", "A"), direction="wide")
+
+fitSPFp.qr   <- lm(cbind(DV.1.1, DV.2.1, DV.1.2, DV.2.2, DV.1.3, DV.2.3) ~ A,
+                   data=dfSPFp.qrW)
+inSPFp.qr    <- expand.grid(B=gl(3, 1), C=gl(2, 1))
+AnovaSPFp.qr <- Anova(fitSPFp.qr, idata=inSPFp.qr, idesign=~B*C)
+summary(AnovaSPFp.qr, multivariate=FALSE, univariate=TRUE)
+```
+
+####宽数据格式anova.mlm()和mauchly.test()
+```{r}
+anova(fitSPFp.qr, M=~1, X=~0,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B, X=~1,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B + C, X=~B,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B + C + B:C, X=~B + C,idata=inSPFp.qr, test="Spherical")
+mauchly.test(fitSPFp.qr, M=~B, X=~1,idata=inSPFp.qr)
+mauchly.test(fitSPFp.qr, M=~B + C, X=~B,
+             idata=inSPFp.qr)
+mauchly.test(fitSPFp.qr, M=~B + C + B:C, X=~B + C,
+             idata=inSPFp.qr)
+```
+
+##混合模型重复测量方差分析（Mixed-effects models for repeated-measures ANOVA）
+在分析数据时，考虑一个因素和它的不同水平对结果变量的影响，称之为这个因素不同水平对因变量的效应。这种效应不是固定效应就是随机效应，当参数能被认为是固定的常数时，这种因素所产生的效应为固定效应，当参数有随机变量的特征时，称之为随机效应。当模型中有多个因素，一部分产生固定效应，一部分产生随机效应，这样的模型就称为混合效应模型。重复测量中的单次测量为低水平，个体为高水平，建立的模型如下：$$Y=X\beta +Z\gamma +\epsilon$$,$X$为已知设计矩阵，$\beta$为固定效应参数构成的未知向量，$\epsilon$为未知的随机误差向量，其元素不必为独立同分布。$Y$和$\gamma$均为正态随机变量。
+
+例 d1为长格式的重复观测数据，因变量为Y，自变量为Xw1、Xb1和Xb2，w表示组内因子，b表示组间因子，id为标示变量。d2为长格式的重复观测数据，因变量为Y，自变量为Xw1、Xw2、Xb1和Xb2，w表示组内因子，b表示组间因子，id为标示变量。
+```{r}
+d1 <- read.csv("d1.csv",header = T)
+d2 <- read.csv("d2.csv",header = T)
+```
+
+###单因素重复测量方差分析(One-way repeated measures ANOVA, RB-p design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xw1 + Error(id/Xw1), data=d1))
+```
+结果显示自变量Xw1有统计学意义。
+
+####混合效应分析(Mixed-effects analysis)
+对重复测量的数据有个假设就是重复测量的数据间的关系是相同的，这就是我们所说的compound symmetry。但在实际中，往往会违背这个假设，特别是当临床试验的时间特别长或各个测量的时间点的间隔不相同时，这是因为间隔时间长的两个点的测量值之间的关系往往不如间隔时间短的两个点的测量值之间的关系紧密。
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xw1, random=~1 | id, method="ML", data=d1))  
+#符合compound symmetry假设
+lmeFit <- lme(Y ~ Xw1, random=~1 | id, correlation=corCompSymm(form=~1|id),
+              method="ML", data=d1)
+anova(lmeFit)
+
+anova(lme(Y ~ Xw1, random=list(id=pdCompSymm(~Xw1-1)), method="REML", data=d1))
+```
+结果显示自变量Xw1有统计学意义。
+
+#####lme4包lmer()方法
+```{r}
+fitF <- lmer(Y ~ Xw1 + (1|id), data=d1)
+anova(fitF)
+fitR <- lmer(Y ~ 1 + (1|id), data=d1)
+library(pbkrtest)
+KRmodcomp(fitF, fitR)
+```
+结果显示自变量Xw1有统计学意义。
+
+#####AIC值比较
+```{r}
+library(AICcmodavg)
+AICc(fitF)
+aictab(cand.set=list(fitR, fitF),
+       modnames=c("restricted", "full"),
+       sort=FALSE, second.ord=FALSE)
+```
+
+####多重比较(基于multcomp包的glht()方法)
+```{r}
+contr <- glht(lmeFit, linfct=mcp(Xw1="Tukey"))
+summary(contr)
+confint(contr) #置信区间
+```
+Xw1变量B-A和C-A比较有差异。
+
+###双因素重复测量方差分析(Two-way repeated measures ANOVA ,RBF-pq design)
+####常规分析（Conventional analysis using aov()）
+```{r}
+summary(aov(Y ~ Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
+```
+结果显示自变量Xw1有统计学意义。
+
+####Mixed-effects analysis
+#####nlme包lme方法（Using lme() from package nlme）
+```{r}
+anova(lme(Y ~ Xw1*Xw2, random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          method="ML", data=d2))
+#符合compound symmetry假设
+anova(lme(Y ~ Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          method="ML", data=d2))
+```
+结果显示自变量Xw1有统计学意义。
+
+#####lme4包lmer()方法(Using lmer() from package lme4)
+```{r}
+anova(lmer(Y ~ Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+```
+根据F值判断自变量Xw1有统计学意义。
+
+###两级裂区设计的方差分析(Two-way split-plot-factorial ANOVA ,SPF-p⋅q design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xw1 + Error(id/Xw1), data=d1))
+```
+
+####混合效应分析(Mixed-effects)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1, random=~1 | id, method="ML", data=d1))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1, random=~1 | id, correlation=corCompSymm(form=~1|id),
+          method="ML", data=d1))
+
+anova(lme(Y ~ Xb1*Xw1, random=list(id=pdCompSymm(~Xw1-1)), method="REML", data=d1))
+```
+自变量Xb1、Xw1和其交互效应均有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xw1 + (1|id), data=d1))
+```
+
+###三级裂区设计的方差分析(Three-way split-plot-factorial ANOVA ,SPF-pq⋅r design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xb2*Xw1 + Error(id/Xw1), data=d1))
+```
+自变量Xb1、Xb2、Xw1和其交互效应均有统计学意义。
+
+####混合效应模型(Mixed-effects analysis)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1, random=~1 | id, method="ML", data=d1))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1, random=~1 | id,
+          correlation=corCompSymm(form=~1 | id), method="ML", data=d1))
+anova(lme(Y ~ Xb1*Xb2*Xw1,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1)))),
+          method="ML", data=d1))
+```
+自变量Xb1、Xb2、Xw1和其交互效应均有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xb2*Xw1 + (1|id), data=d1))
+```
+根据F值判断自变量Xb1、Xb2、Xw1和其交互效应均有统计学意义。
+
+###三级裂区设计的方差分析Three-way split-plot-factorial ANOVA (SPF-p⋅qr design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
+```
+Xb1、Xw1和Xw2无统计学意义。
+
+####混合效应模型(Mixed-effects analysis)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          method="ML", data=d2))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          method="ML", data=d2))
+```
+Xb1、Xw1和其交互作用有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+```
+
+###四级裂区设计的方差分析(Four-way split-plot-factorial ANOVA ,SPF-pq⋅rs design)
+####常规分析(Conventional analysis using aov())
+```{r}
+summary(aov(Y ~ Xb1*Xb2*Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
+```
+Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
+
+####混合效应模型(Mixed-effects analysis)
+#####nlme包lme方法(Using lme() from package nlme)
+```{r}
+#没有明确是否符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          method="ML", data=d2))
+#符合compound symmetry假设
+anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          method="ML", data=d2))
+```
+Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
+
+#####lme4包lmer()方法（Using lmer() from package lme4）
+```{r}
+anova(lmer(Y ~ Xb1*Xb2*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+```
+根据F值判断Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
+
+```{r echo=F}
+try(detach(package:car))
+try(detach(package:DescTools))
+try(detach(package:multcomp))
+try(detach(package:pander))
+try(detach(package:gplots))
+try(detach(package:plyr))
+try(detach(package:effects))
+try(detach(package:phia))
+try(detach(package:nlme))
+try(detach(package:lme4))
+```
+
+#生存分析
+```{r include=FALSE}
+library(epicalc)
+library(survival)
+```
+生存分析(Survival analysis)是指根据试验或调查得到的数据对生物或人的生存时间进行分析和推断，研究生存时间和结局与众多影响因素间关系及其程度大小的方法，也称生存率分析或存活率分析。生存分析适合于处理时间－事件数据,生存时间(survival time)是指从某起点事件开始到被观测对象出现终点事件所经历的时间，如从疾病的“确诊”到“死亡”。生存时间有两种类型：完全数据(complete data)指被观测对象从观察起点到出现终点事件所经历的时间;截尾数据(consored data)或删失数据，指在出现终点事件前，被观测对象的观测过程终止了。由于被观测对象所提供的信息是不完全的，只知道他们的生存事件超过了截尾时间。截尾主要由于失访、退出和终止产生。生存分析方法大体上可分为三类：非参数法、半参数方法和参数法，用Kaplan-Meier曲线(也称乘积极限法Product limit method)和寿命表法(Life table method)估计生存率和中位生存时间等是非参数的方法，半参数方法指Cox比例风险模型，参数方法指指数模型、Weibull模型、Gompertz模型等分析方法。
+
+死亡概率(mortality probability)指某段时间开始时生存的个体在该段时间内死亡的可能性大小，若无删失数据，死亡概率=某人群某段时间总死亡例数/该人群同时间段期初观察例数。生存概率(survival probability)指某段时间开始时存活的个体至该时间结束时仍然存活的可能性大小，生存概率=1-死亡概率=某人群活过某段时间例数/该人群同时间段期初观察例数。由于生存分析中常存在删失数据，假定删失事件在观察时间内各个时间点等机会发生，分母改用校正观察例数。校正观察例数=期初观察例数-删失例数/2。
+生存率(Survival rate)，用$S(t_{k})$表示，指经历$t_{k}$个单位时间后仍存活的概率，若无删失数据，则为活过了$t_{k}$时刻仍然存活的例数/观察开始的总例数。如果有删失数据，分母则需要按时段进行校正，此时生存率的计算公式为$$S(t_{k})=P(T>t_{k})=p_{1} \cdot p_{2}\cdot \cdot \cdot  p_{k}$$,其中$p_{1} \cdot p_{2}\cdot \cdot \cdot  p_{k}$表示不同时间段的生存概率。生存率为多个时间段生存概率的累积，故又称累积生存概率，其标准误计算公式为$$SE(S(t_{k}))=S(t_{k})\sqrt{\sum_{i=1}^{k}\frac{q_{i}}{p_{i}n_{i}}}$$,$q_{i}$为死亡概率，$p_{i}$为生存概率。
+
+例  addicts是238名病例随访信息，status变量表示病例的生存状况（0为删失，1为终点事件），Days.survival变量表示生存的天数。
+
+```{r}
+addicts <- read.table('ADDICTS.txt',T)
+addicts$Clinic <- as.factor(addicts$Clinic)
+addicts$Prison <- as.factor(addicts$Prison)
+```
+
+##非参数法
+###寿命表（Life Table）
+寿命表时描述一段时间内生存状况、终点事件和生存概率的表格，需计算累积生存概率即每一步生存概率的乘积，可完成对病例随访资料在任意指定时点的生存状况评价。survival包中包括了所有生存分析所必须的函数，生存分析主要是把数据放入Surv object，通过Surv()函数做进一步分析。Surv object是将时间和生存状况的信息合并在一个简单的对象内，Surv(time, time2, event,type=c('right', 'left', 'interval', 'counting', 'interval2', 'mstate'),origin=0)，time为生存时间，time2为区间删失的结束时间，event为生存状况，生存状况变量必须是数值或者逻辑型的。如果时数值型，则有两个选项，0表示删失，1表示终点事件，或者1表示删失，2表示终点事件。如果时逻辑型的，则FALSE表示删失，True表示终点事件。type为删失的类型有右删失、左删失、区间删失、第一类区间删失、第二类区间删失。
+
+```{r}
+addicts$surv <- Surv(addicts$Days.survival,addicts$Status)
+summary(survfit(addicts$surv~1),censor=T)
+```
+上表的第一行表示，在第2天，有238个调查对象，没有发生终点事件（n.event），生存概率为(238-0)/238=1,其中有2个删失对象没有显示出来。第二行表示在第7天，有236个对象，其中1个发生了终点事件，生存概率为(236-1)/235*1=0.996。寿命表中其他数据行的意思类似。
+
+###Kaplan-Meier曲线
+Kaplan-Meier曲线也称生存曲线， 纵轴表示生存概率，横轴表示生存事件，它是一条下降的曲线,下降的坡度越陡,表示生存率越低或生存时间越短,其斜率表示死亡速率。如果在概率50%处画一条水平线，它将中位生存事件点和生存曲线相交。
+```{r}
+KM0 <- survfit(surv ~ 1,  type="kaplan-meier",data=addicts)
+kml <- summary(KM0,censor=T)
+attributes(kml)
+plot(kml$time,kml$surv,type="s")
+plot(survfit(addicts$surv~1))
+#绘制一条曲线时，图形中a包含95%的置信区间和删失标记，不需要可设置为False
+plot(survfit(addicts$surv~1),conf.int = F,mark.time = F)
+abline(h=0.5,lty=2,col="red")
+#中位生存期
+survfit(addicts$surv~1)
+#25%,50%和75%生存期
+quantile(KM0, probs=c(0.25, 0.5, 0.75), conf.int=FALSE)
+#50天和100天生存状况
+summary(KM0, times=c(50, 100))
+```
+
+在survfit函数中改变公式右边的参数，可获得不同因子水平的生存曲线。
+```{r}
+plot(survfit(addicts$surv~addicts$Clinic),col=c("red","blue"),conf.int = F)
+legend(10,.4,legend=c("1","2"),col = c("red","blue"),lty=c(1,1))
+```
+
+不同生存曲线间是否有差异，可通过survdiff进行比较，该函数最后一个参数时rho，用于指定检验的类型。让rho=0(默认时)，进行对数秩(log-rank)检验或$Mantel-Haenszel \chi^{2}$检验，比较各组期望频数和实际观察数。如果两组间的差异水平太大，$\chi^{2}$会较大而P值较小，表示生存曲线有统计学差异。当rho=1时，进行Gehan-Wilcoxon的Peto校正检验，该检验赋予早期终点事件较大的权重。
+```{r}
+survdiff(addicts$surv~addicts$Clinic)
+```
+
+###分层比较
+在Clinic变量有可能和其他变量之间存在相关性，应调整其影响后，研究生存区间之间的差异。
+```{r}
+cc(addicts$Clinic,addicts$Prison)
+survdiff(addicts$surv~addicts$Clinic+strata(addicts$Prison))
+```
+在调整addicts$Prison的影响之后，与原始情况没有太大差异，说明Prison对surv的影响不是独立的。
+
+###累积风险率
+风险率指每个单位时间的时小比例，这个随时间变化。用图形可绘制累积风险率，其斜率可相对容易的观察。
+```{r}
+plot(survfit(addicts$surv~1),conf.int = F,fun="cumhaz")
+```
+上图显示，在后800多天的时，由于没有终点事件的发生，斜率时水平的。
+
+在survfit函数中改变公式右边的参数，可获得不同因子水平的累积风险概率。
+```{r}
+plot(survfit(addicts$surv~addicts$Clinic),col=c("red","blue"),conf.int = F,fun="cumhaz")
+legend(5,4,legend=c("1","2"),col = c("red","blue"),lty=c(1,1))
+```
+
+```{r}
+model <-coxph(surv~Clinic,data=addicts)
+```
+
+包含通过寿命表（Life Table）分析法，；Kaplan-Meier方法，对病例随访资料进行生存分析，在对应于每一实际观察事件时点上，作生存率的评价和建立Cox回归模型（亦称比例风险模型）。
+
+##参数法(Parametric proportional hazards models)
+参数方法要求观察的生存事件服从某一特定的分布，采用估计分布中参数的方法获得生存率的估计值。生存事件的分布可能为指数分布、weibull分布、对数正态分布等，这些分布曲线都有相应的生存率函数形式，只需求的相应参数的估计值，即可获得生存率的估计值和生存曲线。
+
+###假定生存时间符合weibull分布
+```{r}
+fitWeib <- survreg(surv~Clinic+Prison+Dose, dist="weibull", data=addicts)
+summary(fitWeib)
+```
+
+###AFT参数转换为Cox模型的$\beta$
+```{r}
+(betaHat <- -coef(fitWeib) / fitWeib$scale)
+```
+
+###模型比较
+```{r}
+fitExp <- survreg(surv~Clinic+Prison+Dose,dist="exponential", data=addicts)
+anova(fitExp, fitWeib)  
+```
+
+####提出因子变量后，模型的比较
+```{r}
+fitR <- survreg(surv~Dose, dist="weibull", data=addicts)
+anova(fitR, fitWeib)
+```
+
+###生存曲线估计
+```{r}
+dfNew <- data.frame(Clinic=factor(c("1", "2"), levels=levels(addicts$Clinic)),
+                      Dose=c(50, 60),
+                     Prison=factor(c("0", "1"), levels=levels(addicts$Prison)))
+percs <- (1:99)/100
+FWeib <- predict(fitWeib, newdata=dfNew, type="quantile", p=percs, se=TRUE)
+
+matplot(cbind(FWeib$fit[1, ],
+              FWeib$fit[1, ] - 2*FWeib$se.fit[1, ],
+              FWeib$fit[1, ] + 2*FWeib$se.fit[1, ]), 1-percs,
+        type="l", main=expression(paste("Weibull-Fit ", hat(S)(t), " mit SE")),
+        xlab="t", ylab="Survival", lty=c(1, 2, 2), lwd=2, col="blue")
+matlines(cbind(FWeib$fit[2, ],
+               FWeib$fit[2, ] - 2*FWeib$se.fit[2, ],
+               FWeib$fit[2, ] + 2*FWeib$se.fit[2, ]), 1-percs, col="red", lwd=2)
+legend(x="topright", lwd=2, lty=c(1, 2, 1, 2), col=c("blue", "blue", "red", "red"),
+       legend=c("Clinic=1, Dose=50, Prison=0", "+- 2*SE", "Clinic=2, Dose=60, Prison=1", "+- 2*SE"))
+```
+
+##半参数法(COX回归)
+多数生存时间的分布并不符合指数分布、weibull分布等，不宜采用参数法进行分析。COX回归用于研究各种因素（称为协变量）对于生存期长短的关系，Cox 回归是一种半参数模型，只规定了影响因素和生存时间的关系，但是没有对生存时间的分布情况加以限定，与参数模型相比，该模型不能给出各时点的风险率，，但可估计出各研究因素对风险率的影响，进行多因素分析。
+风险函数(Hazard Function),用h(t)表示,其定义为:$$h(t)=\lim_{\Delta t\rightarrow 0}\left [ \frac{S(t)-S(t+\Delta t)}{\Delta t} \right ]/S(t)$$,表示时刻t上一个事件瞬时发生的概率，即一个到t时刻存活的个体，在t时刻事件的瞬时发生率。Cox模型为
+$$\ln h(t) = \ln h_{0}(t) + \beta_{1} X_{1} + \dots + \beta_{p} X_{p}$$
+其中$X_{1} + \dots + X_{p}$是协变量，$\beta_{1} + \dots + \beta_{p}$是回归系数，由样本估计而得。$\beta_{i}>0$表示该协变量是危险因素，越大使生存时间越短,$\beta_{i}<0$表示该协变量是保护因素，越大使生存时间越长。$h_{0}(t)$为基础风险函数，它是全部协变量都为0或标准状态下的风险函数，一般是未知的。$h(t)$表示当各协变量值X固定时的风险函数，它和$h_{0}(t)$成比例，所以该模型又称为比例风险模型（proportional  hazard  model),COX回归模型不用于估计生存率，主要用于因素分析。
+ 
+```{r}
+model <- coxph(surv~Clinic+Prison,data=addicts)
+summary(model)
+```
+Clinic2系数为负值，且有统计学意义。Clinic2exp(coef)是0.3412，提示Clinic2与Clinic1相比风险率降低了65.88%(1-0.3412)。Prison1无统计学意义。
+
+###模型拟合
+AIC值
+```{r}
+extractAIC(model)
+```
+McFadden, Cox & Snell and Nagelkerke pseudo \(R^{2}\)
+```{r}
+LLf <- model$loglik[2]
+LL0 <- model$loglik[1]
+```
+McFadden pseudo-\(R^2\)
+```{r}
+as.vector(1 - (LLf / LL0))
+```
+Cox & Snell
+```{r}
+as.vector(1 - exp((2/nrow(addicts)) * (LL0 - LLf)))
+```
+Nagelkerke
+```{r}
+as.vector((1 - exp((2/nrow(addicts)) * (LL0 - LLf))) / (1 - exp(LL0)^(2/nrow(addicts))))
+```
+
+####模型比较
+```{r}
+model1 <- coxph(surv~Clinic,data=addicts)
+anova(model1, model) 
+```
+
+####生存函数(Survival function)
+```{r}
+(CPH <- survfit(model))
+quantile(CPH, probs=c(0.25, 0.5, 0.75), conf.int=FALSE)
+```
+
+####估计生存函数(Estimated survival function for new specific data)
+```{r}
+dfNew  <- data.frame(Clinic=factor(c("2", "2"), levels=levels(addicts$Clinic)),
+                       X=c(-2, -2),
+                      Prison=factor(c("0", "1"), levels=levels(addicts$Prison)))
+CPHnew <- survfit(model, newdata=dfNew)
+par(mar=c(5, 4.5, 4, 2)+0.1, cex.lab=1.4, cex.main=1.4)
+plot(CPH, main=expression(paste("Cox PH-estimate ", hat(S)(t), " with CI")),
+     xlab="t", ylab="Survival", lwd=2)
+lines(CPHnew$time, CPHnew$surv[ , 1], lwd=2, col="blue")
+lines(CPHnew$time, CPHnew$surv[ , 2], lwd=2, col="red")
+legend(x="topright", lwd=2, col=c("black", "blue", "red"),
+       legend=c("pseudo-observation", "Clinic=2, X=-2, Prison=0", "Clinic=2, X=-2, Prison=1"))
+```
+
+####累积基础风险函数(Cumulative baseline hazard)
+```{r}
+expCoef  <- exp(coef(model))
+Lambda0A <- basehaz(model, centered=FALSE)
+Lambda0B <- expCoef[2]*Lambda0A$hazard
+Lambda0C <- expCoef[3]*Lambda0A$hazard
+plot(hazard ~ time, main=expression(paste("Cox PH-estimate ", hat(Lambda)[g](t), " per group")),
+     type="s", ylim=c(0, 5), xlab="t", ylab="cumulative hazard", lwd=2, data=Lambda0A)
+lines(Lambda0A$time, Lambda0B, lwd=2, col="red")
+lines(Lambda0A$time, Lambda0C, lwd=2, col="green")
+legend(x="bottomright", lwd=2, col=1:3, legend=LETTERS[1:3])
+```
+
+###模型诊断(Model diagnostics)
+####比例风险假定(Proportional hazards assumption)
+将纵轴取对数后，绘制时间的对数值图形，可以比较Clinic变量两种取值的生存曲线。如果两条曲线平行，则不太可能违反比例风险假定。
+```{r}
+plot(survfit(surv~Clinic,data=addicts),fun="cloglog",conf.int = F,col = c("red","blue"))
+```
+两条曲线相交不止一次，从图形很难判断是否违反比例风险假定。可采取如下检验
+```{r}
+czph <- cox.zph(coxph(surv~Clinic+Prison,data=addicts))
+czph 
+par(mfrow=c(2, 2))
+plot(czph)
+```
+结果显示，违反比例风险假定的证据非常强。图形展现的是随时间变化的$\beta$图形。
+
+####影响分析(Influential observations)
+```{r}
+dfbetas <- residuals(coxph(surv~Clinic+Prison,data=addicts), type="dfbetas")
+par(mfrow=c(1, 2))
+plot(dfbetas[ , 1], type="h", main="DfBETAS for Clinic", ylab="DfBETAS", lwd=2)
+plot(dfbetas[ , 2], type="h", main="DfBETAS for Prison", ylab="DfBETAS", lwd=2)
+```
+
+####对数线性假设(Linearity of log hazard)
+对自变量是连续性变量，需检测其线性的假设
+```{r}
+resMart <- residuals(coxph(surv~Clinic+Dose,data=addicts), type="martingale")
+par(mfrow=c(1, 1))
+plot(addicts$Dose, resMart, main="Martingale-residuals for Dose",
+     xlab="Dose", ylab="Residuen", pch=20)
+lines(loess.smooth(addicts$Dose, resMart), lwd=2, col="blue")
+legend(x="bottomleft", col="blue", lwd=2, legend="LOESS fit")
+```
+
+###预测风险(Predicted hazard ratios)
+根据建立的模型对每个个体的风险率进行预测，连续性变量假定其等于样本均值，因子变量假定其等于亚变量。
+####风险率预测
+```{r}
+predRes <- predict(coxph(surv~Clinic+Prison,data=addicts), type="risk")
+head(predRes, n=10) #显示前10个
+```
+
+####生存期预测
+```{r}
+Shat1 <- survexp(~ 1, ratetable=model, data=addicts)
+with(Shat1, head(data.frame(time, surv), n=4))
+```
+分因子变量生存期预测
+```{r}
+Shat2 <- survexp(~ Clinic, ratetable=model, data=addicts)
+with(Shat2, head(data.frame(time, surv), n=4))
+```
+
+####分层回归
+```{r}
+phFit <- coxph(surv~Clinic+Prison+Dose,data=addicts)
+summary(phFit)
+step(phFit)
+```
+没有变量剔除时，AIC水平是最低的，所有变量均应保留。
+```{r}
+cox.zph(phFit)
+```
+全局检验的P值，有统计学意义，表面违反了比例风险的假定。一种可能方法是对因子变量Clinic进行分层分析。
+```{r}
+strataphFit <- coxph(surv~strata(Clinic)+Prison+Dose,data=addicts)
+cox.zph(strataphFit)
+summary(strataphFit)
+```
+用Clinic进行分层降低了$\chi ^{2}$值，全局检验的P值，没有统计学意义，没有违反比列风险的假定。strataphFit模型与phFit模型比较，Clinic分层因素的系统被忽略。
+
+```{r echo=F}
+try(detach(package:epicalc))
+try(detach(package:survival))
+```
+
+#非参数检验
+```{r include=FALSE}
+library(coin)
+library(DescTools)
+library(mvtnorm)
+library(polycor)
+library(pROC)
+library(rms)
+library(reshape2)
+library(pander)
+library(vcd)
+library(coin)
+library(e1071)
+library(lmPerm)
+library(pgirmess)
+library(vcd)
+library(plyr)
+library(boot)
+```
+非参数检验不考虑总体分布是否已知，也不针对总体参数，而是针对总体的某些一般性假设（如总体分布的位置是否相同，总体分布是否正态）进行检验。非参数检验方法简便，不依赖于总体分布的具体形式因而适用性强，但灵敏度和精确度不如参数检验。一般而言，非参数检验适用于以下三种情况：顺序类型的数据资料，这这类数据的分布形态一般是未知的；总体分布形态未知或者非正态的连续型数据，这类数据和卡方检验一样，称自由分布检验；总体分布虽正态，数据也是连续类型，但样本容量极小，如10以下（虽然Ｔ检验被称为小样本统计方法，但样本容量太小时，代表性毕竟很差，最好不要用要求较严格的参数检验法）
+
+##单样本(One-sample)
+###符号检验(Sign-test)
+符号检验法是通过对两个相关样本的每对数据之差的符号（正号或负号）进行检验，以比较这两个样本所代表的总体的差异显著性，对应于参数检验中两相关样本差异显著性的Ｔ检验。其基本思想是：若两总体差异不显著，则两样本差值的正号与负号应大致各占一半，即中位数为0，可见符号检验是以中数作为统计量进行假设检验的。
+例 某药厂生产的胶囊平均长度为13mm，现随机在生产线上抽取10个，测得长度如下：15 13 13 15 13 13 12 12 10  9，生产过程中对长度的控制是否需要调整？
+```{r}
+leng <- c(15,13,13,15,13,13,12,12,10,9)
+SignTest(leng,mu = 13)
+```
+P值大于0.05，可以认为长度不需要调整。
+
+例 乙型脑炎病例在25个不同三甲医院的治疗费用（元）如下：15165  4257 25844 36779  4730 14687  2901 13964 16226 25004 37086  2193 31139  4057 34443 37572  6260  2754 18377 39357 29184 17398  9948 13938 32874试用符号检验分析，某三甲医院治疗费(10000元)用是在中位数之上还是之下。
+
+样本的中位数(M)作为治疗费用的中间值，$H_{0}$:M>10000,$H_{1}$:M<10000。
+
+```{r}
+x <- c(15165,4257,25844,36779,4730,14687,2901,13964,
+       16226,25004,37086,2193,31139,4057,34443,37572,6260,2754,
+       18377,39357,29184,17398,9948,13938,32874)
+binom.test(sum(x>10000),n = length(x),alternative = "l")
+
+```
+P值大于0.05，可以认为样本的中位数大于10000元，也就是说某三甲医院治疗费用（10000元）在中位数之下。
+
+例 为豚鼠注入肾上腺素前后的每分钟灌流滴数，给药前：30 38 48 48 60 46 26 58 46 48 44 46，给药后：46 50 52 52 58 64 56 54 54 58 36 54，试比较给药前后灌流滴数有无显著差别？
+
+```{r}
+x <- c(30,38,48,48,60,46,26,58,46,48,44,46)
+y <- c(46,50,52,52,58,64,56,54,54,58,36,54)
+binom.test(sum(x<y),length(x))
+```
+P值大于0.05，可认为给药前后无显著差异。
+
+###Wilcoxon符号秩检验(Wilcoxon signed rank test)
+“秩”又称等级、即按数据大小排定的顺序号，顺序号的和称“秩和”，秩和检验就是用秩和作为统计量进行假设检验的方法。Wilcoxon符号秩检验即符号等级检验法是通过对两个相关样本的每对数据之差的符号（正号或负号）及等级进行检验，以比较这两个样本所代表的总体的差异显著性，对应于参数检验中两相关样本差异显著性的Ｔ检验。其基本思想是：若两总体差异不显著，则两样本的正负向差值的等级之和应大致相等，即分布对称，且中位数为0，可见符号检验是以中位数和分布的对称性为统计量进行假设检验的。
+
+例 某地10名儿童智力测验所的IQ如下：99 131 118 112  128 136 120 107 134 122，这10名儿童的智力是否小于等于当地智力中位数110？
+```{r}
+IQ    <- c(99, 131, 118, 112, 128, 136, 120, 107, 134, 122)
+medH0 <- 110
+wilcox.test(IQ, alternative="greater", mu=medH0, conf.int=TRUE)
+```
+P值小于0.05，可以认为这10名儿童的智力大于当地智力中位数110。
+
+##两独立样本(Two independent samples)
+###符合检验(Sign-test)
+例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲乙组病人血尿素氮(BUN)的含量有无差别？
+```{r}
+Nj  <- c(10, 13)
+x <- c(4.98,3.90,4.02,0.68,4.98,5.04,1.20,2.64,6.23,3.00)
+y <- c(4.17,4.95,3.96,3.59,4.89,3.03,3.71,5.91,5.55,6.29,4.82,3.90,6.11)
+wIndDf <- data.frame(DV=c(x, y),
+                     IV=factor(rep(1:2, Nj), labels=LETTERS[1:2]))
+median_test(DV ~ IV, distribution="exact", data=wIndDf)
+```
+P值均大于0.05，不能拒绝原假设，可以认为两组病人血尿素氮无差异。
+
+###Wilcoxon符号秩和检验(Wilcoxon rank-sum test)
+Wilcoxon符号秩和检验即Mann-Whitney U检验适用于两独立样本的差异显著性检验，用以确定两种总体的分布是否相同，对应于参数检验中两独立样本均数之差的Ｔ检验。
+例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲组病人血尿素氮(BUN)的含量是否大于乙组？
+```{r}
+#wilcox.test(x,y,exact = FALSE,correct =F) #差异性比较 
+#wilcox.test(x,y,exact = FALSE) 
+wilcox.test(DV ~ IV, alternative="less", conf.int=TRUE, data=wIndDf)
+```
+P值均大于0.05，不能拒绝原假设，可以认为甲组病人血尿素氮(BUN)的含量不大于乙组。
+
+例 已知某地正常人尿氟含量的中位数为2.15mmol/L。今在该地某厂随机抽取12名工人，测得尿氟含量（mmol/L），结果如下2.15 2.10 2.20 2.12 2.42 2.52 2.62 2.72 2.99 3.19 3.37 4.57。问该厂工人的尿氟含量是否高于当地正常人？
+
+$H_{0}$:M>2.15,$H_{1}$:M<2.15。
+
+```{r}
+x <- c(2.15,2.10,2.20,2.12,2.42,2.52,2.62,2.72,2.99,3.19,3.37,4.57)
+wilcox.test(x,alternative = "l",mu = 2,15)
+```
+P值大于0.05，接受原假设，认为该工厂的尿氟含量高于当地正常人。
+
+####配对样本比较的Wilcoxon
+配对设计计量资料两处理效应的比较，一般采用配对t检验，如果差数严重偏离正态分布，可采用Wilcoxon秩检验，亦称符号秩和检验（signed rank test）。一般认为，在数据满足配对t检验要求时，Wilcoxon秩检验的功效是检验效能的95%左右。目的是推断配对样本差值的总体中位数是否和0有差别，即推断配对的两个相关样本所来自的两个总体中位数是否有差别。
+
+例 某研究者欲研究保健食品对小鼠抗疲劳作用，将同种属的小鼠按性别和年龄相同、体重相近配成对子，共10对，并将每对中的两只小鼠随机分到保健食品两个不同的剂量组，过一定时期将小鼠杀死，测得10对小鼠肝糖原含量（mg/100g）中剂量组620.16 866.50 641.22 812.91 738.96 899.38 760.78 694.95 749.92 793.94 高剂量组958.47 838.42 788.90 815.20 783.17 910.92 758.49 870.80 862.26 805.48，问不同剂量组的小鼠肝糖原含量有无差别？
+
+```{r}
+x <- c(620.16,866.50,641.22,812.91,738.96,899.38,760.78,694.95,749.92,793.94)
+y <- c(958.47,838.42,788.90,815.20,783.17,910.92,758.49,870.80,862.26,805.48)
+wilcox.test(x,y,paired = T)
+```
+P值小于0.05，可以认为该保健食品的不同剂量对小鼠肝糖原含量的作用不同。
+
+例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲乙组病人血尿素氮(BUN)的含量有无差别？
+ 
+```{r}
+x <- c(4.98,3.90,4.02,0.68,4.98,5.04,1.20,2.64,6.23,3.00)
+y <- c(4.17,4.95,3.96,3.59,4.89,3.03,3.71,5.91,5.55,6.29,4.82,3.90,6.11)
+wilcox.test(x,y,exact = FALSE,correct =F) 
+wilcox.test(x,y,exact = FALSE) 
+```
+无论是否采用连续校正，P值均大于0.05，不能拒绝原假设，可以两组病人血尿素氮无差异。
+
+例 某研究者欲评价新药按摩乐口服液治疗高甘油三脂血症的疗效，将高甘油三脂血症患者189例随机分为两组，分别用按摩乐口服液和山楂精降脂片治疗，数据见下表，问两种药物治疗高甘油三脂血症的疗效有无不同？
+
+疗效          按摩乐口服液       山楂精降脂片
+----          ---                ---
+无效          17                 70
+有效          25                 13
+显效          37                 37
+
+```{r}
+a <- rep(1:3,c(17,25,27))
+b <- rep(1:3,c(70,13,37))
+wilcox.test(a, b, exact=FALSE)
+```
+P值小于0.05，可以认为，两种药物对高甘油三脂血症的疗效分布不同。
+
+##多组样本(more than two samples)
+非参数多组比较法其主要用于等级型数据或不满足参数检验条件的场合，故亦称等级方差分析（ANOVA by ranks）。和方差分析一样，按照实验设计不同，非参数多组比较法也包括适用于完全随机化设计的单向秩次方差分析或称Kruskal-Wallis检验和适用于随机化区组设计的双向秩次方差分析(Friedman检验)。
+###无序独立样本(Independent samples - unordered groups)
+Kruskal-Wallis检验用来检验多个独立样本的位置是否一样。
+
+例 四组病例测试的智力IQ分别打分如下：A：99, 131, 118, 112, 128, 136, 120, 107, 134, 122，B：134, 103, 127, 121, 139, 114, 121, 132 C：110, 123, 100, 131, 108, 114, 101, 128, 110，D：117, 125, 140, 109, 128, 137, 110, 138, 127, 141, 119, 148 问不同组之间的IQ是否有差异？
+
+```{r}
+A  <- c(99, 131, 118, 112, 128, 136, 120, 107, 134, 122)
+B  <- c(134, 103, 127, 121, 139, 114, 121, 132)
+C  <- c(110, 123, 100, 131, 108, 114, 101, 128, 110)
+D  <- c(117, 125, 140, 109, 128, 137, 110, 138, 127, 141, 119, 148)
+Nj   <- c(length(A), length(B), length(C), length(D))
+KWdf <- data.frame(DV=c(A,B,C,D),
+                   IV=factor(rep(1:4, Nj), labels=c("A", "B", "C", "D")))
+kruskal.test(DV ~ IV, data=KWdf) #stats包
+kruskal_test(DV ~ IV, distribution=approximate(B=9999), data=KWdf) #coin包
+pairwise.wilcox.test(KWdf$DV, KWdf$IV, p.adjust.method="holm") #两两比较
+```
+P值均大于0.05，不能拒绝原假设，可以认为四组的智力没有差异。两两比较结果，没有智力差异。
+permutation检验即置换检验，在当样本量不够大，样本分布未知的情况下，用置换检验模拟出样本均值分布，然后再进行比较。
+```{r}
+oneway_test(DV ~ IV, distribution=approximate(B=9999), data=KWdf)
+```
+P值均大于0.05，不能拒绝原假设，可以认为四组的智力没有差异。
+
+例 三名评分员对10名测试的分别打分如下：A：1 2 5 3 2 1 1 3 2 1，B：4 3 6 5 2 6 1 6 5 4，C：9,6,7,7,5,1,8,9,6,5，问不同的评分员之间是否有差异？
+```{r}
+Value <- c(1,2,5,3,2,1,1,3,2,1,4,3,6,5,2,6,1,6,5,4,9,6,7,7,5,1,8,9,6,5)
+Group <- factor(c(rep(1,10),rep(2,10),rep(3,10)))
+data <- data.frame(Group, Value)
+
+kruskal.test(Value ~ Group, data=data)
+```
+P值小于0.05，可以认为，三位评员的评分分布不同。
+
+例 下面的数据是游泳、打篮球、骑自行车等三种不同的运动在30分钟内消耗的热量(单位:卡路里). 这些数据是否说明这三种运动消耗的热量全相等?游泳: 306, 385, 300, 319, 320;打篮球: 311, 364, 315, 338, 398;骑自行车: 289, 198, 201, 302, 289.
+
+```{r}
+x<-list(swim=c(306, 385, 300, 319, 320),
+basketball=c(311, 364, 315, 338, 398),
+bicycle=c(289, 198, 201, 302, 289))
+kruskal.test(x)
+```
+
+###有序独立样本(Independent samples - ordered groups)
+Jonckheere Terpstra trend检验适用于多个总体有相似的连续分布(除了位置可能不同外)，所有的观察值在样本内和样本间独立。不同于Kruskal-Wallis检验，Jonckheere Terpstra trend检验可以判断是否出现单调的趋势。
+
+例 在一项健康试验中，有3种生活方式，他们一个月后减少的种类如下：A 3.7 3.7 3.0 3.9 2.7 B：7.3 5.2 5.3 5.7 6.5 C：9.0 4.9 7.1 8.7，能否得三种生活方式减肥效果相同？
+
+```{r}
+A  <- c(3.7,3.7,3.0,3.9,2.7)
+B  <- c(7.3,5.2,5.3,5.7,6.5)
+C  <- c(9.0,4.9,7.1,8.7)
+Nj <- c(length(A), length(B), length(C))
+JTdf <- data.frame(IV=ordered(rep(LETTERS[1:3], Nj)),
+                   DV=c(A,B,C))
+
+kruskal_test(DV ~ IV, distribution=approximate(B=9999), data=JTdf)
+JonckheereTerpstraTest(DV ~ IV, data=JTdf)
+```
+p值小于0.05，可以认为三个总体的位置有上升趋势。
+
+###无序非独立样本(Dependent samples - unordered groups)
+Friedman检验即双向等级方差分析对应于参数检验中随机区组设计的方差分析
+例 现有6条狗服用阿司匹林不同时间（时间）血中的药物浓度数据（r/ml）如下表，问服药后不同时间血中的药物浓度有无差别？
+
+编号  0.5h  1h    6h     8h     24h   48h
+----  ---   ---   ---    ---    ---   ---
+1     51.6  135.2 169.8  137.2  31.9  0.4
+2     49.6  101.6 158.4  133.0  18.7  0.0
+3     40.6  88.4  142.8  126.6  18.1  2.0
+4     11.2  37.2  131.8  130.3  17.5  0.2
+5     17.8  48.2  118.0  124.5  18.7  1.8
+6     14.4  41.6  120.8  123.5  24.8  3.0
+
+```{r}
+x<-matrix(c(51.6,49.6,40.6,11.2,17.8,14.4,
+           135.2,101.6,88.4,37.2,48.2,41.6,
+           169.8,158.4,142.8,131.8,118,120.8,
+           137.2,133,126.6,130.3,124.5,123.5,
+           31.9,18.7,18.1,17.5,18.7,24.8,
+           0.4,0,2,0.2,1.8,3
+          ),
+         nrow = 6,
+         byrow = TRUE,
+         dimnames = list(1 : 6,c("h1", "h2", "h3","h4","h5","h6")))
+
+friedman.test(x)
+```
+P值小于0.05，拒绝原假设，可以认为服药后不同时间血中的药物浓度有差异。
+
+例 四种测试的方式，分别测试得到如下：A：14 13 12 11 10 ，B：11 12 13 14 15，C：16 15 14 13 12，D：13 12 11 10 9，问不同的测试方式之间是否有差异？
+
+```{r}
+N   <- 5
+P   <- 4
+DV1 <- c(14, 13, 12, 11, 10)
+DV2 <- c(11, 12, 13, 14, 15)
+DV3 <- c(16, 15, 14, 13, 12)
+DV4 <- c(13, 12, 11, 10,9)
+Fdf <- data.frame(id=factor(rep(1:N, times=P)),
+                  DV=c(DV1, DV2, DV3, DV4),
+                  IV=factor(rep(1:P, each=N),
+                            labels=LETTERS[1:P]))
+friedman.test(DV ~ IV | id, data=Fdf)
+```
+P值小于0.05，拒绝原假设，可以认为四种不同的测试方式之间有差异。
+
+由于本例中样本量较小，置换检验如下
+```{r}
+oneway_test(DV ~ IV | id, distribution=approximate(B=9999), data=Fdf)
+```
+置换检验结果表明四种不同的测试方式之间没有差异。
+
+例 现有6条狗服用阿司匹林不同时间（时间）血中的药物浓度数据（r/ml）如下表，问服药后不同时间血中的药物浓度有无差别？
+
+编号  0.5h  1h    6h     8h     24h   48h
+----  ---   ---   ---    ---    ---   ---
+1     51.6  135.2 169.8  137.2  31.9  0.4
+2     49.6  101.6 158.4  133.0  18.7  0.0
+3     40.6  88.4  142.8  126.6  18.1  2.0
+4     11.2  37.2  131.8  130.3  17.5  0.2
+5     17.8  48.2  118.0  124.5  18.7  1.8
+6     14.4  41.6  120.8  123.5  24.8  3.0
+
+```{r}
+x<-matrix(c(51.6,49.6,40.6,11.2,17.8,14.4,
+           135.2,101.6,88.4,37.2,48.2,41.6,
+           169.8,158.4,142.8,131.8,118,120.8,
+           137.2,133,126.6,130.3,124.5,123.5,
+           31.9,18.7,18.1,17.5,18.7,24.8,
+           0.4,0,2,0.2,1.8,3
+          ),
+         nrow = 6,
+         byrow = TRUE,
+         dimnames = list(1 : 6,c("h1", "h2", "h3","h4","h5","h6")))
+
+friedman.test(x)
+```
+P值小于0.05，拒绝原假设，可以认为服药后不同时间血中的药物浓度有差异
+
+例 A、B两种药物治疗后，测得体重相近的三组患儿的血肌酐含量如下，每组2名，问A、B两种药物对患儿的血肌酐含量的影响是否有差异？
+
+药物   区组   血浆蛋白
+----   ---    ---
+ A     L      44.55
+ B     L      28.22
+ A     M      24.00
+ B     M      28.77
+ A     H      24.55
+ B     H      18.77
+ 
+```{r}
+w <- as.factor(c("A","B","A","B","A","B"))
+t <- as.factor(c("L","L","M","M","H","H"))
+x <- c(44.55,28.22,24.00,28.77,24.55,18.77)
+wb <- as.data.frame(cbind(x,w,t))
+friedman.test(x ~ w | t, data = wb)
+```
+P值大于0.05，不能拒绝原假设，可以认为A、B两种药物对患儿的血肌酐含量影响无差异。
+
+
+###有序非独立样本(Dependent samples - ordered groups)
+Page trend检验对应于参数检验中Spearman's rank相关检验，适用于有序的多组之间的的非参数的趋势检验。
+例 四种测试的方式，分别测试得到如下：A：1.79 -3.05  2.44  1.53 -0.43  0.96  0.17  1.55  0.19 -1.21，B：2.43 -3.20  0.73 -3.60 -4.05 -1.91 -5.44  1.97 -3.78 -3.25，C：3.33 -3.50 -0.49  0.87  2.28 -1.25  6.70  2.79  3.53  4.73，D：-3.23  2.00  4.43  3.95  2.54  3.45  0.66  0.91  0.06 -1.47，问不同的测试方式之间是否有差异？
+
+```{r}
+A <- c(1.79,-3.05,2.44,1.53,-0.43,0.96,0.17,1.55,0.19,-1.21)
+B <- c(2.43,-3.20,0.73,-3.60,-4.05,-1.91,-5.44,1.97,-3.78,-3.25)
+C <- c(3.33,-3.50,-0.49,0.87,2.28,-1.25,6.70,2.79,3.53,4.73)
+D <- c(-3.23,2.00,4.43,3.95,2.54,3.45,0.66,0.91,0.06,-1.47)
+
+Pdf <- data.frame(id=factor(rep(1:10, times=4)),
+                  DV=c(A,B,C,D),
+                  IV=ordered(rep(LETTERS[1:4], each=10)))
+PageTest(DV ~ IV | id, data=Pdf) #DescTools包
+friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Pdf) #coin包
+```
+p值大于0.05，可以认为四种不同的测试方式之间没有差异。
+
+##二项分布检验(Binomial test)
+二项分布检验是对二分类变量的拟合优度检验，它考察每个类别中观察值的频数与特定二项分布下的预期频数间是否存在统计学差异。在二项分布检验中，实际上采用的和K-S检验的原理相同，只是这里主要使用的是二分变量，是一个离散分布的检验情况。
+###单侧(One-sided)
+例 某研究检测7份血清标本，乙肝HBsAg的抗体结果如下："+", "+", "-", "+", "-", "+", "+"，问研究的血清标本阳性率是否小于等于0.25？
+```{r}
+DV   <- factor(c("+", "+", "-", "+", "-", "+", "+"), levels=c("+", "-"))
+N    <- length(DV)
+(tab <- table(DV))
+pH0 <- 0.25
+binom.test(tab, p=pH0, alternative="greater", conf.level=0.95)
+```
+P值大于0.05，可以认为研究的血清标本阳性率时候小于等于0.25。
+
+###双侧(Two-sided)
+例 某研究检测20份血清标本，乙肝HBsAg的抗体有10份是阳性，问研究的血清标本阳性率是否等于0.25？
+```{r}
+N    <- 20
+hits <- 10
+binom.test(hits, N, p=pH0, alternative="two.sided")
+```
+P值小于0.05，可以认为研究的血清标本阳性率时候不等于0.25。
+
+###置信区间(Confidence intervals)
+例 某研究检测7份血清标本，乙肝HBsAg的抗体结果如下："+", "+", "-", "+", "-", "+", "+"，问研究的血清标本阳性率和其置信区间？
+```{r}
+DV   <- factor(c("+", "+", "-", "+", "-", "+", "+"), levels=c("+", "-"))
+N    <- length(DV)
+tab <- table(DV)
+BinomCI(tab[1], sum(tab), method="wilson")
+```
+该血清阳性率为71.42%，95%置信区间为35.89%~91.77%.
+
+##Pearson拟合优度$\chi ^{2}$检验
+假定某随机变量$X$应当有分布，对$X$进行$n$次观察，可以得到Pearson$\chi^{2}$统计量$K=\sum_{i=1}^{m}\frac{(n_{i}-np{i})^{2}}{np_{i}}$,当$n\rightarrow \infty$时，$K$分布收敛于自由度为$m-1$的$\chi ^{2}$分布。$m$为区间个数，$n_{i}$为随机变量落在区间内的个数，$p_{i}$为区间的理论概率。
+
+例 20位病人的某项临床检验值如下9.66 35.42 39.24 32.00  6.63 27.96 20.79 17.81 19.97 13.03 35.93 13.30 32.39 23.21 31.35 16.98 20.56 16.94 35.21 23.33，请用Pearson $\chi ^{2}$检验判断是否服从正态分布？
+
+```{r}
+ x <- c(9.66,35.42,39.24,32.00,6.63,27.96,20.79,
+        17.81,19.97,13.03,35.93,13.30,32.39,23.21,
+        31.35,16.98,20.56,16.94,35.21,23.33)
+ g <- table(cut(x,breaks = c(5,10,15,20,25,30,35)))
+ p <- pnorm(c(10,15,20,25,30,35),mean(x),sd(x))
+ p <- c(p[1],p[2]-p[1],p[3]-p[2],p[4]-p[3],p[5]-p[4],1-p[5])
+ chisq.test(g,p = p)
+
+```
+P值大于0.05，可以认为服从正态分布
+
+##Kolmogorov-Smirnov检验
+Kolmogorov-Smirnov是比较一个频率分布f(x)与理论分布g(x)或者两个观测值分布的检验方法。其原假设$H_{0}$:两个数据分布一致或者数据符合理论分布。 $D=max|f(x)-g(x)|$,当实际观测值$D>D(n,\alpha)$则拒绝$H_{0}$，否则则接受$H_{0}$假设。检验统计量为$Z=\sqrt{n}\max_{i}(|F_{n}(x_{i-1}-F(x_{i})|,|F_{n}(x_{i}-F(x_{i})|)$。
+
+###单样本检验
+例 20位病人的某项临床检验值如下9.66 35.42 39.24 32.00  6.63 27.96 20.79 17.81 19.97 13.03 35.93 13.30 32.39 23.21 31.35 16.98 20.56 16.94 35.21 23.33，请用Kolmogorov-Smirnov检验判断是否服从正态分布？
+```{r}
+x <- c(9.66,35.42,39.24,32.00,6.63,27.96,20.79,17.81,
+       19.97,13.03,35.93,13.30,32.39,23.21,31.35,16.98,
+       20.56,16.94,35.21,23.33)
+ks.test(x,mean(x),sd(x))
+```
+P值大于0.05，可以认为服从正态分布
+
+例 对一台设备进行寿命检验，记录十次无故障操作时间，并按从小到大的次序排列如下420 500 920 1380 1510 1650 1760 2100 2300 2350检验此设备无故障工作时间是否符合rambda=1/1500的指数分布？
+
+```{r}
+X<-c(420, 500, 920, 1380, 1510, 1650, 1760, 2100, 2300, 2350)
+ks.test(X, "pexp", 1/1500)
+```
+###两样本检验
+例 测定两组病人尿液中的尿胆原（URO），A组 2.13 13.91 15.65 12.34  0.74 10.49  7.22  5.86  6.84  3.67 B组 4.62  6.16 0.52  4.79 0.21  3.69  3.46  3.42  5.67  2.83，请检验A组和B组是否相同？
+
+```{r}
+a <- c(2.13,13.91,15.65,12.34,0.74,10.49,7.22,5.86,6.84,3.67)
+b <- c(4.62,6.16,0.52,4.79,0.21,3.69,3.46,3.42,5.67,2.83)
+ks.test(a,b)
+```
+P值大于0.05，可以认为A、B两组的分布相同。
+
+##列联表的独立性检验
+在研究问题时有时候会遇到要求判断两个分类变量之间是否存在联系的问题，通常使用$\chi ^{2}$检验判断两组或多组资料是否相互关联。如果不相互关联，就称为独立，这类问题处理称为独立性检验（Test of Independence）。
+
+####pearson$\chi ^{2}$检验
+在$i$为行，$j$为列的列联表中，统计量为$K=\sum_{i=1}^{I}\sum_{j=1}^{J}\frac{[n\cdot n_{ij}-n_{i}\cdot n_{j}]^{2}}{n\cdot n_{i}\cdot n_{j}}$。
+
+例 vcd包中Arthritis数据集是一项风湿性关节炎新疗法的双盲临床实验的结果，请分析治疗措施是否与风湿性关节炎改善情况有关？
+```{r}
+panderOptions('table.split.table', Inf)
+pander(head(Arthritis))
+```
+```{r}
+mytable <- xtabs(~Treatment+Improved,data=Arthritis)
+chisq.test(mytable)
+```
+P值小于0.05，可以认为治疗情况与改善状况有关。
+
+例 某杂志刊登了一篇研究吸烟是否与患肺癌有关文章，对63位肺癌患者及43名非肺癌患者调查了其中的吸烟人数，得到2*2列联表，如下表所示，认为吸烟与肺癌有关，请予以验证！
+
+               患肺癌          未患肺癌
+---            ---             --- 
+吸烟            60             32
+不吸烟          3              11
+
+```{r}
+x<-c(60, 3, 32, 11)
+dim(x)<-c(2,2)
+chisq.test(x,correct = FALSE)
+```
+P值小于0.05，可以认为吸烟与肺癌有关。
+
+##卡方检验($\chi^{2}$检验)
+卡方检验用于两个率或两个构成比之间的比较。
+例 三组大白鼠分别为35 16 94只，在不同致癌剂作用下的发病数分别为15 6 39，问不同组只见发病数是否有差别？
+```{r}
+total <- c(35, 16, 94)
+hits  <- c(15,6,39)
+prop.test(hits, total)
+```
+P值大于0.05，不能拒绝零假设，不能认为三组之间的发病数有差异。
+
+##游程检验(Runs-test)
+游程检验即单样本变量值的随机性检验，其一个或多个的代表相同属性或类型的接连出现区段称为游程。游程检验主要是用来检验数据是否为随机性取得。 
+例 某村发生一种地方病，其住户沿一条河排列，调查时对发病的住户标记为“t”，对非发病的住户标记为“f”，共8户，其取值如下表所示:"f", "t", "t", "f", "t", "f", "f", "f",问该地方的发病是否随机？
+```{r}
+queue <- factor(c("f", "t", "t", "f", "t", "f", "f", "f"))
+RunsTest(queue, alternative="greater")
+```
+P值大于0.05，可以认为地方病的发病是随机的。
+
+###置换检验(Manual permutation test)
+样本数较少，实现置换检验
+```{r}
+Nj    <- table(queue)
+(runs <- rle(levels(queue)[as.numeric(queue)]))
+(rr <- length(runs$lengths))
+(rr1 <- table(runs$values)[1])
+(rr2 <- table(runs$values)[2])
+getP <- function(r1, r2, n1, n2) {
+    # iterations of a symbol <= total number of this symbol?
+    stopifnot(r1 <= n1, r2 <= n2)
+
+    # probability in case r1+r2 is uneven
+    p <- (choose(n1-1, r1-1) * choose(n2-1, r2-1)) / choose(n1+n2, n1)
+
+    # probability in case r1+r2 is even: twice the uneven case
+    ifelse(((r1+r2) %% 2) == 0, 2*p, p)
+}
+
+n1 <- Nj[1]
+n2 <- Nj[2]
+N <- sum(Nj)
+rMin  <- 2
+(rMax <- ifelse(n1 == n2, N, 2*min(n1, n2) + 1))
+p3.2 <- getP(3, 2, n1, n2)
+p2.3 <- getP(2, 3, n1, n2)
+p3.3 <- getP(3, 3, n1, n2)
+p4.3 <- getP(4, 3, n1, n2)
+(pGrEq <- p3.2 + p2.3 + p3.3 + p4.3)
+p2.2 <- getP(2, 2, n1, n2)
+p1.2 <- getP(1, 2, n1, n2)
+p2.1 <- getP(2, 1, n1, n2)
+p1.1 <- getP(1, 1, n1, n2)
+(pLess <- p2.2 + p1.2 + p2.1 + p1.1)
+pGrEq + pLess
+```
+
+对上述游程进行检验可用正态近似法
+```{r}
+muR   <- 1 + ((2*n1*n2) / N)
+varR  <- (2*n1*n2*(2*n1*n2 - N)) / (N^2 * (N-1))
+rZ    <- (rr-muR) / sqrt(varR)
+(pVal <- 1-pnorm(rZ))
+```
+
+##无序分类联合检验(Association tests and measures for unordered categorical variables)
+###(2×2)列联表
+Fishe精确检验是检验两个二分类变量是否是独立的一种检验。在样本较小时（单元的期望频数小于5），需要用Fisher精确检验来做独立性检验。Fisher精确检验的原假设是：边界固定的列联表中行和列是相互独立的,其调用格式为fisher.test(mytable)，其中的mytable是一个二维列联表,这里的fisher.test()函数可以在任意行列数大于等于2的二维列联表上使用，但不能用于2×2的列联表。
+
+例 vcd包中Arthritis数据集是一项风湿性关节炎新疗法的双盲临床实验的结果，请用Fisher精确独立检验分析治疗措施是否与风湿性关节炎改善情况。
+
+```{r}
+mytable <- xtabs(~Treatment+Improved,data=Arthritis)
+fisher.test(mytable) #fish.test()函数不可用于2*2列联表
+```
+P值小于0.05，可以认为治疗情况与改善状况有关。
+
+例 某疾病的影像学诊断和疾病的确诊结果如下，问影像学诊断和确诊结果是否有差别？
+        
+疾病    isHealthy  isIll
+---     ---        ---
+no      8          2  
+yes     1          4 
+    
+```{r}
+disease <- factor(rep(c("no", "yes"),   c(10, 5)))
+diagN   <- rep(c("isHealthy", "isIll"), c( 8, 2))
+diagY   <- rep(c("isHealthy", "isIll"), c( 1, 4))
+diagT   <- factor(c(diagN, diagY))
+contT1  <- table(disease, diagT)
+addmargins(contT1)
+fisher.test(contT1)
+```
+P值大于0.05，可以认为影像学诊断和确诊结果没有差别。
+
+###灵敏度、特异度等(Prevalence, sensitivity, specificity, CCR, F-score)
+```{r}
+TN <- c11 <- contT1[1, 1]       ## true negative 真阴性
+TP <- c22 <- contT1[2, 2]       ## true positive / hit 真阳性
+FP <- c12 <- contT1[1, 2]       ## false positive 假阳性
+FN <- c21 <- contT1[2, 1]       ## false negative / miss 假阴性
+
+(prevalence <- sum(contT1[2, ]) / sum(contT1)) #盛行率
+(sensitivity <- recall <- TP / (TP+FN))  #灵敏度
+(specificity <- TN / (TN+FP))  #特异度
+(relevance <- precision <- TP / (TP+FP)) #阳性预测值
+(CCR <- sum(diag(contT1)) / sum(contT1)) #正确分类率 accuracy = (TP + TN)/(TP + FP + FN + TN)
+(Fval <- 1 / mean(1 / c(precision, recall))) #F得分 = 2*TP /(2*TP + FP + FN) % 
+```
+
+### OR值、相对危险度等(Odds ratio, Yule's Q and risk ratio)
+```{r}
+(OR <- OddsRatio(contT1, conf.level=0.95)) # OR值
+YuleQ(contT1)  ## Goodman-Kruskal γ值，属于2×2四格表的列联比例函数
+RelRisk(contT1) #相对危险度
+(risk    <- prop.table(contT1, margin=1))
+(relRisk <- risk[1, 1] / risk[2, 1]) #相对危险度
+```
+
+###(r×c)列联表
+例 某研究得出吸烟和冠心病疾病的严重程度人数分布如下表，问吸烟和冠心病疾病的严重程度是否有关？
+
+smokes  轻   中   重
+---     ---  ---  ---
+no      5    21   6
+yes     4    13   1 
+```{r}
+table2flat <- function(mytable){
+  df <- as.data.frame(mytable)
+  rows <- dim(df)[1]
+  cols <- dim(df)[2]
+  x <- NULL
+  for(i in 1:rows){
+    for(j in 1:as.integer(as.character(df$Freq[i]))){
+      row <- df[i,c(1:(cols-1))]
+      x <- rbind(x,row)
+    }
+  }
+  row.names(x) <- c(1:dim(x)[1])
+  return(x)
+}
+
+smokes <- rep(c("no","yes"),times=1)
+siblings <- rep(c("1","2","3"),each=2)
+Freq <- c(5,4,21,13,6,1)
+mytable <- as.data.frame(cbind(smokes,siblings,Freq))
+mydata <- table2flat(mytable)
+cTab <- table(mydata)
+cTab
+addmargins(cTab)
+chisq.test(cTab)
+```
+p值大于0.05，可以认为吸烟和冠心病疾病的严重程度无关。
+
+#### \(\phi\), Cramer's \(V\), contingency coefficient等值
+```{r}
+Assocs(cTab)
+```
+
+####Cochran-Mantel-Haenszel 检验
+MHC 检验在存在第三个类别变量的情况下有条件地检验两个二分类变量的关联度。
+
+例 检验在A、B两组组别因素存在的情况下，性别和工作而分类变量的关联度
+```{r}
+set.seed(123)
+myDf <- data.frame(work =factor(sample(c("home", "office"), 10, replace=TRUE)),
+                   sex=factor(sample(c("f", "m"),10, replace=TRUE)),
+                   group=factor(sample(c("A", "B"), 10, replace=TRUE)))
+tab3 <- xtabs(~ work + sex + group, data=myDf)
+tab3
+cmh_test(tab3, distribution=approximate(B=9999))
+```
+P值大于0.05，可以认为性别和工作无关联。
+
+在存在第三个分类变量的情况下，有条件的检验两个分类变量的关联度，需要用Cochran-Mantel-Haenszel检验。其原假设是两个分类变量在第三个变量的每一层中都是条件独立的。
+
+例 Arthritis数据集检验治疗情况和改善情况在性别的每一水平下是否独立，假设不存在三阶交互作用（治疗情况×改善情况×性别）。
+
+```{r}
+mytable <- xtabs(~Treatment+Improved+Sex,data=Arthritis)
+mantelhaen.test(mytable)
+```
+P值较小，表明接受治疗与得到改善在性别的每一水平下并不独立即，分性别来看，用药治疗的患者叫接受安慰剂的患者有了更多的改善。
+
+##有序分类联合检验(Association tests and measures for ordered categorical variables)
+###线性间的联合检验(Linear-by-linear association test)
+线性间的联合检验检验两有序变量之间升高或降低的变化趋势。
+
+例  下表表示不同年龄组血液病患者真菌感染发生的严重分级情况，是否年龄组越高，感染越重？
+年龄   I      II      III     IV
+---    ---    ---     ---     ---
+<=29   1      5       6       9 
+30~59  5      7       6       7
+>=60   8      9       13      10
+
+```{r}
+age <- rep(c("Q","Z","L"),times=4)
+severity <- rep(c("I","II","III","IV"),each=3)
+Freq <- c(1,5,8,5,7,9,6,6,13,9,7,10)
+mytable <- as.data.frame(cbind(age,severity,Freq))
+dfOrd <- table2flat(mytable)
+cTab <- xtabs(~ age + severity, data=dfOrd)
+addmargins(cTab)
+lbl_test(cTab, distribution=approximate(B=9999))
+```
+P值大于0.05，不能认为年龄越高真菌感染的严重程度越重。
+
+###多序列相关(Polychoric and polyserial correlation)
+Polychoric相关是估计从两个从有序分类变量所获得的两个近似连续正态分布的潜变量（latent variables）之间的相关。
+```{r}
+polychor(dfOrd$age, dfOrd$severity, ML=TRUE)
+#polychor(cTab, ML=TRUE)
+```
+
+polyserial相关是估计一个连续性变量和一个有序分类的变量之间的相关。
+```{r}
+x <- rnorm(86,mean = 23,sd=10) 
+polyserial(x, dfOrd$severity) #两步骤估计
+polyserial(x, dfOrd$severity,ML=TRUE, std.err=TRUE) #ML估计 
+```
+
+###异构相关矩阵(Heterogeneous correlation matrices)
+```{r}
+N <- 100
+Sigma <- matrix(c(4,2,-3, 2,16,-1, -3,-1,9), byrow=TRUE, ncol=3)
+mu<- c(-3, 2, 4)
+Xdf   <- data.frame(rmvnorm(n=N, mean=mu, sigma=Sigma))
+lOrd   <- lapply(Xdf, function(x) {
+  cut(x, breaks=quantile(x), include.lowest=TRUE,
+      ordered=TRUE, labels=LETTERS[1:4]) })
+dfOrd  <- data.frame(lOrd)
+
+Xdf2<- rmvnorm(n=N, mean=mu, sigma=Sigma) #产生随机多元正态分布
+dfBoth <- cbind(Xdf2, dfOrd)
+hetcor(dfBoth, ML=TRUE)
+```
+
+###有序变量和连续性变量(Association measures involving categorical and continuous variables)
+对有序分类变量和连续性变量的相关测量，可以使用rms包中建立Logistic模型的lmr函数，AUC等指标可从模型的stats中获得。
+```{r}
+set.seed(123)
+N   <- 100
+x   <- rnorm(N)
+y   <- x + rnorm(N, 0, 2)
+yDi <- ifelse(y <= median(y), 0, 1)
+
+lrm(yDi ~ x)$stats
+
+#绘制ROC曲线
+(rocRes <- roc(yDi ~ x, plot=TRUE, ci=TRUE, main="ROC-curve",
+               xlab="specificity (TN / (TN+FP))", ylab="sensitivity (TP / (TP+FN))"))
+rocCI <- ci.se(rocRes)
+plot(rocCI, type="shape")
+```
+
+##Cochran Q检验(Cochran-Q-test)
+Cochran-Q检验是对多个变量的二分数据具有同一分布的检验。检验的数据是二分类数据，且数据是0或1两种编码。
+
+例 某研究调查了20名患者，对四个医院的满意情况，满意用1表示，不满意用0表示。
+```{r}
+data_wide <- read.csv("Cochran.csv",header = T)
+data_wide
+```
+
+```{r}
+data_long <- melt(data_wide, id.vars = NULL) #转为长格式
+id=factor(rep(1:20,times=4))
+cdf <- data.frame(id,data_long)
+cdf$value <- as.numeric(cdf$value) #转为数字
+symmetry_test(value~variable  | id, teststat="quad", data=cdf)
+```
+P值小于0.05，可以认为对四个医院的满意情况有差异。
+
+##McNemar检验(McNemar test)
+McNemar检验用于配对计数资料的分析，主要分析配对资料中对照组和处理组的频数或比率是否有差异。常用于同一批观察对象用药前后或试验前后的结果是否有差异。McNemar检验用于配对计数资料的分析，主要分析配对资料中对照组和处理组的频数或比率是否有差异，也可以分析统一批观察对象用药前后或试验前后的结果是否有差异，并不是独立性检验。Kappa统计量用于测量两次调查的可重复性，$k=\frac{p_{0}-p_{e}}{1-p_{e}}$,$p_{0}$两次调查中一致的概率，$p_{e}$两次调查的期望一致概率，$p_{e}= \sum_{i=1}^{c}a_{i}b_{i}$，$a_{i}b_{i}$为$c*c$列联表中两个调查第$i$个类型的边际概率,k>0.75表示极好的重复性,0.4<=k<=0.75好的重复性,0<=k<0.4边界(勉强够格)的重复性。
+
+例 同一批病例治疗前后症状研究结果如下，试分析治疗前后是否有差异？
+
+       后有    后无  
+---    ---     ---
+前有    3       5
+前无    6       6
+
+```{r}
+pre <- rep(c("yes","no"),times=2)
+post <- rep(c("yes","no"),each=2)
+Freq <- c(3,6,5,6)
+mytable <- as.data.frame(cbind(pre,post,Freq))
+mydata <- table2flat(mytable)
+cTab    <- table(mydata$pre, mydata$post)
+addmargins(cTab)
+mcnemar.test(cTab, correct=FALSE)
+symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
+```
+P值大于0.05，不但能认为治疗前后的症状有差异。
+例 研究人员将患霍奇金淋巴瘤的病人和非病人按同性别及年龄在5岁以内的条件进行配对，共配对85对病人。两组人群中扁桃体切除情况如下，试问配对的两组人群扁桃体切除率是否有差别？
+
+             对照是       对照否
+----         ---         --- 
+病人是       26          15 
+病人否       7           37
+
+```{r}
+x <- c(26,7,15,37)
+dim(x) <- c(2,2)
+mcnemar.test(x,correct=F)
+```
+P值大于0.05，不能认为两组人群扁桃体切除率有差异。
+
+例 同时使用甲乙两种方法测定265份标本中的金黄色葡萄球菌，结果如下，问甲乙两种方法可重复性(kappa)是多少？
+
+             甲+         甲-
+----         ---         --- 
+乙+          107         35 
+乙-          24          99
+
+```{r}
+kappa.test <- function(x)
+{
+  N=sum(x)
+  Po=sum(diag(x)/N) #观察到的一致数
+  mr=apply(x,1,sum) #行边际
+  mr=mr/N
+  mc=apply(x,2,sum) #列边际
+  mc=mc/N
+  Pe=sum(mc * mr) #期望一致数
+  k=(Po-Pe)/(1-Pe) #kappa统计量
+  se_k = sqrt((Pe+Pe^2-sum(mr*mc*(mr+mc)))/(N*(1-Pe)^2)) # kappa统计量的标准误
+  z=k/se_k #检验统计量
+  p.value=1-pnorm(z) # p值
+  res=list(kappa=k,se_k=se_k,p.value=p.value,z=z)
+}
+
+X<-c(107, 24, 35, 99)
+dim(X)<-c(2,2)
+k <- kappa.test(X)
+k
+```
+
+##Bowker 检验(Bowker test)
+对于配对设计的二分类资料，通常使用McNemar检验，而对于配对设计多分类资料，使用Bowker检验，是McNemar检验的一般化。
+
+例 两名放射科医生对203名棉屑沉着病可疑患者的诊断结果见下表。试分析两名医生诊断的结果是否相同。
+
+	   I	   II	   III
+---  ---   ---   ---
+I	   78	   5	   2
+II	 6	   56	   12
+III  2	   10	   32
+
+```{r}
+A <- rep(c("I","II","III"),times=3)
+B <- rep(c("I","II","III"),each=3)
+Freq <- c(78,6,2,5,56,10,2,12,32)
+mytable <- as.data.frame(cbind(A,B,Freq))
+mydata <- table2flat(mytable)
+cTab  <- table(mydata$A, mydata$B)
+addmargins(cTab)
+mcnemar.test(cTab) #对于大于2*2的列联表mcnemar.test自动采用Bowke检验
+symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
+```
+P值大于0.05，不能认为两医生的诊断有差异。
+
+##Stuart Maxwell检验(Stuart-Maxwell-test for marginal homogeneity)
+Stuart Maxwell检验与Bowker 检验类似，适用于有序多分类的资料。
+
+例 如上题。
+```{r}
+mh_test(cTab, distribution=approximate(B=9999))
+```
+结果与上题类似，P值大于0.05，不能认为两医生的诊断有差异。
+
+##基于尺度参数的检验
+Kruskal-Wallis和Wilcoxon检验均为基于位置参数的检验，常用基于尺度参数的检验有Ansari-Bradley检验和Fligner-Killeen检验。
+
+###尺度参数的Ansari-Bradley检验
+
+例 两台机器加工的片剂直径(各10个)为(单位:mm):机器A: 18.0, 17.1, 16.4, 16.9, 16.9, 16.7, 16.7, 17.2, 17.5, 16.9;机器B: 17.0, 16.9, 17.0, 16.9, 17.2, 17.1, 16.8, 17.1, 17.1, 17.2.这个结果能否说明两台机器的水平(加工精度)一致？
+
+```{r}
+worker.a<-c(18.0,17.1,16.4,16.9,16.9,16.7,16.7,17.2,17.5,16.9)
+worker.b<-c(17.0,16.9,17.0,16.9,17.2,17.1,16.8,17.1,17.1,17.2)
+ansari.test(worker.a,worker.b)
+```
+P值小于0.05，拒绝原假设，可以认为两台机器的加工精度不同。
+
+###尺度参数的Fligner-Killeen检验
+
+例 三名不同的病人A、B、C同时在同一条件下进行某项智力测验,各进行10次,他们评分如下:
+A: 8, 7, 9, 10, 9, 6, 5, 8, 10, 5;
+B: 8, 7, 9, 6, 8, 9, 10, 7, 8, 9;
+C: 10, 10, 9, 6, 8, 3, 5, 6, 7, 4.
+问这三名病例的智力测验稳定性是否一样？
+
+```{r}
+x<-list(A=c(8,7,9,10,9,6,5,8,10,5),
+B=c(8,7,9,6,8,9,10,7,8,9),
+C=c(10,10,9,6,8,3,5,6,7,4))
+fligner.test(x)
+```
+P值大于0.05，接受原假设，认为三名病例的智力测验稳定性一样。
+
+##重抽样（Resampling）
+当数据抽样于非正态分布时，如未知或混合分布、样本量过小、存在离群点、基于理论分布设计合适的统计检验过于复杂且数学上难以处理等情况，这时可以使用基于随机化和重抽样的统计方法。
+
+###置换检验（Permutation tests）
+以原假设为起点，假定二组没有差别，由此将二组样本合并，从中以无放回方式进行抽样，分别归入两个组再计算统计量，反复进行由此得到置换分布，在此基础上进行推断。相对于传统检验，coin包提供了进行置换检验的一般性框架，函数形式：function(formula,data,distribution=)，formula描述的是要检验变量间的关系，如下表所示，data是一个数据框，distribution指定经验分布在零假设条件下的形式，若distribution ="exact"，那么表示在零假设条件下，分布的计算是精确的（即依据所有可能的排列组合），仅可用于两样本问题；若distribution = "asymptotic"表示根据它的渐进分布进行计算；若distribution ="approxiamate(B = #)"表示根据蒙特卡洛重抽样来做近似计算，其中#指所需重复的次数。
+
+检验	                                        coin函数
+---                                           ---
+两样本和K样本置换检验	                        oneway_test(y ~ A)
+含一个分层（区组）因子的两样本和K样本置换检验	oneway_test(y ~ A | C)
+Wilcoxon-Mann-Whitney秩和检验	                wilcox_test(y ~ A)
+Kruskal-Wallis检验	                          kruskal_test(y ~ A)
+Person卡方检验	                              chisq_test(A ~ B)
+Cochran-Mantel-Haenszel检验	                  cmh_test(A ~ B | C)
+线性关联检验	                                lbl_test(D ~ E)
+Spearman检验	                                spearman_test(y ~ x)
+Friedman检验	                                friedman_test(y ~ A | C)
+Wilcoxon符号秩检验	                          wilcoxsign_test(y1 ~ y2)
+
+coin函数中，y和x是数值变量，A和B是分类因子，C是类别型区组变量，D和E是有序因子，y1和y2是相匹配的数值变量。类别变量和有序变量均应转化为因子和有序因子。
+
+####独立两样本和K样本检验（Two-sample t-test / one-way ANOVA for independent groups）
+
+例 某医院欲研究A、B两种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），问两组家兔血清ACE浓度是否相同？
+```{r}
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
+    46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
+    45, 46, 44, 45, 46, 44, 43, 42, 45)
+
+dfCRp <- data.frame(length = c(a, b), site = factor(c(rep("1", 20), 
+    rep("2", 25))))
+
+set.seed(123)
+ot <- oneway_test(length ~ site, data = dfCRp,distribution=approximate(B=9999))
+ot
+```
+
+置换密度图
+```{r}
+supp <- support(ot)
+dens <- sapply(supp, dperm, object=ot)
+plot(supp, dens, xlab="Support", ylab=NA, pch=20, main="Density permutation distribution")
+```
+
+QQ图
+```{r}
+qEmp <- sapply(ppoints(supp), qperm, object=ot)
+qqnorm(qEmp, xlab="Normal quantiles", ylab="Permutation quantiles",
+       pch=20, main="Permutation quantiles vs. normal quantiles")
+abline(a=0, b=1, lwd=2, col="blue")
+```
+
+累积分布图
+```{r}
+plot(qEmp, ecdf(qEmp)(qEmp), col="gray60", pch=16,
+     xlab="Difference in means", ylab="Cumulative relative frequency",
+     main="Cumulative relative frequency and normal CDF")
+```
+
+####非独立两样本和K样本检验（Two-sample t-test / one-way ANOVA for dependent groups）
+例 10各高血压病人在治疗前后的血压值分别为86 120  82 137  96 104 142  86  77  82和75 107  88 111 111 132  67 115 103 136，问治疗前后的血压值是否有不同？
+```{r}
+N <- 10
+pre <- c(86,120,82,137,96,104,142,86,77,82)
+post <- c(75,107,88,111,111,132,67,115,103,136)
+tDepDf <- data.frame(DV=c(pre, post),
+                     IV=factor(rep(0:1, each=N), labels=c("pre", "post")))
+id     <- factor(rep(1:N, times=2))
+set.seed(123)
+oneway_test(DV ~ IV | id, alternative="less", distribution=approximate(B=9999), data=tDepDf)
+```
+P值大于0.05，治疗前后的血压值没有不同。
+
+####独立性检验
+例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否独立？
+```{r}
+Arthritisc <- transform(Arthritis,Improved=as.factor(as.numeric(Improved)))
+set.seed(123)
+chisq_test(Treatment~Improved,distribution=approximate(B=9999),data=Arthritisc)
+```
+p值较小，可以认为治疗情况和改善情况不独立。
+
+#####Cochran-Mantel-Haenszel检验
+CMH检验可以对一些分层变量进行调整，从而获得反应率的总体比较。最为最为常见的应用是在多中心试验中对研究中心进行调整而进行两组率的比较。
+
+例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）、性别（Sex）和改善情况（Improved），在性别分层的情况下治疗情况和改善情况是否独立？
+```{r}
+set.seed(123)
+cmh_test(Treatment~Improved|Sex,distribution=approximate(B=9999),data=Arthritis)
+```
+P值较小，分性别来看，治疗情况和改善情况并不独立。
+
+#####趋势检验
+例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否存在线性趋势？
+```{r}
+set.seed(123)
+lbl_test(Treatment~Improved,distribution=approximate(B=9999),data=Arthritis)
+```
+P值较小，治疗情况和改善情况存在线性趋势。
+
+#####数值变量的独立性
+某医生分别采用盐析法和结合法测定正常皮肤中胶原蛋白的含量，检测结果如下，分析两数值变量之间的独立性。
+
+编号   盐析法   结合法
+---    ---      ---
+1      6.8      546
+2      7.8      553
+3      8.7      562
+4      8.7      563
+5      8.9      570
+6      9.5      575
+7      10.1     581
+8      10.2     605
+9      10.3     607
+10     10.4     621
+11     11.1     624
+12     12.4     626
+13     13.3     632
+14     13.1     640
+15     13.2     656
+ 
+```{r}
+y <- c(546,553,562,563,570,575,581,605,607,621,624,626,632,640,656)
+x <- c(6.8,7.8,8.7,8.7,8.9,9.5,10.1,10.2,10.3,10.4,11.1,12.4,13.3,13.1,13.2)
+df <- as.data.frame(cbind(x,y))
+
+set.seed(123)
+spearman_test(x~y,data=df,distribution=approximate(B=9999))
+```
+基于9999次重复的近似置换检验， 盐析法和结合法并不独立。
+
+####相关性
+
+#####Wilcoxon符号秩检验
+Wilcoxon符号秩检验适用于成对观测的数据，主要用于成对比较，比传统的单独用正负号的检验更加有效。
+例 某医生为了探讨缺碘地区母婴TSH水平的关系，应用免疫放射分析测定了160名孕妇（15-17周）及分娩时脐带血TSH水平（mU/L），现随机抽取10对数据，母血TSH1.21 1.30 1.39	1.42 1.47 1.56 1.68	1.72 1.98	2.1,脐血TSH3.90 4.5 4.20	4.83 4.16 4.93 4.32	4.99 4.7 5.2，试对母血TSH水平与新生儿脐带血TSH水平进行相关分析。
+```{r}
+x <- c(1.21,3.90,1.30,4.50,1.39,4.20,1.42,4.83,1.47,4.16)
+y <- c(1.56,4.93,1.68,4.32,1.72,4.99,1.98,4.70,2.10,5.20)
+df <- as.data.frame(cbind(x,y))
+
+set.seed(123)
+wilcoxsign_test(x~y,data=df,distribution="exact")
+```
+P值较小，可以认为母血TSH水平与新生儿脐带血TSH水平相关。
+
+#####Mann-Whitney-Wilcoxon检验
+Mann-Whitney-Wilcoxon检验是比较没有配对的两个独立样本的非参数检验。
+例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲组病人血尿素氮(BUN)的含量是否大于乙组？
+```{r}
+#wilcox.test(x,y,exact = FALSE,correct =F) #差异性比较 
+#wilcox.test(x,y,exact = FALSE) 
+wilcox_test(DV ~ IV, alternative="less", conf.int=TRUE,
+            distribution="exact", data=wIndDf)
+```
+P值均大于0.05，不能拒绝原假设，可以认为甲组病人血尿素氮(BUN)的含量不大于乙组。
+
+#####Spearman秩相关检验
+例 两位评分员对新出生的5名新生儿进行Apgar评分，甲：6  7  8  9 10，乙：5  6  7  8 10。试用Spearman秩相关检验方法检验两个评分员对等级评定有无相关关系。
+```{r}
+x <- c(6,7,8,9,10)
+y <- c(5,6,7,8,10)
+set.seed(123)####Spearman秩相关检验
+spearman_test(y~x)
+```
+P值小于0.05，可以认为两位评分员结论有关。
+
+#####Friedman检验
+例 四种测试的方式，分别测试得到如下：A：14 13 12 11 10 ，B：11 12 13 14 15，C：16 15 14 13 12，D：13 12 11 10 9，问不同的测试方式之间是否有差异？
+
+```{r}
+N   <- 5
+P   <- 4
+DV1 <- c(14, 13, 12, 11, 10)
+DV2 <- c(11, 12, 13, 14, 15)
+DV3 <- c(16, 15, 14, 13, 12)
+DV4 <- c(13, 12, 11, 10,9)
+Fdf <- data.frame(id=factor(rep(1:N, times=P)),
+                  DV=c(DV1, DV2, DV3, DV4),
+                  IV=factor(rep(1:P, each=N),
+                            labels=LETTERS[1:P]))
+set.seed(123)
+friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Fdf)
+```
+P值小于0.05，拒绝原假设，可以认为四种不同的测试方式之间有差异。
+
+####回归分析
+例　某项“冠状动脉缓慢血流现象”的影响因素的研究，以前降支、回旋支、右冠状动脉三支血管的平均TIMI帧基数(MTFC)表示，调查的影响因素有年龄(AGE,岁)、收缩压(SBP,mmHg)、舒张压(DBP,mmHg)、白细胞(WBC,$10^{2}$/L),寻找影响MTFC变化的因素。
+
+age sbp dbp wbc   mtfc
+--- --- --- ---   ---
+43  110 50	6.19	33.67
+63	105	60	6.03	26.67
+59	100	60	5.28	23
+78	100	60	6.52	26
+67	100	60	7.31	28
+65	119	61	5.67	30.33
+66	120	64	5.11	27
+73	130	88	6.40  47
+53	113	68	4.41	27.67
+76	120	70	4.20	37.33
+76	136	70	5.38	35.67
+76	130	70	4.94	31.33
+68	126	70	4.56	32.33
+61	136	70	5.42	30.67
+78	124	70	5.75	37.67
+80	110	70	4.68	36
+74	140	70	8.67	41
+75	130	70	6.62	41.67
+66	130	70	6.86	22
+55	114	70	7.52	23.33
+71	120	70	4.94	25.67
+62	130	70	4.59	25
+69	130	70	4.26	27
+45	110	70	10.21	29
+79	120	70	6.46	30.33
+58	110	70	4.70	27
+65	100	70	6.06	28
+44	119	70	5.55	22.33
+53	110	70	14.0	29.33
+62	130	72	7.29	43
+62	118	72	3.97	27.33
+53	122	74	3.97	18.33
+71	130	75	3.78	31
+54	116	75	4.35	22.33
+64	120	76	6.59	30
+71	140	78	5.70	35.67
+50	121	78	5.27	40.33
+51	138	80	5.65	34.67
+73	130	80	7.45	35.33
+64	138	80	6.58	33.67
+40	130	80	7.51	35.33
+72	120	80	4.42	34
+51	100	80	7.85	21
+49	120	89	5.14	20.67
+63	150	90	8.18	42.67
+56	130	90	5.23	30.67
+69	160	90	7.10	39
+78	130	90	6.03	29
+78	120	90	4.52	30.67
+61	150	92	7.52	40
+76	142	92	4.66	38
+51	140	100	5.70	28.33
+51	140	100	6.71	42.67
+57	160	100	6.14	41
+63	190	100	5.25	46
+69	150	80	6.33	22.67
+
+```{r warning=FALSE}
+records <- read.table("example1")
+ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
+set.seed(123)
+fit <- lmp(mtfc~age+sbp+log10(wbc),data=ex,perm = "Prob")
+summary(fit)
+```
+结果显示三个因素均有统计学意义。perm有Exact、Prob和SPR三个选项，Exact适用于10个观测数以下的精确间检验，Prob从可能的排列中不断抽样，直至估计的标准差在0.1之下，SPR适用序贯概率比检验来判断何时停止抽样。pgirmess包中PermTest函数也可以对lm、lme和glm(binomial and Poisson)进行置换检验。
+```{r}
+fit <- lm(mtfc~age+sbp+log10(wbc),data=ex)
+PermTest(fit,B=1000)
+```
+
+回归系数的置信区间
+```{r}
+getRegr <- function(dat, idx) {
+  bsFit <- lm(mtfc~age+sbp+log10(wbc), subset=idx, data=dat)
+  coef(bsFit)
+}
+
+(bsRegr <- boot(ex, statistic=getRegr, R=999))
+boot.ci(bsRegr, conf=0.95, type="bca", index=1)$bca #需要指定索引参数
+```
+
+
+####方差分析
+#####单因素方差分析
+例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
+
+```{r}
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
+    46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
+    45, 46, 44, 45, 46, 44, 43, 42, 45)
+c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48, 47, 44, 45, 46, 
+    45, 43, 44, 45, 46, 43, 42)
+dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20), 
+    rep("2", 25), rep("3", 23))))
+
+set.seed(123)
+ot <- aovp(length ~ site, data = dfCRp,perm="Prob")
+summary(ot)
+```
+P值为0.05，可以认为三组的家兔血清ACE浓度不同。
+
+自主法求F值及其置信区间
+```{r warning=F}
+anBase <- anova(lm(length ~ site, data=dfCRp))
+Fbase  <- anBase["site", "F value"]
+(pBase <- anBase["length", "Pr(>F)"])
+
+fit0 <- lm(length ~ 1, data=dfCRp)    ## fit 0-model
+E    <- residuals(fit0)               ## residuals
+Er   <- E / sqrt(1-hatvalues(fit0))   ## rescaled residuals
+Yhat <- fitted(fit0)     
+
+getAnova <- function(dat, idx) {
+  Ystar <- Yhat + Er[idx]
+  anBS  <- anova(lm(Ystar ~ site, data=dat))
+  anBS["site", "F value"]
+}
+
+(bsAnova <- boot(dfCRp, statistic=getAnova, R=999))
+boot.ci(bsAnova,conf=0.95, type=c("basic", "bca"))
+
+Fstar    <- bsAnova$t
+# don't use >= because of floating point arithmetic problems
+tol     <- .Machine$double.eps^0.5
+FsIsGEQ <- (Fstar > Fbase) | (abs(Fstar-Fbase) < tol)
+(pValBS <- (sum(FsIsGEQ) + 1) / (length(Fstar) + 1))
+
+plot(Fstar, ecdf(Fstar)(Fstar), col="gray60", pch=1, xlab="f* bzw. f",
+     ylab="P(F <= f)", main="F*: cumulative rel. freqs and F CDF")
+curve(pf(x, P-1, sum(Nj) - P), lwd=2, add=TRUE)
+legend(x="topleft", lty=c(NA, 1), pch=c(1, NA), lwd=c(2, 2),
+       col=c("gray60", "black"), legend=c("F*", "F"))
+```
+Wild boostrap
+```{r warning=F}
+getAnovaWild <- function(dat, idx) {
+  n  <- length(idx)                     ## size of replication
+  ## 1st choice for random variate U: Rademacher-variables
+  Ur <- sample(c(-1, 1), size=n, replace=TRUE, prob=c(0.5, 0.5))
+  
+  ## 2nd option for choosing random variate U
+  Uf <- sample(c(-(sqrt(5) - 1)/2, (sqrt(5) + 1)/2), size=n, replace=TRUE,
+               prob=c((sqrt(5) + 1)/(2*sqrt(5)), (sqrt(5) - 1)/(2*sqrt(5))))
+  
+  Ystar <- Yhat + (Er*Ur)[idx]          ## for E* with Rademacher-variables
+  # Ystar <- Yhat + (Er*Uf)[idx]        ## for E* with 2nd option
+  anBS  <- anova(lm(Ystar ~ site, data=dat))
+  anBS["site", "F value"]
+}
+
+bsAnovaW <- boot(dfCRp, statistic=getAnovaWild, R=999)
+boot.ci(bsAnovaW,conf=0.95, type=c("basic", "bca"))
+FstarW   <- bsAnovaW$t
+
+# don't use >= because of floating point arithmetic problems
+tol      <- .Machine$double.eps^0.5
+FsIsGEQ  <- (FstarW > Fbase) | (abs(FstarW-Fbase) < tol)
+(pValBSw <- (sum(FsIsGEQ) + 1) / (length(FstarW) + 1))
+```
+
+#####单因素协方差分析
+例 multcomp包中litter数据集是怀孕小白鼠被分为四个小组，每个小组接受不同剂量（0、5、50和500）的药物处理dose为自变量，产下幼崽的体重weigth均值为因变量，怀孕时间gesttime为协变量。
+```{r}
+data(litter,package = "multcomp")
+ddply(.data = litter,.(dose),summarize,mean=mean(weight))
+shapiro.test(litter$weight)
+bartlett.test(weight~dose,data = litter)
+set.seed(123)
+ancova <- aovp(weight~gesttime+dose,data = litter,perm = "Prob")
+summary(ancova)
+par(mfrow=c(2,2))
+plot(ancova)
+par(mfrow=c(1,1))
+```
+数据满足正态性的要求,但不满足方差齐性的要求。检验结果表明怀孕时间gesttime与出生体重weight相关，在控制怀孕时间后，每种药物剂量dose下出生体重weight均值不同。
+
+#####双因素方差分析
+例 基础安装中的ToothGrowth数据集是随机分配60只豚鼠,分别采用两种喂食方法supp(橙汁或维生素C),各喂食方法中抗坏血酸含量有三种水平dose(0.5mg、1mg或2mg),每种处理方式组合都被分配10只豚鼠,牙齿长度len为因变量。
+
+```{r}
+attach(ToothGrowth)
+#table(supp,dose)
+ddply(.data = ToothGrowth,.(supp,dose),summarise,mean=mean(len))
+ddply(.data = ToothGrowth,.(supp,dose),summarise,sd=sd(len))
+```
+table语句的预处理表明该设计是均衡设计(各设计单元中样本大小都相同),ddply语句处理可获得各单元的均值和标准差。
+
+```{r}
+set.seed(123)
+aovCRFpq <- aovp(len~ supp*dose, data=ToothGrowth,perm = "Prob")
+summary(aovCRFpq)
+par(mfrow=c(2,2))
+plot(aovCRFpq)
+par(mfrow=c(1,1))
+```
+得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
+
+####Logistic回归
+例 AER包中包含一个Affairs数据，记录了一组婚外情数据，其中包括参与者性别、年龄、婚龄、是否有小孩、宗教信仰程度（5分制，1表示反对，5表示非常信仰）、学历、职业和婚姻的自我评分（5分制，1表示非常不幸福，5表示非常幸福），问婚外情的影响因素。
+```{r}
+data(Affairs,package="AER")
+Affairs$ynaffair[Affairs$affairs > 0] <- 1
+Affairs$ynaffair[Affairs$affairs==0] <- 0
+Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
+fit<- glm(Affairs$ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating,data=Affairs,family=binomial())
+summary(fit)
+set.seed(123)
+PermTest(fit,B=250)
+```
+yearsmarried、religiousness和rating三个变量的P值较小，可能是婚外情的影响因素。
+
+####广义线性模型
+例 robust包中Breslow癫痫数据记录了治疗初期八周内，抗癫痫药物对癫痫发病数的影响，因变量sumY为随机后8周内癫痫发病数，自变量治疗Trt，年龄Age和治疗前8周的癫痫发病数Base。
+
+```{r}
+data(breslow.dat,package="robust")
+fitm <- glm(breslow.dat$sumY~Base+Age+Trt,data=breslow.dat,family = poisson())
+summary(fitm)
+set.seed(123)
+PermTest(fitm,B=250)
+```
+Base变量的P值较小，可能对癫痫的发病数有影响。
+
+##自主法(Bootstrapping)
+自主法是在原样本中有放回的抽样，随机抽取形成一个新的样本，重复这样的操作，形成一系列的新样本，通过这些样本就可以计算出样本的一个分布。该法无需特定的理论分布，便可计算统计量的置信区间，并能检验统计假设。
+
+###单个统计量
+例 计算robust包中breslow.dat数据集年龄Age的中位数及其置信区间
+```{r}
+mymedian <- function(data,indices){
+  d <- data[indices,]
+  rs <- median(d$Age)
+  return (rs)
+}
+
+set.seed(123)
+result <- boot(data=breslow.dat,statistic = mymedian,R=1000)
+print(result)
+plot(result)
+boot.ci(result,type = c("perc","bca"))
+```
+
+###多个统计量
+例 计算Affairs数据中logistic回归系统的置信区间
+```{r}
+bs <- function(formula,data,indices){
+  d <- data[indices,]
+  fit <- glm(formula,data=d,family=binomial())
+  return (coef(fit))
+}
+
+result <- boot(data = Affairs,statistic = bs,R=1000,formula=ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating)
+print(result)
+#print(result,index = 8) #多个统计量，添加索引
+plot(result,index = 8)
+
+boot.ci(result,type = "perc",index = 8)
+```
+type参数有norm(normal approximation方法)、basic(basic bootstrap方法)、stud(studentized bootstrap方法)、perc(bootstrap percentile方法)、bca(adjusted bootstrap percentile)和all(全部)。
+
+##分层自主法(Stratified bootstrapping)
+例 制药厂试制某种安定神经的新药，两台仪器制造药品服从正态分布，从各自加工药品中，分别取若干个测量其直径，两组直径如下A组 20.5 19.8 19.7 20.4 20.1 20.0 19.0 19.9 B组 20.7 19.8 19.5 20.8 20.4 19.6 20.2，问两组均数之差的置信区间？
+两组分层抽样非参数法
+```{r}
+DVm<-c(20.5, 19.8, 19.7, 20.4, 20.1, 20.0, 19.0, 19.9)
+DVf<-c(20.7, 19.8, 19.5, 20.8, 20.4, 19.6, 20.2)
+tDf <- data.frame(DV=c(DVm, DVf),
+                  IV=factor(rep(c("m", "f"), c(length(DVm), length(DVf)))))
+getDM <- function(dat, idx) {
+  Mfm <- aggregate(DV ~ IV, data=dat, subset=idx, FUN=mean)
+  -diff(Mfm$DV)
+}
+
+bsTind <- boot(tDf, statistic=getDM, strata=tDf$IV, R=999)
+boot.ci(bsTind, conf=0.95, type=c("basic", "bca")) 
+```
+参数法
+```{r}
+tt <- t.test(DV ~ IV, alternative="two.sided", var.equal=TRUE, data=tDf)
+tt$conf.int
+```
+
+```{r echo=F}
+try(detach(package:coin))
+try(detach(package:DescTools))
+try(detach(package:mvtnorm))
+try(detach(package:polycor))
+try(detach(package:pROC))
+try(detach(package:rms))
+try(detach(package:reshape2))
+try(detach(package:pander))
+try(detach(package:vcd))
+try(detach(package:e1071))
+try(detach(package:lmPerm))
+try(detach(package:pgirmess))
+try(detach(package:plyr))
+try(detach(package:boot))
+```
+
