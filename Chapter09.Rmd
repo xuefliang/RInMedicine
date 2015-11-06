@@ -25,7 +25,6 @@ library(XML)
 library(RCurl)
 library(plyr)
 library(leaflet)
-library(rgdal)
 library(htmltools)
 library(reshape2)
 ```

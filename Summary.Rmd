@@ -24,6 +24,9 @@ r-cran-codetools r-cran-foreign r-cran-kernsmooth r-cran-lattice
 r-cran-mass r-cran-matrix r-cran-mgcv r-cran-nlme r-cran-nnet 
 r-cran-rpart r-cran-spatial r-cran-survival r-cran-rodbc
 
+sudo apt-get install libgsl0ldbl
+sudo apt-get install gsl-bin libgsl0-dev
+
 #Step 1: Update Sources.List File
 #- Edit the sources.list file
 sudo gedit /etc/apt/sources.list
@@ -57,11 +60,21 @@ wants <- c("knitr","rmarkdown","devtools","epicalc","mosaic",
            "survival","robust","mlogit","nnet","VGAM","ordinal",
            "Sample.Size","phia","mvtnorm","pscl","mosaic","XML",
            "pipeR","Rcmdr","rgl","HH","DescTools","multcomp",
-           "effects","sandwich","qcc")
+           "effects","sandwich","qcc","devtools","ggmap","mosaic",
+            "Hmisc","pastecs","psych","doBy","gmodels","CircStats",
+            "expm","koRpus","ldbounds","ggm","coin","DescTools",
+            "Rcurl","maptools","rgdal","animation","leaflet",
+            "polycor","pROC","rms","pgirmess")
 
 has   <- wants %in% rownames(installed.packages())
 if(any(!has)) install.packages(wants[!has])
 ```
+
+```{r eval=FALSE}
+install.packages("~/Downloads/epicalc_2.15.1.0.tar.gz", repos = NULL, type = "source")
+install.packages("~/Downloads/lmPerm_1.1-2.tar.gz", repos = NULL, type = "source")
+```
+
 GitHub中R包通过以下方式进行安装
 ```{r eval=FALSE}
 devtools::install_github("rstudio/rticles")
@@ -100,6 +113,7 @@ INFOPATH=/usr/local/texlive/2014/texmf-dist/doc/info:$INFOPATH; export INFOPATH
 wget http://mirrors.ctan.org/fonts/fandol.zip
 #字体保存到 ~/.fonts 文件夹下
 mkdir ~/.fonts
+cd ~/Downloads
 unzip ~/Downloads/fandol.zip
 cp ~/Downloads/fandol/* ~/.fonts
 cd ~/.fonts
