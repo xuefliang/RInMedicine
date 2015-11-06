@@ -10,6 +10,8 @@ output:
     toc: yes
 classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
+\pagebreak
+
 #如何使用
 相对于R在其他行业的流行，医学领域R应用更加少见，医学领域目前仍然以SPSS和SAS为主，本书主要目的在于介绍R在医学领域的应用。本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，在TeXLive环境下使用xelatex编译，所有的R语言代码都基于knitr运行和生成。本书的所有代码都在R 3.2 下经过严格的测试。其中测试的操作系统为Linux Mint 17.2。
 
@@ -112,6 +114,8 @@ fc-list :lang=zh-cn
 ```
 
 由于水平有限，书中难免有错误和疏漏之处，诚恳地期望各位专家和读者批评指正，深表感谢。
+
+\pagebreak
 
 #描述性统计
 ```{r include=FALSE}
@@ -637,6 +641,8 @@ try(detach(package:stringr))
 try(detach(package:dplyr))
 try(detach(package:reshape2))
 ```
+
+\pagebreak
 
 #常用数据分布
 ```{r include=FALSE}
@@ -1447,6 +1453,8 @@ try(detach(package:CircStats))
 try(detach(package:ggplot2))
 ```
 
+\pagebreak
+
 #参数估计
 ```{r include=FALSE}
 library(MASS)
@@ -1790,6 +1798,8 @@ try(detach(package:pander))
 try(detach(package:mixtools))
 try(detach(package:boot))
 ```
+
+\pagebreak
 
 #样本容量估计
 ```{r include=FALSE}
@@ -4327,6 +4337,8 @@ try(detach(package:koRpus))
 try(detach(package:ldbounds))
 ```
 
+\pagebreak
+
 #假设检验
 ```{r include=FALSE}
 library(vcd)
@@ -4695,6 +4707,8 @@ try(detach(package:ggm))
 try(detach(package:coin))
 try(detach(package:DescTools))
 ```
+
+\pagebreak
 
 # 回归分析
 ```{r include=FALSE}
@@ -5335,6 +5349,8 @@ try(detach(package:bootstrap))
 try(detach(package:rJava))
 try(detach(package:quantreg))
 ```
+
+\pagebreak
 
 #广义线性模型
 ```{r include=FALSE}
@@ -6050,6 +6066,8 @@ try(detach(package:mvtnorm))
 try(detach(package:MASS))
 ```
 
+\pagebreak
+
 #广义加性模型
 ```{r include=FALSE}
 library(mgcv)
@@ -6092,6 +6110,8 @@ summary(model)
 ```{r echo=F}
 try(detach(package:mgcv))
 ```
+
+\pagebreak
 
 #方差分析
 ```{r include=FALSE}
@@ -6980,6 +7000,8 @@ try(detach(package:nlme))
 try(detach(package:lme4))
 ```
 
+\pagebreak
+
 #生存分析
 ```{r include=FALSE}
 library(epicalc)
@@ -7262,6 +7284,8 @@ try(detach(package:epicalc))
 try(detach(package:survival))
 ```
 
+\pagebreak
+
 #非参数检验
 ```{r include=FALSE}
 library(coin)
@@ -7398,6 +7422,7 @@ P值小于0.05，可以认为，两种药物对高甘油三脂血症的疗效分
 
 ##多组样本(more than two samples)
 非参数多组比较法其主要用于等级型数据或不满足参数检验条件的场合，故亦称等级方差分析（ANOVA by ranks）。和方差分析一样，按照实验设计不同，非参数多组比较法也包括适用于完全随机化设计的单向秩次方差分析或称Kruskal-Wallis检验和适用于随机化区组设计的双向秩次方差分析(Friedman检验)。
+
 ###无序独立样本(Independent samples - unordered groups)
 Kruskal-Wallis检验用来检验多个独立样本的位置是否一样。
 
@@ -8565,8 +8590,10 @@ tt$conf.int
 ```{r echo=F}
 try(detach(package:coin))
 try(detach(package:DescTools))
-try(detach(package:mvtnorm))
 try(detach(package:polycor))
+try(detach(package:HH))
+try(detach(package:multcomp))
+try(detach(package:mvtnorm))
 try(detach(package:pROC))
 try(detach(package:rms))
 try(detach(package:reshape2))
@@ -8579,3 +8606,483 @@ try(detach(package:plyr))
 try(detach(package:boot))
 ```
 
+\pagebreak
+
+#地图展示
+```{r include=FALSE}
+library(bitops)
+library(RCurl)
+library(XML)
+library(maptools)
+library(ggplot2)
+library(maps)
+library(mapproj)
+library(ggmap)
+library(dplyr)
+library(magrittr)
+library(rgdal)
+library(animation)
+library(plyr)
+library(leaflet)
+library(rgdal)
+library(htmltools)
+library(reshape2)
+```
+
+流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
+
+```{r}
+# 读取地理信息数据
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+# 将数据转为数据框
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+#发病数据
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data$id <- as.character(data$id)
+
+plotData <- left_join(tract, data)
+```
+
+地图数据查看及加工
+```{r}
+names(city)
+#Linux环境是UTF-8，需要iconv函数转化
+table(iconv(city$NAME, from = "GBK"))
+#选择兰州的地图
+lanzhou = city[city$CNTY_CODE8 == 62010000,]
+#默认把经度和纬度作为普通数据，均匀平等对待，绘制在笛卡尔坐标系上
+plot(lanzhou)
+#地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，ggplot2包提供了专门的coord_map()函数
+```
+
+## Choropleth map
+### geom_polygon()绘制地图
+```{r warning=F}
+p <- ggplot() +
+  geom_polygon(data = plotData, aes(x = long, y = lat, group = group,fill = rand), color ="black", size = 0.25) +
+  coord_map()+theme_set(theme_bw())+
+  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
+        axis.text.y=element_blank(),axis.ticks=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
+  xlab("") + ylab("")+labs(title = "甘肃省")+
+  scale_fill_gradient2(low = "darkgreen", high = "red", mid = "yellow")+
+  guides(fill = guide_legend(keywidth = 1, keyheight = 1))
+
+ggsave(p, file = "map2.png", width = 5, height = 4.5, type = "cairo-png")
+print(p)
+```
+
+### geom_map()绘制地图
+```{r warning=F}
+ggplot(data, aes(map_id = id)) + 
+  geom_map(aes(fill = rand), map =tract) +
+  expand_limits(x = tract$long, y = tract$lat) +
+  coord_map()+
+  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
+     axis.text.y=element_blank(),axis.ticks=element_blank(),
+     axis.title.x=element_blank(),
+     axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
+  xlab("") + ylab("")+labs(title = "甘肃省")+
+  scale_fill_gradientn("发病率",breaks = c(0, 0.4, 0.8, 1),colours = c("green","yellow","red"),space = "Lab")
+  
+#scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
+```
+
+##点密度地图(Dot Density Maps)
+###spsample()绘制地图
+```{r  warning=F}
+tract$group <- tract$id
+tract <- rbind(filter(tract,id=="62290000"),filter(tract,id=="62300000"))
+
+
+#发病数据
+data$id <- as.character(data$id)
+data$A <- round(data$rand*1000)
+data$B <- round(data$rand*100*4)
+
+plotData <- left_join(tract, data)
+pointCollector <- list()
+perNCapita <- 1
+
+for(ss in tract$id){
+  #print(ss)
+  stateShapeFrame <- tract[tract$id == ss, ]
+  if(nrow(stateShapeFrame) < 1){next()}
+  statePoly <- Polygons(lapply(split(stateShapeFrame[, c("long", "lat")],
+                                     stateShapeFrame$group), Polygon), ID = "b")
+  nA <- ceiling(data[data$id == ss, "A"]/perNCapita)
+  nB <- ceiling(data[data$id == ss, "B"]/perNCapita)
+  
+  pA <- data.frame(spsample(statePoly, nA, type = "random")@coords,
+                   Vote = "A") #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
+  pB <- data.frame(spsample(statePoly, nB, type = "random")@coords,
+                   Vote = "B")
+  
+  allPoints <- data.frame(State = ss, rbind(pA, pB))
+  pointCollector[[ss]] <- allPoints
+}
+
+pointFrame <- do.call(rbind, pointCollector)
+pointFrame <- pointFrame[sample(1:nrow(pointFrame), nrow(pointFrame)), ]
+#head(pointFrame)
+
+new_theme_empty <- theme_bw()  # 创建自己的主题
+new_theme_empty$line <- element_blank()
+new_theme_empty$rect <- element_blank()
+new_theme_empty$strip.text <- element_blank()
+new_theme_empty$axis.text <- element_blank()
+#new_theme_empty$axis.title <- element_blank()
+new_theme_empty$plot.margin <- structure(c(0, 0, -1, -1), unit = "lines",
+                                         valid.unit = 3L, class = "unit")
+
+ggplot(tract)+
+  geom_point(data = pointFrame,aes(x = x, y = y, colour = Vote),size=1)+
+  geom_polygon(aes(x = long, y = lat, group = group),colour = "BLACK", fill = "transparent")+
+  coord_map(project="conic", lat0 = 30)+
+  new_theme_empty+
+  scale_colour_manual(values = c("blue", "red"))+
+  ggtitle("Type by State")+
+  ylab("")+
+  xlab(paste("Each dot represents ",perNCapita, " Vote", sep = ""))+
+  guides(colour = guide_legend(override.aes =list(shape = 19, alpha = 1)))
+```
+
+###dotsInPolys()绘制地图
+在循环中使用spsample()方法获取点的速度较慢，可以dotsInPolys()方法提高作图的速度。
+```{r}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data$id <- as.character(data$id)
+data$CNTY_CODE <- as.integer(data$id)
+data$A <- round(data$rand*1000)
+data$B <- round(data$rand*100*4)
+
+plotDdata <- left_join(city@data, data)
+
+dots.A <- dotsInPolys(city, as.integer(plotDdata$A))
+dots.A$Vote <- "A"
+dots.B <- dotsInPolys(city, as.integer(plotDdata$B))
+dots.B$Vote <- "B"
+dots.all <- spRbind(dots.A, dots.B) 
+dots <- data.frame(coordinates(dots.all)[,1:2],Vote=dots.all$Vote)
+
+ggplot(tract, aes(x = long, y = lat)) + 
+  geom_polygon(aes(group = group), size=0.2, fill = "white") + 
+  coord_equal()+geom_point(data=dots, aes(x=x,y=y,colour=factor(Vote)), size=0.8)+
+  scale_colour_manual (values=c("blue", "orange")) 
+```
+
+##ggmap包使用
+ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
+
+Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
+```{r warning=F}
+#由于goole的API被封，国内需要使用代理服务器完成访问
+BeijinMap <-get_map(location = 'beijin', zoom = 12,maptype='roadmap')
+ggmap(BeijinMap,extent='device')
+
+#获得定中心的经纬度坐标
+geocode("Peking University")
+
+#绘制北京大学地图
+baylor <- "Peking university"
+qmap(baylor, zoom = 14)
+
+#绘制基于OpenStreetMaps数据的北京大学地图
+qmap(baylor, zoom = 14,source = "osm")
+```
+
+例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
+```{r warning=F}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+gpclibPermit()  #install.packages("gpclib", type = "source")
+tract <- fortify(city,region="CNTY_CODE")
+
+data <- read.csv("data.csv",header = T,stringsAsFactors = F)
+data$lan <- as.numeric(data$lan)
+data$lon <- as.numeric(data$lon)
+data$date <- as.Date(data$date,  "%Y-%m-%d")
+
+ggmap(get_googlemap(center = 'gansu', zoom=5,maptype='roadmap'),extent='device')+
+geom_polygon(data = tract, aes(x = long, y = lat, group = group),colour="black",fill='grey' ,alpha = 0.2)+
+geom_point(data=data,aes(x=lon,y=lan),colour = 'red',alpha=0.7)+
+stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),size=2,bins=4,data=data,geom='polygon')+
+theme_nothing(legend = TRUE)+
+  coord_cartesian(xlim=c(90, 110), ylim=c(32, 43))
+```
+
+```{r eval=F}
+# 为了生成动画，先准备好一个绘图函数
+plotfunc <- function(x) {
+    df <- subset(data,date <= x)
+    df$lan <- as.numeric(df$lan)
+    df$lon <- as.numeric(df$lon)
+    p <- ggmap(get_googlemap(center ='gansu',zoom=8,maptype='roadmap'),,extent='device')+
+        geom_point(data=df,aes(x=lon,y=lan),colour = 'red',alpha=0.7)
+}
+# 获取日期
+time <- sort(unique(data$date))
+# 生成并保存动画
+saveHTML(for( i in time) print(plotfunc(i))) #用getwd()查看目录，此目录下有生成html文件
+```
+
+##添加标记和路径
+```{r}
+dat <- read.table(text = "
+location lat long
+A	33.29	104.6
+B	40.01	97.95
+C	36.83	103.65
+D	35.32	106.53
+E	36.06	103.49
+F	39.2	97.81
+", header = TRUE)
+
+map <- get_map(location = "gansu", zoom = 6, maptype = "watercolor")
+
+p <- ggmap(map)
+p <- p + geom_point(data = dat, aes(x = long, y = lat, shape = location, colour = location, size = 7))
+p <- p + geom_text(data = dat, aes(x = long, y = lat, label = location), hjust = -0.2)
+p <- p + theme(legend.position = "none", panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               axis.text = element_blank(), 
+               axis.title = element_blank(), 
+               axis.ticks = element_blank()
+)
+p <- p + labs(title = "Gansu locations")
+print(p)
+```
+
+添加路径
+```{r}
+dat.pts <- data.frame(x = dat$long, y = dat$lat)
+map <- get_googlemap("gansu", zoom = 6, maptype = "satellite", markers = dat.pts, path = dat.pts, scale = 2)
+
+p <- ggmap(map, extent = "device" # 除去白色边框
+, darken = 0.1 #图层淡化，凸显标记点
+)
+
+p <- p + geom_text(data = dat, aes(x = long, y = lat, label = location)
+                   , hjust = -0.2, colour = "white", size = 6)
+p <- p + theme(legend.position = c(0.05, 0.05) # put the legend inside the plot area
+, legend.justification = c(0, 0)
+, legend.background = element_rect(colour = F, fill = "white")
+, legend.key = element_rect(fill = F, colour = F)
+, panel.grid.major = element_blank()
+, panel.grid.minor = element_blank()
+, axis.text = element_blank()
+, axis.title = element_blank()
+, axis.ticks = element_blank()
+)
+p <- p + labs(title = "Around Gansu")
+print(p)
+```
+##交互式地图
+交互式地图提供比传统地图更好的展示效果，通过生成的html进行缩放查看。交互式地图的绘制主要依靠leaflet包完成,交互式地图查看应以html方式，此处由于要印刷而添加了eval=F。
+
+###添加标记点
+```{r eval=F}
+Icon <- makeIcon(
+  iconAnchorX = 22, iconAnchorY = 32
+)
+
+m <- leaflet() %>%
+  setView(103.87,36.05,zoom=13)%>%
+  addTiles() %>%  # 默认OpenStreetMap地图
+  addMarkers(lng=103.87, lat=36.05, popup="我的工作地",icon = Icon)
+m  # Print the map
+```
+
+###添加多边形连线
+```{r eval=F}
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp") 
+longnan = city[city$CNTY_CODE8 == 62120000,]
+longnan <- fortify(longnan,region="CNTY_CODE")
+
+leaflet() %>% addTiles() %>%addPolylines(lng=longnan$long,lat=longnan$lat)
+```
+
+###以人口多少绘制圆形
+```{r eval=F}
+cities <- read.csv(textConnection("
+City,Long,Lat,Pop
+兰州,103.8343,36.06109,3616163
+陇南,104.9218,33.40069,2567718
+甘南,102.911,34.983399,689132
+临夏,103.2105,35.60118,1946677
+天水,105.7249,34.58086,3262548
+庆阳,107.6436,35.70908,2211191
+平凉,106.6651,35.54306,2068033 
+"))
+
+leaflet(cities) %>% addTiles() %>%
+  addCircles(lng = ~Long, lat = ~Lat, weight = 1,
+    radius = ~sqrt(Pop) * 30, popup = ~City
+  )
+```
+
+###绘制多边形区域
+```{r eval=F}
+states <- readOGR("/home/xuefliang/RInMedicine/cb_2013_us_state_20m",
+                  layer = "cb_2013_us_state_20m", verbose = FALSE)
+
+neStates <- subset(states, states$STUSPS %in% c(
+  "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
+))
+
+leaflet(neStates) %>%
+  addPolygons(
+    stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5,
+    color = ~colorQuantile("YlOrRd", states$AWATER)(AWATER)
+  )
+```
+
+###添加包含超级连接的标记点
+```{r eval=F}
+content <- paste(sep = "<br/>",
+  "<b><a href='http://www.gscdc.net'>甘肃省疾控中心</a></b>",
+  "东岗西路230号",
+  "甘肃省,兰州市"
+)
+
+leaflet() %>% addTiles() %>%
+  addPopups(103.87,36.05, content,
+    options = popupOptions(closeButton = FALSE)
+  )
+```
+
+###添加多个html标记点
+```{r eval=F}
+leaflet(cities) %>% addTiles() %>%
+  addMarkers(~Long, ~Lat, popup = ~htmlEscape(City))
+```
+
+###连续性变量
+```{r eval=F}
+countries <- readOGR("/home/xuefliang/RInMedicine/countries.geojson", "OGRGeoJSON")
+map <- leaflet(countries)
+
+qpal <- colorQuantile("Blues", countries$gdp_md_est, n = 7) #将GDP这个连续性变量分为7段
+map %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~qpal(gdp_md_est)
+  )
+```
+
+###分类变量
+```{r eval=F}
+countries$category <- factor(sample.int(5L, nrow(countries), TRUE))
+
+factpal <- colorFactor(topo.colors(5), countries$category)
+
+leaflet(countries) %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~factpal(category)  #分类变量
+  )
+```
+
+###添加图例
+```{r eval=F}
+map <- leaflet(countries) %>% addTiles()
+
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = countries$gdp_md_est
+)
+map %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~pal(gdp_md_est)
+  ) %>%
+  addLegend("bottomright", pal = pal, values = ~gdp_md_est,  #addLegend（）函数添加图例
+    title = "Est. GDP (2010)",
+    labFormat = labelFormat(prefix = "$"),
+    opacity = 1
+  )
+```
+
+###比例图例
+```{r eval=F}
+qpal <- colorQuantile("RdYlBu", countries$gdp_md_est, n = 5) #用不同颜色表示所占比例
+map %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color = ~qpal(gdp_md_est)
+  ) %>%
+  addLegend(pal = qpal, values = ~gdp_md_est, opacity = 1)
+```
+
+###波及范围交互地图
+```{r eval=F}
+data <- read.csv("data.csv",header = T,stringsAsFactors = F)
+data$lan <- as.numeric(data$lan)
+data$lon <- as.numeric(data$lon)
+outline <- data[chull(data$lon, data$lan),]
+
+map <- leaflet(data) %>%
+  # Base groups
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles("Stamen.Toner", group = "Toner") %>%
+  addProviderTiles("Stamen.TonerLite", group = "Toner Lite") %>%
+  # Overlay groups
+  addCircles(~lon, ~lan, ~10^X/5,stroke = F, group = "occur") %>%
+  addPolygons(data = outline, lng = ~lon, lat = ~lan,
+    fill = F, weight = 2, color = "#FFFFCC", group = "Outline") %>%
+  # Layers control
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Toner", "Toner Lite"),
+    overlayGroups = c("Quakes", "Outline"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+map
+```
+
+##等高线
+```{r}
+volcano3d <- melt(volcano) #reshape2包
+names(volcano3d) <- c("x", "y", "z")
+
+#等高线
+v <- ggplot(volcano3d, aes(x, y, z = z))
+v + stat_contour(binwidth = 5,aes(colour = ..level..),size = 1)
+
+#面积
+v + stat_contour(geom="polygon", aes(fill=..level..))+geom_tile(aes(fill = z))
+
+v + geom_tile(aes(fill = z)) + stat_contour()
+```
+
+###制作三维图
+```{r eval=F}
+z <- 2*volcano
+x <- 10*(1:nrow(z))
+y <- 10*(1:ncol(z))
+zlim <- range(z)
+zlen <- zlim[2]-zlim[1]+1
+colorlut <- terrain.colors(zlen)
+col <- colorlut[z-zlim[1]+1]
+rgl.open()
+rgl.surface(x,y,z,color=col,back="lines")
+```
+
+```{r echo=F}
+try(detach(package:maptools))
+try(detach(package:ggplot2))
+try(detach(package:mapproj))
+try(detach(package:ggmap))
+try(detach(package:dplyr))
+try(detach(package:magrittr))
+try(detach(package:rgdal))
+try(detach(package:animation))
+try(detach(package:XML))
+try(detach(package:RCurl))
+try(detach(package:plyr))
+try(detach(package:leaflet))
+try(detach(package:rgdal))
+try(detach(package:htmltools))
+try(detach(package:reshape2))
+```

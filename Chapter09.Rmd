@@ -474,5 +474,3 @@ rgl.surface(x,y,z,color=col,back="lines")
 
 
 
-
-
