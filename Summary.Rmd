@@ -6027,6 +6027,7 @@ Vuong 检验的统计量则成标准的N(0, 1)正态分布。Vuong 值大于1.96
 ```{r echo=F}
 try(detach(package:Deducer))
 try(detach(package:rms))
+try(detach(package:Hmisc))
 try(detach(package:pander))
 try(detach(package:ggplot2))
 try(detach(package:plyr))
@@ -6035,9 +6036,7 @@ try(detach(package:epicalc))
 try(detach(package:car))
 try(detach(package:boot))
 try(detach(package:bestglm))
-try(detach(package:Hmisc))
 try(detach(package:survival))
-try(detach(package:robust))
 try(detach(package:mlogit))
 try(detach(package:VGAM))
 try(detach(package:nnet))
@@ -6049,4 +6048,47 @@ try(detach(package:lmtest))
 try(detach(package:pscl))
 try(detach(package:mvtnorm))
 try(detach(package:MASS))
+```
+
+#广义加性模型
+```{r include=FALSE}
+library(mgcv)
+```
+加性模型是一种非参数模型，模型中每一个加性项使用单个光滑函数来估计，每一个加性项中可以解释因变量如何随的自变量变化而变化。广义加性模型时广义线性模型的扩展，
+$$g(\mu )=s_{0}+s_{1}(x_{1})+s_{2}(x_{2})+\cdots +s_{p}(x_{p})$$
+$$\eta =s_{0}+\sum_{i=1}^{p}s_{i}(X_{i})$$
+其中$\eta$为线性预测值，$s_{i}$是非参数光滑函数，也可是光滑样条函数、核函数或者局部回归光滑函数，通过backfitting算法获得。模型不需要因变量对自变量的任何假设，由随机部分、加性部分及连接两者的连接函数$g(.)$组成。因变量的分布属于指数分布族、二项分布、Poisson分布、Gamma分布等。半参数广义加性模型，其形式为：
+$$g(\mu )=s_{0}+X\beta +\sum_{i=1}^{p}s_{i}(X_{i})$$。
+加性模型的拟合是通过一个迭代过程（向后拟合算法）对每个预测变量进行样条平滑。其算法要在拟合误差和自由度之间进行权衡最终达到最优。
+
+例 robust包中Breslow癫痫数据记录了治疗初期八周内，抗癫痫药物对癫痫发病数的影响，因变量sumY为随机后8周内癫痫发病数，年龄Age和治疗前8周的癫痫发病数Base。
+
+```{r}
+data(breslow.dat,package="robust")
+model=gam(sumY~s(Base)+s(Age),data=breslow.dat,family = poisson())
+par(mfrow=c(1,2))
+plot(model,se=T,resid=T,pch=16)
+par(mfrow=c(1,1))
+```
+上图显示的是各预测变量的偏残差图，表示了各预测变量对响应变量的独立影响，纵轴括号中的数字表示EDF（estimated degrees of freedom），如果估计自由度为1，即是线性关系。
+```{r}
+summary(model)
+```
+从报告可以观察到各预测变量的EDF值，后面的P值表示平滑函数是否显著的减少了模型误差。伪判定系数R-sq显示了模型的解释能力为92.3%。
+
+```{r}
+model=gam(sumY~s(Base,k = 9)+s(Age,k=12),data=breslow.dat,family = poisson())
+summary(model)
+```
+K的最小值是3，最大值是17，为3、4的时候都是直线，K越大，曲线原来越平滑，再大时，曲线就出现了一些弯曲，说明更精准了。
+
+## 交互作用
+考虑到Base和Age之间，可能有交互作用，采用s(Base,Age)方法
+```{r}
+data(breslow.dat,package="robust")
+model=gam(sumY~s(Base,Age),data=breslow.dat,family = poisson())
+summary(model)
+```
+```{r echo=F}
+try(detach(package:mgcv))
 ```
