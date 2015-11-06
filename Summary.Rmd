@@ -5336,3 +5336,717 @@ try(detach(package:rJava))
 try(detach(package:quantreg))
 ```
 
+#广义线性模型
+```{r include=FALSE}
+library(pander)
+library(ggplot2)
+library(plyr) 
+library(elrm) 
+library(epicalc)
+library(car)
+library(rms)
+library(Deducer)
+library(boot)
+library(bestglm)
+library(survival)
+library(robust)
+library(mlogit)
+library(VGAM)
+library(nnet)
+library(ordinal)
+library(robust)
+library(qcc)
+library(sandwich)
+library(lmtest)
+library(pscl)
+library(mvtnorm)
+library(MASS)
+```
+广义线性模型（GLM）是正态线性模型的直接推广，使用于连续数据和离散数据。广义线性模型通过链接函数，将因变量的期望与线性自变量相联系，通过误差函数描述误差的分布，使得许多线性模型的方法能被用于一般的问题。下表为广义线性模型中常见的链接函数和误差函数。
+
+      连接函数                     典型误差函数
+----  ---                          ---
+恒等  $x^{T}\beta =E(y)$           正态分布
+对数  $x^{T}\beta =lnE(y)$         Poisson分布
+Logit $x^{T}\beta =logitE(y)$      二项分布
+逆    $x^{T}\beta =\frac{1}{E(y)}$ Gamma分布
+
+R中常用的分布族和连接函数见下表
+
+分布族            连接函数                        默认连接函数
+----              ----                            ---
+binomial          logit,probit,cloglog            link="logit"
+gaussian          identity                        link="identity"
+Gamma             identity,inverse,log            link="inverse"
+inverse.gaussian  1/mu^2                          link="1/mu^2""
+poisson           identity,log,sqrt               link="log""
+quasi             logit,probit,cloglog,identity,  link="identity",variance="constant"
+                  inverse,log,1/mu^2,sqrt
+                  
+R中通过glm(formula, family=family.generator,data=data.frame) 函数用来做广义线性回归。正态分布族的使用方法：glm(formula, family = gaussian(link = identity),data = data.frame) , link指定了连接函数，正态分布族的连接函数缺省值是恒等的，link = identity可以不写。分布族缺省值是正态分布，family = gaussian也可以不写。glm(formula,data=data.frame)与lm(formula,data=data.frame)等价。本章重点关注常用的两种模型：Logistic回归和Poisson回归。
+
+##Logistic回归
+
+因变量为二分类或多分类时，Logistics回归是非常重要的模型。Logistics回归由于对资料的正态性和方差齐性不做要求、对自变量类型也不做要求等，使得Logistic回归模型在医学研究各个领域被广泛用，可探索某疾病的危险因素，根据危险因素预测某疾病发生的概率，等等。例如，想探讨胃癌发生的危险因素，可以选择两组人群，一组是胃癌组，一组是非胃癌组，两组人群肯定有不同的体征和生活方式等。这里的因变量就是是否胃癌，即“是”或“否”，为两分类变量，自变量就可以包括很多了，例如年龄、性别、饮食习惯、幽门螺杆菌感染等。自变量既可以是连续的，也可以是分类的。通过logistic回归分析，就可以大致了解到底哪些因素是胃癌的危险因素。Logistics回归模型的表达形式为
+$$logit(P)=ln(\frac{P}{1-P})=\beta_{0}+\beta_{1}X_{1}+\beta_{2}X_{2}+\cdots +\beta_{p}X_{p}$$
+P为暴露于某种状态下的结局概率。$logit(P)$是一种变量变换方式，表示对P进行logit变换。$beta_{i}$为偏回归系数，表示在其他自变量不变的条件下，$X_{i}$每变化一个单位$logit(P)$的估计值。对P进行了$logit(P)$变换后，$ln(\frac{P}{1-P})$的值可以取任意值。Logistics回归是通过最大似然估计（maximum likelihood estimation,MLE）求解常数项和偏回归系数,基本思想时当从总体中随机抽取n个样本后，最合理的参数估计量应该使得这n个样本观测值的概率最大。最大似然法的基本思想是先建立似然函数与对数似然函数，再通过使对数似然函数最大求解相应的参数值，所得到的估计值称为参数的最大似然估计值。
+
+在R语言中，进行logistic回归的命令是通过广义线性模型进行的：fm <- glm(formula, family = binomial(link = logit),data=data.frame) 。Logistic回归的基本方法是极大似然方法，其前提是样本较大。在样本量较小、数据结构较偏时，可以用精确Logistic回归（Exact logistic regression）来解决这一问题，该方法通过建立条件似然函数，进一步求出参数的充分统计量的分布函数。随着计算方法的发展和优化，也出现了使用马尔可夫链蒙特卡罗算法来模拟精确Logistic回归。R语言中的elrm包就可以实现这种算法。glm()拟合二项模型时对于因变量，如果是向量， 则假定操作二元（binary）数据，因此要求是0/1向量。 如果因变量是双列矩阵，则假定第一列为试验成功的次数第二列为试验失败的次数。如果因变量是因子，则第一水平作为失败 (0) 考虑而其他的作为`成功'(1) 考虑。
+
+### 单因素Logistics回归
+某项研究观察一种基因对于胃癌的诊断价值，选择了115名胃癌患者和115名非胃癌患者，检测他们的基因表达状态，欲分析该基因对胃癌是否有一定的诊断价值。
+
+胃癌        基因+        基因-
+----        ---          ---
+是          50           65
+否          4            111
+
+本例研究的因变量为二分类变量，分析基因的影响可以用$\chi ^{2}$和Logistics回归。
+```{r}
+x<-c(50, 4, 65, 111)
+dim(x)<-c(2,2)
+chisq.test(x,correct = FALSE)
+```
+P值较小，可以认为该基因对胃癌的诊断具有统计学意义。
+```{r}
+#将表转化为扁平格式
+table2flat <- function(mytable){
+  df <- as.data.frame(mytable)
+  rows <- dim(df)[1]
+  cols <- dim(df)[2]
+  x <- NULL
+  for(i in 1:rows){
+    for(j in 1:as.integer(as.character(df$Freq[i]))){
+      row <- df[i,c(1:(cols-1))]
+      x <- rbind(x,row)
+    }
+  }
+  row.names(x) <- c(1:dim(x)[1])
+  return(x)
+}
+
+gene <- rep(c(1,0),times=2)
+cancer <- rep(c("0","1"),each=2)
+Freq <- c(50,4,65,111)
+mytable <- as.data.frame(cbind(gene,cancer,Freq))
+mydata <- table2flat(mytable)
+
+#绘制条件密度图，查看线性关系
+cdplot(cancer~gene,data=mydata)
+fit.glm<- glm(cancer~gene,family = binomial, data = mydata)
+summary(fit.glm)
+```
+
+#### 回归诊断
+##### 拟合优度（goodness of fit）
+拟合优度度量的是预测值和观测值之间的总体一致性。但是在评价模型时，实际上测量的是预测值和观测值之间的差别，也就是实际上检测的是模型预测的“劣度”不是”优度“，即拟合不佳检验 （lack of fit test）常用的两个指标是 Hosmer-Lemeshow指标（HL）和信息测量指标（information measure）(IM). Hosmer Lemeshow拟合优度指标(通常简写为H-L),对应的统计假设$H_{0}$是预测值概率和观测值之间无显著差异，所以如果HL指标显示较大的P-value，说明统计结果不显著，因此，不能拒绝关于模型拟合数据很好的假设，换句话说，模型很好的拟合了数据。 IM指标中比较常用的是AIC，在其他条件不变的情况下，较小的AIC值表示拟合模型较好。
+
+##### 模型卡方统计（model chi-square statistic）
+模型卡方统计检测的是模型中所包含的统计量对因变量有显著的解释能力，也就是说所设模型比零假设模型（即只包含常数项的模型）要好，在多元线性回归和ANOVA中，常用F检验达到目的。在logistic中用似然比检验（likelihood ratio test）,相当于F检验。需要注意的是，模型卡方值和拟合优度是两个完全不同的概念：模型卡方值度量的是自变量是否与因变量的odds自然对数线性相关，而拟合优度度量的是预测值与观测值之间的一致性。所以按照理想情况，最好是模型的卡方检验统计性显著而拟合优度的统计性不显著。如果发生不一致，实践中更优先关注前者。
+
+##### 预测准确性
+模型卡方统计关注的只是对于零假设模型而言，所设模型显著不显著，它只是从总体上考虑了模型的显著性，但是所有X变量到底能解释多少Y变量的波动？这是预测准确性的问题，有两种方法：(1)类RSQUARE指标：在线性回归中，可以用RSQUARE来度量，显然RSQUARE越高说明预测越好，在logistic中，也有类似的指标。logistic中的RSQUARE也有许多重要的性质：与经典的RSQUARE定义一致，它可以被理解为Y变异中被解释的比例。(2)AUC值(C统计量)：拟合优度只是给出了观测值和预测概率直接的差别程度，然后给出了一个总体评价的指标，但是在实际应用中，往往更关心观测值和模型预测的条件事件概率的关联强度，这类指标被称为序列相关指标，指标值越高，表示预测概率与观测反应变量直接的关联越密切。通常用ROC图来和ROC图的曲线下面积（AUC）进行，AUC可以定量地评价模型的效果，AUC越大则模型效果越好。ROC曲线下的面积值在1.0和0.5之间。在AUC>0.5的情况下，AUC越接近于1，说明诊断效果越好。AUC在 0.5～0.7时有较低准确性，AUC在0.7～0.9时有一定准确性，AUC在0.9以上时有较高准确性。AUC=0.5时，说明诊断方法完全不起作用，无诊断价值。AUC<0.5不符合真实情况，在实际中极少出现。大于或等于0.75一般认为认为模型是可靠的。
+
+ROC（receiver operating characteristic curve，受试者工作特征曲线）曲线，横轴是1-Specificity（特异度），纵轴是Sensitivity（灵敏度）。45度线是作为参照（baseline model）出现的，就是说，ROC的好坏，乃是跟45度线相比的。选择最佳的诊断界限值。ROC曲线越靠近左上角,试验的准确性就越高。最靠近左上角的ROC曲线的点是错误最少的最好阈值，其假阳性和假阴性的总数最少。两种或两种以上不同诊断试验对疾病识别能力的比较。在对同一种疾病的两种或两种以上诊断方法进行比较时，可将各试验的ROC曲线绘制到同一坐标中，以直观地鉴别优劣，靠近左上角的ROC曲线所代表的受试者工作最准确。亦可通过分别计算各个试验的ROC曲线下的面积(AUC)进行比较，哪一种试验的 AUC最大，则哪一种试验的诊断价值最佳。
+
+对于0-1变量的二分类问题，分类的最终结果可以用表格表示为：
+
+            预测值0     预测值1
+----        ---         ---            
+实际值0     a           b
+实际值1     c           d
+
+其中，d是“实际为1而预测为1”的样本个数，c是“实际为1而预测为0”的样本个数，其余依此类推。显然地，主对角线所占的比重越大，则预测效果越佳，这也是一个基本的评价指标——总体准确率(a+d)/(a+b+c+d)。TPR（真阳性率、灵敏度）：True Positive Rate，将实际的1正确地预测为1的概率，d/(c+d)。FPR：False Positive Rate（假阳性率，1-特异度），将实际的0错误地预测为1的概率，b/(a+b)。TPR与FPR相互影响的重要因素就是“阈值”。当阈值为0时，所有的样本都被预测为正例，因此TPR=1，而FPR=1。此时的FPR过大，无法实现分类的效果。随着阈值逐渐增大，被预测为正例的样本数逐渐减少，TPR和FPR各自减小，当阈值增大至1时，没有样本被预测为正例，此时TPR=0，FPR=0。
+
+统计量最为关注的是AUC值，其次是似然卡方统计量，然后才是HL统计量，对AIC 和RSQUARE 极少关注，这一点和多元线性回归有很大的不同，根本原因是多元线性回归是一个预测模型，目标变量的值具有实际的数值意义；而logistic是一个分类模型，目标变量的值是一个分类标识，因此更关注观测值和预测值之间的相对一致性，而不是绝对一致性。
+
+rms包lrm()函数可以计算相关统计量。
+```{r}
+model <- lrm(cancer~gene,data=mydata)
+
+#Nagelkerke等其他拟合优度指标
+goodfit <- function(glmFit)
+{
+  N    <- nobs(glmFit)
+  glm0 <- update(glmFit, . ~ 1)
+  LLf  <- logLik(glmFit)
+  LL0  <- logLik(glm0)
+  
+  McFadden <- as.vector(1 - (LLf / LL0))
+  CoxSnell <- as.vector(1 - exp((2/N) * (LL0 - LLf)))
+  Nagelkerke <- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+  
+ result <- list(McFadden=McFadden, CoxSnell= CoxSnell,Nagelkerke=Nagelkerke)
+ return (result)
+}
+
+model$stats
+goodfit(fit.glm)
+```
+AUC值（C统计量）为0.778，可以认为模型比较可靠。似然比检验结果比较显著，观测值和预测值的一致性有差异。HL统计量,在多因素统计中予以计算。Deducer包rocplot可以绘制ROC曲线并计算AUC值。CoxSnell$R_{2}$系数与线性回归分析中的决定系数$R_{2}$有相似指出，也是回归方程对因变量变异解释程度的反应，由于CoxSnell$R_{2}$系数取值范围不易确定，不易直接判断拟合效果。Nagelkerke$R_{2}$系数是对CoxSnell$R_{2}$的修正，取值范围在0~1之间，越接近于1，说明模型的拟合优度越高。但对Logistic回归而言，伪决定系数不像线性回归中决定系数那么重要。
+
+```{r}
+rocplot(fit.glm)
+```
+#### 影响分析
+对于异常值识别仍然可用influence.measures()函数获得。
+```{r}
+influencePlot(fit.glm)
+influence.measures(fit.glm)
+```
+
+#### 多重共线性
+可用vif（方差膨胀因子）进行判断，vif开平方是否大于2，若大于2，则存在多重共线性问题。
+
+#### 过度离散
+因变量的方差大于期望的二项分布的方差，过度离散会导致奇异标准误检验和不精确的的显著性检验。检验过度离散的一种方法是比较二项分布模型的残差偏差与残差自由度，如果比值比1大很多，可以认为存在过度离散。对过度离散的假设检验需要用family = "quasibinomial"再进行一次模型拟合。
+
+```{r}
+overdispersion <- function(fit.glm){
+  Phi <- fit.glm$deviance/fit.glm$df.residual
+  fit.od <- glm(fit.glm$formula,family = quasibinomial, data = fit.glm$data)
+  p <- pchisq(summary(fit.od)$dispersion*fit.glm$df.residual,
+              fit.glm$df.residual,lower=F)
+  return (list(Phi=Phi,p.value=p))
+  }
+overdispersion(fit.glm)
+```
+比值在1附近，并且P值大于0.05，不能拒绝比值为1的假设，可以认为不存在过度离散。
+
+
+#### 模型参数解释
+```{r}
+logistic.display(fit.glm)
+```
+exp(coef(fit.glm))即为OR值，表示自变量增加一个单位，因变量则乘以OR值。OR值具有风险的含义，在危险因素研究中具有重要意义。LR-test（likelihood ration test）为似然比检验,Wald's test为Wadld检验，P值小于0.05均说明回归系数具有统计学意义，自变量与因变量有统计学联系。OR值大于1，为危险因素。OR值小于1，为保护因素。
+
+### 多因素Logistics回归
+AER包中包含一个Affairs数据，记录了一组婚外情数据，其中包括参与者性别、年龄、婚龄、是否有小孩、宗教信仰程度（5分制，1表示反对，5表示非常信仰）、学历、职业和婚姻的自我评分（5分制，1表示非常不幸福，5表示非常幸福）。
+```{r}
+data(Affairs,package="AER")
+Affairs$ynaffair[Affairs$affairs > 0] <- 1
+Affairs$ynaffair[Affairs$affairs==0] <- 0
+Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
+```
+与线性回归相似，bestglm包中bestglm函数可以完成logistic回归的全子集的自变量筛选。
+```{r}
+Affairs <- Affairs[,c("gender","age","yearsmarried","children",
+                      "religiousness","education","occupation","rating","ynaffair")]
+best.logistic <-bestglm(Affairs,family = binomial,IC = "AIC",method = "exhaustive") 
+best.logistic$BestModels
+summary(best.logistic$BestModel)
+```
+也可用逐步法完成自变量的筛选。
+```{r}
+fit.full <- glm(ynaffair~gender+age+yearsmarried
+                +children+religiousness+education+
+                  occupation+rating,data=Affairs,family=binomial())
+step(fit.full)
+```
+
+全自集和逐步法对自变量的筛选均应建立在对自变量专业考虑的基础上进行。本例中两种方法结果类似，对其结果进行诊断。
+```{r}
+fit <- glm(ynaffair ~ gender + age + yearsmarried + 
+             religiousness + rating, family = binomial(), data = Affairs)
+
+lrm(ynaffair ~ gender + age + yearsmarried + religiousness + rating,data=Affairs)
+```
+AUC=0.70,模型尚可。
+```{r}
+fit0 <- glm(formula = ynaffair ~ 1, family = binomial(), data = Affairs)
+anova(fit0,fit,test="Chisq")
+```
+模型的likelihood-ratio检验，P值小于0.05，可以认为模型的自变量与因变量的odds自然对数线性相关。
+
+Hosmer-Lemeshowz指标
+```{r error=FALSE}
+hosmerlem  <- function(y, yhat, g=10) {
+  cutyhat = cut(yhat, breaks = quantile(yhat, probs=seq(0,1,1/g)), 
+                include.lowest=TRUE)
+  obs = xtabs(cbind(1 - y, y) ~ cutyhat)
+  expect = xtabs(cbind(1 - yhat, yhat) ~ cutyhat)
+  chisq = sum((obs - expect)^2/expect)
+  P = 1 - pchisq(chisq, g - 2)
+  return(list(chisq=chisq,p.value=P))
+}
+
+hosmerlem(y=Affairs$ynaffair, yhat=fitted(fit))
+```
+Hosmer Lemeshow拟合优度指标检验P值小于0.05，可以认为预测值和观测值之间差异显著。
+过度离散诊断
+```{r}
+overdispersion(fit)
+```
+过度离散检验P值大于0.05，可以认为不存在过度离散。
+
+多重共线性
+```{r}
+sqrt(vif(fit)) > 2
+```
+自变量之间不存在多重共线性。可用influence.measures()函数进行影响分析，logistic.display()对自变量进行解释。
+
+### 稳健Logistic回归
+robust包中的glmRob（）函数可用来拟合稳健的广义线性模型，包括稳健Logistic回归；当拟合回归模型数据出现离群点和强影响点时，便可应用稳健Logistic回归。对influence.measures(fit)进行影响分析后，发现存在强影响点，应用稳健Logistic回归。
+```{r}
+fit.rob <- glmRob(ynaffair ~ gender + age + 
+                    yearsmarried + religiousness + rating, 
+                  family = binomial(), data = Affairs)
+summary(fit.rob)
+```
+
+### 条件logistic回归
+条件logistic回归假设自变量在各配对组中对结果变量的作用是相同的，即自变量的回归系数与配对组无关。配对设计的Logistic回归模型不含常数项，参数估计是根据条件概率得到的。对病例和对照进行配比能控制影响实验效应的主要非处理因素，可以提高统计分析的效能，通常可分为1:1，1:n，m:n配对。epicalc包中的VC1to1来自于验证吸烟、酗酒和橡胶行业工作是否是食管癌的危险因素的病例对照研究。
+
+```{r}
+data(VC1to1,package = "epicalc")
+pander(VC1to1)
+use(VC1to1)
+matchTab(case,smoking,strat=matset)
+```
+case变量1表示患病，0表示未患病。matset变量表示对子号。epicalc包中matchTab()函数用以计算条件优势比（McNemar's优势比），表示病例间不一致部分的计数比值，其95%置信区间如果包含1，则表示变量没有统计学意义。
+```{r}
+fit.c <- clogit(case~smoking+alcohol+rubber+strata(matset),
+                data=VC1to1,method = "exact")
+summary(fit.c)
+fit.c$loglik
+```
+survival包中clogit()函数可以完成条件Logistic回归，结果显示模型与空模型比较，差异无显著性。自变量smoking和rubber均无显著性差异，自变量alcohol差异显著。条件Logistic回归模型不能得到对数似然比和AIC值，但能得到条件对数似然比，以表示模型的拟合水平。
+
+### 无序多分类Logistic回归 
+若因变量包含两个以上的无序类别（比如，已婚/寡居/离婚），便可使用mlogit包中的mlogit（）函数拟合多项Logistic回归。epicalc中Ectopic数据集，其中outc变量中Deci表示正常分娩，IA表示发生人工流产，EP表示发生宫外孕。hia变量表示以前是否有IA（人工流产史），gravi表示怀孕的次数。
+```{r}
+data(Ectopic,package = "epicalc")
+pander(head(Ectopic))
+```
+```{r}
+ep <- Ectopic$outc=="EP"
+ia <- Ectopic$outc=="IA"
+deli <- Ectopic$outc=="Deli"
+mnFit <- multinom(cbind(deli,ep,ia)~hia+gravi, data=Ectopic)
+summary(mnFit)
+mlogit.display(mnFit)
+```
+
+```{r}
+vglmFitMN <- vglm(outc~hia+gravi, family=multinomial(refLevel=3), data=Ectopic)
+exp(VGAM::coef(vglmFitMN))
+```
+
+```{r}
+dfMNL <- mlogit.data(Ectopic, choice="outc", shape="wide", varying=NULL)
+mlogitFit <- mlogit(outc ~ 0 | hia+gravi,, reflevel="Deli", data=dfMNL)
+summary(mlogitFit)
+exp(mlogitFit$coefficients)
+```
+nnet包中multinom()函数、VGAM包中的vglm()函数、mlogit包中mlogit()函数均得到了相似的结果。mlogit()函数对数据格式于其他两个函数的要求有所不同，其中formula：mlogit提供了条件logit，多项logit，混合logit多种模型，对于多项logit的估计模型应写为：因变量~0|自变量,data：使用mlogit.data函数使得数据结构符合mlogit函数要求。Choice：确定分类变量是什么Shape：如果每一行是一个观测，选择wide，如果每一行是表示一个选择，那么选择long。alt.var：对于shape为long的数据，需要标明所有的选择名称。由于mlogit包可以做的logit模型更多。
+
+本例中是以outc变量的Deli(分娩)做为参考水平的，有人工流产史的病例(hia ever IA)发生宫外孕（EP）的危险增加4.44，有人工流产史的病例(hia ever IA)发生人工流产（IA）的危险增加1.47(置信区间包括1，无显著性意义)。multinom()函数默认是第一水平，可通过levels(Ectopic$outc)方法查看。vglm()和mlogit()函数是可以指定参考水平。
+
+#### 模型拟合评价
+```{r}
+PhatCateg <- VGAM::predict(vglmFitMN, type="response")
+categHat <- levels(Ectopic$outc)[max.col(PhatCateg)]
+facHat <- factor(categHat,levels=levels(Ectopic$outc))
+cTab   <- xtabs(~ outc+ facHat, data=Ectopic)
+addmargins(cTab)
+CCR <- sum(diag(cTab)) / sum(cTab)
+CCR
+```
+上述方法可获得模型的正确分类率，本例的正确分类率为`r CCR`，正确分类率偏低。
+
+偏差、对数似然值和AIC值
+```{r}
+deviance <- VGAM::deviance(vglmFitMN)
+logLik<- VGAM::logLik(vglmFitMN)
+AIC <- VGAM::AIC(vglmFitMN)
+deviance
+logLik
+AIC
+```
+
+McFadden, Cox & Snell and Nagelkerke $R^{2}$伪决定系数
+
+vglm()函数拟合结果并没有直接给出伪决定系数，可通过如下方法计算相关统计量。
+```{r}
+vglm0 <- vglm(outc~ 1, family=multinomial(refLevel=3), data=Ectopic)
+LLf   <- VGAM::logLik(vglmFitMN)
+LL0   <- VGAM::logLik(vglm0)
+N    <- nobs(vglmFitMN)
+McFadden <- as.vector(1 - (LLf / LL0))
+CoxSnell<- as.vector(1 - exp((2/N) * (LL0 - LLf)))
+Nagelkerke<- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+McFadden
+CoxSnell
+Nagelkerke
+```
+Nagelkerke伪决定系数为`r Nagelkerke`，表明自变量对因变量的解释程度不高。
+
+####系数及模型的检验
+vglm函数结果中并没有系数及模型的检验情况。对模型的系数及其95%置信区间可从如下方法获得。
+```{r}
+sumMN   <- VGAM::summary(vglmFitMN)
+coefMN <- VGAM::coef(sumMN)
+zCrit   <- qnorm(c(0.05/2, 1 - 0.05/2))
+ciCoef <- t(apply(coefMN, 1, function(x) x["Estimate"] - zCrit*x["Std. Error"] ))
+coefMN
+ciCoef
+```
+似然比检验通过如下方法获得。
+```{r}
+vglm0 <- vglm(outc~ 1, family=multinomial(refLevel=3), data=Ectopic)
+VGAM::lrtest(vglmFitMN, vglm0)
+```
+似然比检验结果表明含有两个自变量的模型和仅有截距项的模型相比有显著性差异。对系数的检验结果表明有人工流产史的病例(hia ever IA)是发生宫外孕(EP)危险因素。
+
+
+#### 预测分类
+vglm拟合结果可通过如下的方法得到每个分类的预测概率。
+```{r}
+PhatCateg <- VGAM::predict(vglmFitMN, type="response")
+head(PhatCateg)
+```
+还可以通过如下两种方法分别得到针对multinom()、mlogit()每个分类的预测概率。
+```{r eval=FALSE}
+predict(mnFit, type="probs")
+fitted(mlogitFit, outcome=FALSE)
+```
+对分类结果的预测有如下两种方法。
+```{r}
+PhatCateg <- VGAM::predict(vglmFitMN, type="response")
+categHat <- levels(Ectopic$outc)[max.col(PhatCateg)]
+head(categHat)
+```
+```{r eval=FALSE}
+predCls <- predict(mnFit, type="class")
+head(predCls)
+```
+
+### 有序多分类Logistic回归
+若因变量是一有序的类别（比如，无效/有效/显效/控制），使用无序多分类Logistic回归处理因变量，不但会丧失变量间联系的功效，而且会曲解因变量和自变量之间的相关方式。程序包MASS提供polr()函数、ordinal提供clm()函数、rms提供orm()函数、VGAM提供vglm()函数可以进行ordered logit或probit回归。累积Logistic回归模型(cumulative logit model)如下，${logit}(p(Y \geq g)) = \ln \frac{P(Y \geq g)}{1 - P(Y \geq g)} = \beta_{0_{g}} + \beta_{1} X_{1} + \dots + \beta_{p} X_{p} \quad(g = 2, \ldots, k)$。成比例比数比累计Logistic模型(proportional-adds cumulative logit mode)简化上述模型，使自变量$X_{i}$所对应的回归系数$\beta_{i}$都是相等。在此假设条件下，不同累计Logistic的回归线相互平行，只是截距$\beta_{i}$不同。
+例 epicalc中HW93数据集是1993年泰国南部钩虫感染的调查资料，其中intense变量表示感染的严重程度为有序多分类变量，shoes表示是否穿鞋，agegr是年龄分组。
+```{r}
+data(HW93,package = "epicalc")
+intense.ord <- ordered(HW93$intense)
+```
+
+在自变量较多的时候，可以采用R中自动逐步变量筛选step()函数，仅MASS包中polr()函数能够支持自变量的筛选。
+```{r}
+polrFit <- polr(intense.ord~agegr+shoes,method="logistic",data=HW93)
+exp(MASS:::confint.polr(polrFit))
+ordinal.or.display(polrFit)
+```
+VGAM包
+```{r}
+vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
+```
+VGAM包能进行所有类型的logistic回归的计算，并且能进行累计Logistic回归模型的平行性假设检验，其他包则不能。模型中family=cumulative(parallel=TRUE, reverse=TRUE)指定拟合累计Logistic回归模型，而且parallel=T指定模型按平行性假定进行拟合，该选项可简写为amily=propodds。
+```{r,eval=FALSE}
+vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE, 
+                                                reverse=TRUE),data=HW93)
+vglm(intense.ord~agegr+shoes, family=acat(parallel=TRUE), data=HW93)
+vglm(intense.ord~agegr+shoes, family=sratio(parallel=TRUE), data=HW93)
+```
+
+rms包
+```{r}
+ormFit <- orm(intense~agegr+shoes, data=HW93)
+```
+
+ordinal包
+```{r}
+clmFit <- clm(intense~agegr+shoes, link="logit", data=HW93)
+```
+结果显示，上述有序多分类Logisitic回归模型有两个截距，每一个都是结果的一个切割点，这些截距项的值没有实际意义。年龄的系数通过两个切割点进行了分割，两个系数均为正数表示危险度随年龄的增加而增加，穿鞋的系数为负数表示穿鞋对两种感染水平均有保护作用。
+
+#### 模型评价
+```{r}
+vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
+PhatCateg <- VGAM::predict(vglmFit, type="response")
+categHat <- levels(HW93$intense)[max.col(PhatCateg)]
+facHat <- factor(categHat, levels=levels(HW93$intense))
+cTab   <- xtabs(~ intense + facHat, data=HW93)
+addmargins(cTab)
+(CCR <- sum(diag(cTab)) / sum(cTab))
+```
+上述方法可获得模型的正确分类率，本例的正确分类率为`r CCR`，正确分类率偏低。
+偏差、对数似然值和AIC值
+```{r}
+deviance <- VGAM::deviance(vglmFit)
+logLik<- VGAM::logLik(vglmFit)
+AIC <- VGAM::AIC(vglmFit)
+deviance
+logLik
+AIC
+```
+
+McFadden, Cox & Snell and Nagelkerke $R^{2}$伪决定系数
+```{r}
+vglm0 <- vglm(intense.ord~ 1, family=propodds, data=HW93)
+LLf   <- VGAM::logLik(vglmFit)
+LL0   <- VGAM::logLik(vglm0)
+McFadden <- as.vector(1 - (LLf / LL0))
+CoxSnell<- as.vector(1 - exp((2/N) * (LL0 - LLf)))
+Nagelkerke<- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+McFadden
+CoxSnell
+Nagelkerke
+```
+
+####系数及模型的检验
+```{r}
+sumOrd   <- summary(vglmFit)
+coefOrd <- coef(sumOrd)
+exp(coefOrd[,1])
+zCrit   <- qnorm(c(0.05/2, 1 - 0.05/2))
+ciCoef <- t(apply(coefOrd, 1, function(x) x["Estimate"] - zCrit*x["Std. Error"] ))
+```
+
+MASS包建立的模型可直接使用confint()函数计算OR值及其可信区间。
+```{r}
+summary(polrFit)
+exp(cbind(OR=coef(polrFit),t(confint(polrFit))))
+```
+
+ordinal包建立的模型用summary()函数即可输出系数。
+```{r}
+summary(clmFit)
+```
+
+#### 模型比较
+```{r}
+vglmR <- vglm(intense.ord~ shoes, family=propodds, data=HW93)
+VGAM::lrtest(vglmFit, vglmR)
+VGAM::lrtest(vglmFit, vglm0)
+```
+vglmFit与其他两个模型比较均有显著性差异，选择LogLik值较大的，还有两个自变量的模型。选择更优模型还可以比较两个模型的信息统计量AIC和BIC，信息统计量小的模型更优。
+```{r}
+AIC(vglmR)
+AIC(vglm0)
+AIC(vglmFit)
+```
+
+#### 平行性假设检验
+为了检验平行性假设，需要建立非平行的模型，将平行性模型与非平行性模型进行似然比检验，检验平行性假设
+```{r}
+vglmP  <- vglm(intense.ord~agegr+shoes, 
+               family=cumulative(parallel=TRUE,  reverse=TRUE),data=HW93)
+vglmNP <- vglm(intense.ord~agegr+shoes, 
+               family=cumulative(parallel=FALSE, reverse=TRUE),data=HW93)
+VGAM::lrtest(vglmP, vglmNP)
+```
+
+```{r}
+clmP  <- clm(intense~agegr+shoes, link="logit", data=HW93)
+clmNP <- clm(intense~shoes, nominal=~agegr, data=HW93)
+anova(clmP, clmNP)
+```
+平行性假设检验结果表明，P值小于0.05，可以认为平行性假设不成立。检验结果可用is.parallel()函数获得。
+### 精确Logistic回归
+例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
+```{r}
+data(drugDat,package = "elrm")
+pander(drugDat)
+```
+
+```{r,eval=FALSE}
+data(drugDat)
+drug.elrm=elrm(formula=recovered/n~sex+treatment,
+               interest=~sex+treatment,iter=100000,burnIn=1000,dataset=drugDat)
+summary(drug.elrm)
+```
+
+## Possion回归
+Poisson回归的因变量是计数型的变量，自变量是连续性或类别型变量。Poisson回归因变量通常局限在一个固定长度时间段内进行测量（如过去一年交通事故数），整个观测集中时间长度都是不变的。Poisson回归主要有两个假设，首先，具有相同特征和同时的不同对象的人时风险是同质的，其次，当样本量越来越大时，频数的均数趋近于方差。
+
+例 robust包中Breslow癫痫数据记录了治疗初期八周内，抗癫痫药物对癫痫发病数的影响，因变量sumY为随机后8周内癫痫发病数，自变量治疗Trt，年龄Age和治疗前8周的癫痫发病数Base。
+
+```{r}
+data(breslow.dat,package="robust")
+opar <- par(no.readonly=T)
+par(mfrow = c(1,2))
+attach(breslow.dat)
+hist(sumY,breaks = 20,xlab = "Seizure Count",main="Distribution of Seizure")
+boxplot(sumY~Trt,xlab="Treatment",main="Group Coomparisons")
+par(opar)
+```
+
+从图中可以清楚的看到因变量的偏移特性及可能的离群点。药物治疗下癫痫的发病数似乎变小，且方差也变小了。
+
+```{r}
+fit <- glm(sumY~Base+Age+Trt,data=breslow.dat,family = poisson())
+summary(fit)
+```
+
+VGAM包vglm()方法获得类似结果
+```{r,eval=FALSE}
+vglmFit <- vglm(sumY~Base+Age+Trt, family=poissonff, data=breslow.dat)
+summary(vglmFit)
+```
+
+结果输出了偏差、回归参数、标准误和参数为0的检验。
+
+###拟合优度检验
+检验建立Poisson模型的拟合优度
+```{r}
+poisgof(fit)
+```
+P值较小，表明模型的拟合优度较差。
+
+###模型的系数及解释
+```{r}
+exp(coef(fit))
+```
+Base、Age、Trt和截距项检验均显示有意义，在保持其他变量不变，年龄增加1岁，癫痫发病数将乘以1.023。一单位的Trt变化（从安慰剂到治疗组），癫痫发病数将乘以0.86,也就是说治疗组想对于安慰剂组发病数下降了。危险比的95%置信区间可通过
+```{r}
+idr.display(fit)
+```
+
+###过度离散
+与Logistic回归类似，如果残差的偏差和和残差的自由度之比大于1,那么表明存在过度离散。Poisson分布的方差和均数相等，当因变量的方差比预测方差大时，Poisson分布可能会发生过度离散。过度离散可能会对结果的解释造成影响，可能会得到很小的标准误和置信区间，并且显著性检验也比较宽松。发生过度离散可能是遗漏了某个重要变量或者是计数事件并不独立。过度离散检验可用qcc包的qcc.overdispersion.test()方法。
+
+```{r}
+qcc.overdispersion.test(breslow.dat$sumY,type = "poisson")
+```
+P值小于0.05,表明确实存在过度离散。通过用family="quasipoisson" 替换family="poisson",以完成对过度离散数据的拟合。
+
+```{r}
+fit.od <- glm(sumY~Base+Age+Trt,data=breslow.dat,family = quasipoisson())
+summary(fit.od)
+```
+
+VGAM包vglm()方法获得类似结果
+```{r,eval=FALSE}
+vglm <- vglm(sumY~Base+Age+Trt, family=quasipoissonff, data=breslow.dat)
+summary(vglm)
+```
+
+使用类Poisson方法估计的参数与Poisson相同，但标准误变大。当考虑过度离散，Base、Trt和Age均没有显著意义。
+
+###异方差一致的标准误差 
+可通过如下方法获得
+```{r}
+hcSE <- vcovHC(fit, type="HC0")
+coeftest(fit, vcov=hcSE)
+```
+
+###时间段变化的Poisson回归
+当观测时间长度不同时，可以拟合时间段变化的Poisson回归模型，次住假设结果变量是比率。为分析比率，数据中需包含一个记录每个观测时间长度的变量(如time)。然后模型将从$ln(\lambda )=\beta _{0}+\sum_{j=1}^{p}\beta _{j}X_{j}$修改为$ln\begin{pmatrix}\frac{\lambda}{time} \end{pmatrix}=\beta _{0}+\sum_{j=1}^{p}\beta _{j}X_{j}$。为拟合新模型，需要使用glm()函数中的offset选项。假设Breslow中有一个time变量，记录了病人随机分组后监测时间长度的变化，拟合模型如下
+
+```{r,eval=FALSE}
+fit <- glm(sumY~Base+Age+Trt,data=breslow.dat,offset=log(time),
+           family = poisson())
+vglmFit <- vglm(sumY~Base+Age+Trt,offset=log(time), 
+                family=poissonff, data=breslow.dat)
+```
+
+###零膨胀的Poisson回归
+当因变量中，0计数的数目比Poisson回归预测的数据多时，即总体的一个子群体无任何被计数的行为时，就可能发生这种问题。
+
+```{r}
+set.seed(123)
+N     <- 200
+sigma <- matrix(c(4,2,-3, 2,16,-1, -3,-1,8), byrow=TRUE, ncol=3)
+mu    <- c(-3, 2, 4)
+XY    <- rmvnorm(N, mean=mu, sigma=sigma)
+Y     <- round(XY[ , 3] - 1.5)
+Y[Y < 0] <- 0
+dfCount <- data.frame(X1=XY[ , 1], X2=XY[ , 2], Y)
+
+ziFitP <- zeroinfl(Y ~ X1 + X2 | 1, dist="poisson", data=dfCount)
+vglm(Y ~ X1 + X2, family=zipoissonff, data=dfCount)
+```
+
+###稳健Poisson回归
+influence.measures()对拟合的模型完成影响分析后，如存在离群点和强影响点，可用robust包中glmRob()方法拟合稳健广义线性模型。
+```{r}
+fit.rob <- glmRob(sumY~Base+Age+Trt, family = poisson(), data=breslow.dat)
+summary(fit.rob)
+```
+
+### 负二项回归(Negative binomial regression)
+Poisson回归假定因变量是均数和方差相等，如果出现方差比均数大，就会形成过度离散，Poisson回归会低估预测变量的标准误。当过度离散比较明显时，指定误差项服从负二项分布，得到的负二项回归系数与Poisson回归相同，但标准误更大，结果的解释与Poisson回归相同。
+
+例 epicalc包DHF99数据集是一实地调查的滋生蚊子幼虫的水容器的数据，因变量containers是有蚊子幼虫滋生的容器的频数，education 和viltype是可能对因变量有影响的自变量。
+
+```{r}
+data(DHF99,package="epicalc")
+opar <- par(no.readonly=T)
+par(mfrow = c(1,2))
+attach(DHF99)
+hist(containers,breaks = 20)
+boxplot(containers~viltype)
+par(opar)
+qcc.overdispersion.test(DHF99$containers,type = "poisson")
+```
+因变量的偏移特性比较明显,因变量有缺失值，Poisson回归的过度离散情况不能够检验。
+
+负二项回归拟合用MASS包中glm.nb()方法
+```{r}
+glmFitNB <- glm.nb(containers ~ education + viltype, data=DHF99)
+summary(glmFitNB)
+```
+VGAM包中vglm()方法如下
+```{r,eval=FALSE}
+vglmFitNB <- vglm(containers ~ education + viltype, 
+                  family=negbinomial, data=DHF99)
+summary(vglmFitNB)
+```
+
+### 拟合优度检验
+检验建立负二项回归模型的拟合优度
+```{r}
+poisgof(glmFitNB)
+```
+P值较大，表明模型的拟合优度较好。
+
+###模型的系数及解释
+```{r}
+exp(coef(glmFitNB))
+```
+viltype的P值小于0.05,意义比较显著，结果解释与Poisson回归类似。对于自变量的选择可以采用step()和AIC值。
+
+###零膨胀的负二项回归回归
+与Poisson回归类似，因变量中0计数的频数较多时，应采用零膨胀的负二项回归回归
+```{r}
+ziFitNB <- zeroinfl(containers ~ education + viltype | 1, 
+                    dist="negbin", data=DHF99)
+summary(ziFitNB)
+```
+VGAM包中vglm()方法如下，此方法的自变量不能为分类变量。
+```{r,eval=FALSE}
+vglm(containers ~ village, family=zinegbinomial, data=DHF99)
+```
+
+出用AIC比较模型外，Quang Vuong提出如果一个模型比另一个模型更接近真实的函数，那么从这个模型得到的每个个体的对数似然值也应该显著的大于从另一个模型得到的每个个体的对数似然值。pscl包vuong() 方法实现了Vuong检验。
+```{r}
+vuong(ziFitNB, glmFitNB)
+```
+
+Vuong 检验的统计量则成标准的N(0, 1)正态分布。Vuong 值大于1.96，则模型1好于模型2，小于-1.96，则结论相反。Vuong Test = -0.15表明两个模型同样地接近真实函数。
+
+```{r echo=F}
+try(detach(package:Deducer))
+try(detach(package:rms))
+try(detach(package:pander))
+try(detach(package:ggplot2))
+try(detach(package:plyr))
+try(detach(package:elrm))
+try(detach(package:epicalc))
+try(detach(package:car))
+try(detach(package:boot))
+try(detach(package:bestglm))
+try(detach(package:Hmisc))
+try(detach(package:survival))
+try(detach(package:robust))
+try(detach(package:mlogit))
+try(detach(package:VGAM))
+try(detach(package:nnet))
+try(detach(package:ordinal))
+try(detach(package:robust))
+try(detach(package:qcc))
+try(detach(package:sandwich))
+try(detach(package:lmtest))
+try(detach(package:pscl))
+try(detach(package:mvtnorm))
+try(detach(package:MASS))
+```
