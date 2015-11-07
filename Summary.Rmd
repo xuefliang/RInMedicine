@@ -64,7 +64,9 @@ wants <- c("knitr","rmarkdown","devtools","epicalc","mosaic",
             "Hmisc","pastecs","psych","doBy","gmodels","CircStats",
             "expm","koRpus","ldbounds","ggm","coin","DescTools",
             "Rcurl","maptools","rgdal","animation","leaflet",
-            "polycor","pROC","rms","pgirmess")
+            "polycor","pROC","rms","pgirmess","rateratio.test",
+            "exactci","Deducer","VGAM","ordinal","AER","gplots",
+              "phia","HH","AICcmodavg"")
 
 has   <- wants %in% rownames(installed.packages())
 if(any(!has)) install.packages(wants[!has])
