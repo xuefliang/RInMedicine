@@ -10,7 +10,7 @@ output:
     number_sections: yes
     template: !expr rticles::ctex_template()
     toc: yes
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+classoption: "hyperref,"
 ---
 相对于R在其他行业的流行，医学领域R应用更加少见，医学领域目前仍然以SPSS和SAS为主，本书主要目的在于介绍R在医学领域的应用。本书使用 markdown衍生版本R Markdown（Rmd）V2进行撰写，在TeXLive环境下使用xelatex编译，所有的R语言代码都基于knitr运行和生成。本书的所有代码都在R 3.2 下经过严格的测试。其中测试的操作系统为Linux Mint 17.2。在Linux Mint下安装R，需要安装如下依赖库和编译库
 

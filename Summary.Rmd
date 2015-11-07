@@ -8,7 +8,7 @@ output:
     number_sections: yes
     template: !expr rticles::ctex_template()
     toc: yes
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+classoption: "hyperref,"
 ---
 \pagebreak
 
@@ -97,16 +97,21 @@ install.packages("blotter", repos="http://R-Forge.R-project.org")
 wget https://download1.rstudio.org/rstudio-0.99.486-amd64.deb
 sudo dpkg -i /home/xuefliang/Downloads/rstudio-0.99.486-amd64.deb
 ```
-## TexLive2014安装
+## TexLive2015安装
 ```{r eval=FALSE}
-mount -t iso9660 -o ro,loop,noauto texlive2014.iso /mnt 
-cd /mnt ./install-tl 
-umount -l /mnt
-#安装完成后需要设置环境变量，即在～/profile下加入
-vi ~/profile
-PATH=/usr/local/texlive/2014/bin/x86_64-linux:$PATH; export PATH
-MANPATH=/usr/local/texlive/2014/texmf-dist/doc/man:$MANPATH; export MANPATH
-INFOPATH=/usr/local/texlive/2014/texmf-dist/doc/info:$INFOPATH; export INFOPATH
+sudo mount -t iso9660 -o ro,loop,noauto texlive2015.iso /mnt 
+cd /mnt 
+sudo ./install-tl 
+sudo umount -l /mnt
+
+#安装完成后需要设置环境变量，即在/etc/profile下加入
+vi /etc/profile
+export MANPATH=/usr/local/texlive/2015/texmf/doc/man:$MANPATH  
+export INFOPATH=/usr/local/texlive/2015/texmf/doc/info:$INFOPATH  
+export PATH=/usr/local/texlive/2015/bin/x86_64-linux:$PATH 
+
+#使环境变量生效
+source /etc/profile
 ```
 ## Fandol 字体
 ```{r eval=FALSE}
