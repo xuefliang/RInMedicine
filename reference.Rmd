@@ -5,7 +5,7 @@ output:
     latex_engine: xelatex
     template: !expr rticles::ctex_template()
 classoption: "hyperref,"
-geometry: margin=0.5in
+geometry: margin=0.7in
 ---
 #参考文献
 1.Chow SC, Shao J, Wang H. Sample Size Calculation in Clinical Research[M]. New York: Marcel
