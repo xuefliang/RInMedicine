@@ -1,18 +1,13 @@
 ---
-title: "参考文献"
-author: "梁雪枫"
-date: "2015年5月23日"
+documentclass: ctexart
 output:
   pdf_document:
-    fig_caption: yes
     latex_engine: xelatex
-    number_sections: yes
     template: !expr rticles::ctex_template()
-    toc: yes
-documentclass: ctexart
-classoption: hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`
+classoption: "hyperref,"
+geometry: margin=0.5in
 ---
-
+#参考文献
 1.Chow SC, Shao J, Wang H. Sample Size Calculation in Clinical Research[M]. New York: Marcel
 Dekker, 2003
 

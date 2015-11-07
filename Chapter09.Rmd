@@ -1,6 +1,4 @@
 ---
-title: "地图展示"
-author: "梁雪枫"
 documentclass: ctexart
 output:
   pdf_document:
@@ -8,10 +6,10 @@ output:
     latex_engine: xelatex
     number_sections: yes
     template: !expr rticles::ctex_template()
-    toc: yes
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+classoption: "hyperref,"
+geometry: margin=0.5in
 ---
-
+#地图展示
 ```{r include=FALSE}
 library(maptools)
 library(ggplot2)
@@ -33,13 +31,14 @@ library(reshape2)
 
 ```{r}
 # 读取地理信息数据
-city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")
 # 将数据转为数据框
-gpclibPermit()  #install.packages("gpclib", type = "source")
-tract <- fortify(city,region="CNTY_CODE")
+gpclibPermit()  #install.packages('gpclib', type = 'source')
+tract <- fortify(city, region = "CNTY_CODE")
 
-#发病数据
-data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+# 发病数据
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", 
+    stringsAsFactors = FALSE)
 data$id <- as.character(data$id)
 
 plotData <- left_join(tract, data)
@@ -60,35 +59,41 @@ plot(lanzhou)
 ## Choropleth map
 ### geom_polygon()绘制地图
 ```{r warning=F}
-p <- ggplot() +
-  geom_polygon(data = plotData, aes(x = long, y = lat, group = group,fill = rand), color ="black", size = 0.25) +
-  coord_map()+theme_set(theme_bw())+
-  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
-        axis.text.y=element_blank(),axis.ticks=element_blank(),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
-  xlab("") + ylab("")+labs(title = "甘肃省")+
-  scale_fill_gradient2(low = "darkgreen", high = "red", mid = "yellow")+
-  guides(fill = guide_legend(keywidth = 1, keyheight = 1))
+p <- ggplot() + geom_polygon(data = plotData, aes(x = long, 
+    y = lat, group = group, fill = rand), color = "black", 
+    size = 0.25) + coord_map() + theme_set(theme_bw()) + 
+    theme(legend.position = "right", axis.line = element_blank(), 
+        axis.text.x = element_blank(), axis.text.y = element_blank(), 
+        axis.ticks = element_blank(), axis.title.x = element_blank(), 
+        axis.title.y = element_blank(), panel.border = element_blank(), 
+        panel.grid.major = element_line(colour = NA)) + 
+    xlab("") + ylab("") + labs(title = "甘肃省") + 
+    scale_fill_gradient2(low = "darkgreen", high = "red", 
+        mid = "yellow") + guides(fill = guide_legend(keywidth = 1, 
+    keyheight = 1))
 
-ggsave(p, file = "map2.png", width = 5, height = 4.5, type = "cairo-png")
+ggsave(p, file = "map2.png", width = 5, height = 4.5, 
+    type = "cairo-png")
 print(p)
 ```
 
 ### geom_map()绘制地图
 ```{r warning=F}
-ggplot(data, aes(map_id = id)) + 
-  geom_map(aes(fill = rand), map =tract) +
-  expand_limits(x = tract$long, y = tract$lat) +
-  coord_map()+
-  theme(legend.position="right",axis.line=element_blank(),axis.text.x=element_blank(),
-     axis.text.y=element_blank(),axis.ticks=element_blank(),
-     axis.title.x=element_blank(),
-     axis.title.y=element_blank(),panel.border=element_blank(),panel.grid.major=element_line(colour=NA))+
-  xlab("") + ylab("")+labs(title = "甘肃省")+
-  scale_fill_gradientn("发病率",breaks = c(0, 0.4, 0.8, 1),colours = c("green","yellow","red"),space = "Lab")
-  
-#scale_fill_gradient2("发病率",low = "darkgreen", high = "red", mid = "yellow", midpoint = 0.5,space = "Lab",guide = )
+ggplot(data, aes(map_id = id)) + geom_map(aes(fill = rand), 
+    map = tract) + expand_limits(x = tract$long, y = tract$lat) + 
+    coord_map() + theme(legend.position = "right", 
+    axis.line = element_blank(), axis.text.x = element_blank(), 
+    axis.text.y = element_blank(), axis.ticks = element_blank(), 
+    axis.title.x = element_blank(), axis.title.y = element_blank(), 
+    panel.border = element_blank(), panel.grid.major = element_line(colour = NA)) + 
+    xlab("") + ylab("") + labs(title = "甘肃省") + 
+    scale_fill_gradientn("发病率", breaks = c(0, 
+        0.4, 0.8, 1), colours = c("green", "yellow", 
+        "red"), space = "Lab")
+
+# scale_fill_gradient2('发病率',low = 'darkgreen',
+# high = 'red', mid = 'yellow', midpoint =
+# 0.5,space = 'Lab',guide = )
 ```
 
 ##点密度地图(Dot Density Maps)
@@ -153,15 +158,16 @@ ggplot(tract)+
 ###dotsInPolys()绘制地图
 在循环中使用spsample()方法获取点的速度较慢，可以dotsInPolys()方法提高作图的速度。
 ```{r}
-city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
-gpclibPermit()  #install.packages("gpclib", type = "source")
-tract <- fortify(city,region="CNTY_CODE")
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")
+gpclibPermit()  #install.packages('gpclib', type = 'source')
+tract <- fortify(city, region = "CNTY_CODE")
 
-data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
+data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", 
+    stringsAsFactors = FALSE)
 data$id <- as.character(data$id)
 data$CNTY_CODE <- as.integer(data$id)
-data$A <- round(data$rand*1000)
-data$B <- round(data$rand*100*4)
+data$A <- round(data$rand * 1000)
+data$B <- round(data$rand * 100 * 4)
 
 plotDdata <- left_join(city@data, data)
 
@@ -169,13 +175,13 @@ dots.A <- dotsInPolys(city, as.integer(plotDdata$A))
 dots.A$Vote <- "A"
 dots.B <- dotsInPolys(city, as.integer(plotDdata$B))
 dots.B$Vote <- "B"
-dots.all <- spRbind(dots.A, dots.B) 
-dots <- data.frame(coordinates(dots.all)[,1:2],Vote=dots.all$Vote)
+dots.all <- spRbind(dots.A, dots.B)
+dots <- data.frame(coordinates(dots.all)[, 1:2], Vote = dots.all$Vote)
 
-ggplot(tract, aes(x = long, y = lat)) + 
-  geom_polygon(aes(group = group), size=0.2, fill = "white") + 
-  coord_equal()+geom_point(data=dots, aes(x=x,y=y,colour=factor(Vote)), size=0.8)+
-  scale_colour_manual (values=c("blue", "orange")) 
+ggplot(tract, aes(x = long, y = lat)) + geom_polygon(aes(group = group), 
+    size = 0.2, fill = "white") + coord_equal() + geom_point(data = dots, 
+    aes(x = x, y = y, colour = factor(Vote)), size = 0.8) + 
+    scale_colour_manual(values = c("blue", "orange"))
 ```
 
 ##ggmap包使用
@@ -200,36 +206,42 @@ qmap(baylor, zoom = 14,source = "osm")
 
 例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
 ```{r warning=F}
-city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
-gpclibPermit()  #install.packages("gpclib", type = "source")
-tract <- fortify(city,region="CNTY_CODE")
+city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")
+gpclibPermit()  #install.packages('gpclib', type = 'source')
+tract <- fortify(city, region = "CNTY_CODE")
 
-data <- read.csv("data.csv",header = T,stringsAsFactors = F)
+data <- read.csv("data.csv", header = T, stringsAsFactors = F)
 data$lan <- as.numeric(data$lan)
 data$lon <- as.numeric(data$lon)
-data$date <- as.Date(data$date,  "%Y-%m-%d")
+data$date <- as.Date(data$date, "%Y-%m-%d")
 
-ggmap(get_googlemap(center = 'gansu', zoom=5,maptype='roadmap'),extent='device')+
-geom_polygon(data = tract, aes(x = long, y = lat, group = group),colour="black",fill='grey' ,alpha = 0.2)+
-geom_point(data=data,aes(x=lon,y=lan),colour = 'red',alpha=0.7)+
-stat_density2d(aes(x=lon,y=lan,fill=..level..,alpha=..level..),size=2,bins=4,data=data,geom='polygon')+
-theme_nothing(legend = TRUE)+
-  coord_cartesian(xlim=c(90, 110), ylim=c(32, 43))
+ggmap(get_googlemap(center = "gansu", zoom = 5, maptype = "roadmap"), 
+    extent = "device") + geom_polygon(data = tract, 
+    aes(x = long, y = lat, group = group), colour = "black", 
+    fill = "grey", alpha = 0.2) + geom_point(data = data, 
+    aes(x = lon, y = lan), colour = "red", alpha = 0.7) + 
+    stat_density2d(aes(x = lon, y = lan, fill = ..level.., 
+        alpha = ..level..), size = 2, bins = 4, data = data, 
+        geom = "polygon") + theme_nothing(legend = TRUE) + 
+    coord_cartesian(xlim = c(90, 110), ylim = c(32, 
+        43))
 ```
 
 ```{r eval=F}
 # 为了生成动画，先准备好一个绘图函数
 plotfunc <- function(x) {
-    df <- subset(data,date <= x)
+    df <- subset(data, date <= x)
     df$lan <- as.numeric(df$lan)
     df$lon <- as.numeric(df$lon)
-    p <- ggmap(get_googlemap(center ='gansu',zoom=8,maptype='roadmap'),,extent='device')+
-        geom_point(data=df,aes(x=lon,y=lan),colour = 'red',alpha=0.7)
+    p <- ggmap(get_googlemap(center = "gansu", zoom = 8, 
+        maptype = "roadmap"), , extent = "device") + 
+        geom_point(data = df, aes(x = lon, y = lan), 
+            colour = "red", alpha = 0.7)
 }
 # 获取日期
 time <- sort(unique(data$date))
 # 生成并保存动画
-saveHTML(for( i in time) print(plotfunc(i))) #用getwd()查看目录，此目录下有生成html文件
+saveHTML(for (i in time) print(plotfunc(i)))  #用getwd()查看目录，此目录下有生成html文件
 ```
 
 ##添加标记和路径
@@ -247,14 +259,13 @@ F	39.2	97.81
 map <- get_map(location = "gansu", zoom = 6, maptype = "watercolor")
 
 p <- ggmap(map)
-p <- p + geom_point(data = dat, aes(x = long, y = lat, shape = location, colour = location, size = 7))
-p <- p + geom_text(data = dat, aes(x = long, y = lat, label = location), hjust = -0.2)
+p <- p + geom_point(data = dat, aes(x = long, y = lat, 
+    shape = location, colour = location, size = 7))
+p <- p + geom_text(data = dat, aes(x = long, y = lat, 
+    label = location), hjust = -0.2)
 p <- p + theme(legend.position = "none", panel.grid.major = element_blank(), 
-               panel.grid.minor = element_blank(), 
-               axis.text = element_blank(), 
-               axis.title = element_blank(), 
-               axis.ticks = element_blank()
-)
+    panel.grid.minor = element_blank(), axis.text = element_blank(), 
+    axis.title = element_blank(), axis.ticks = element_blank())
 p <- p + labs(title = "Gansu locations")
 print(p)
 ```
@@ -262,24 +273,23 @@ print(p)
 添加路径
 ```{r}
 dat.pts <- data.frame(x = dat$long, y = dat$lat)
-map <- get_googlemap("gansu", zoom = 6, maptype = "satellite", markers = dat.pts, path = dat.pts, scale = 2)
+map <- get_googlemap("gansu", zoom = 6, maptype = "satellite", 
+    markers = dat.pts, path = dat.pts, scale = 2)
 
-p <- ggmap(map, extent = "device" # 除去白色边框
-, darken = 0.1 #图层淡化，凸显标记点
+p <- ggmap(map, extent = "device"  # 除去白色边框
+, darken = 0.1  #图层淡化，凸显标记点
 )
 
-p <- p + geom_text(data = dat, aes(x = long, y = lat, label = location)
-                   , hjust = -0.2, colour = "white", size = 6)
-p <- p + theme(legend.position = c(0.05, 0.05) # put the legend inside the plot area
-, legend.justification = c(0, 0)
-, legend.background = element_rect(colour = F, fill = "white")
-, legend.key = element_rect(fill = F, colour = F)
-, panel.grid.major = element_blank()
-, panel.grid.minor = element_blank()
-, axis.text = element_blank()
-, axis.title = element_blank()
-, axis.ticks = element_blank()
-)
+p <- p + geom_text(data = dat, aes(x = long, y = lat, 
+    label = location), hjust = -0.2, colour = "white", 
+    size = 6)
+p <- p + theme(legend.position = c(0.05, 0.05)  # put the legend inside the plot area
+, legend.justification = c(0, 
+    0), legend.background = element_rect(colour = F, 
+    fill = "white"), legend.key = element_rect(fill = F, 
+    colour = F), panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), axis.text = element_blank(), 
+    axis.title = element_blank(), axis.ticks = element_blank())
 p <- p + labs(title = "Around Gansu")
 print(p)
 ```
