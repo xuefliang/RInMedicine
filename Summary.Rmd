@@ -66,12 +66,13 @@ wants <- c("knitr","rmarkdown","devtools","epicalc","mosaic",
             "Rcurl","maptools","rgdal","animation","leaflet",
             "polycor","pROC","rms","pgirmess","rateratio.test",
             "exactci","Deducer","VGAM","ordinal","AER","gplots",
-              "phia","HH","AICcmodavg"")
+           "AICcmodavg")
 
 has   <- wants %in% rownames(installed.packages())
 if(any(!has)) install.packages(wants[!has])
 ```
 
+在CRAN上已经下线包，采用离线安装
 ```{r eval=FALSE}
 install.packages("~/Downloads/epicalc_2.15.1.0.tar.gz", repos = NULL, type = "source")
 install.packages("~/Downloads/lmPerm_1.1-2.tar.gz", repos = NULL, type = "source")
@@ -1475,9 +1476,9 @@ try(detach(package:ggplot2))
 
 #参数估计
 ```{r include=FALSE}
+library(mixtools)
 library(MASS)
 library(pander)
-library(mixtools)
 library(boot)
 ```
 
@@ -1617,7 +1618,6 @@ summary(boot)
 summary(gauss)
 sd(boot)
 ```
-
 
 ##区间估计
 由于点估计不能说明估计值与真实值的偏差到底有多大，也不能说明这个估计有多大的可行度，这些问题需要区间估计予以解决。区间估计是依据抽取的样本，根据一定的正确度与精确度的要求，构造出适当的区间，作为总体分布的未知参数或参数的函数的真值所在范围的估计。求置信区间常用的三种方法：1.利用已知的抽样分布.利用区间估计与假设检验的联系。3.利用大样本理论。 
@@ -1811,9 +1811,9 @@ p.test <- function(x,n)
 p.test(34,120)
 ```
 ```{r echo=F}
+try(detach(package:mixtools))
 try(detach(package:MASS))
 try(detach(package:pander))
-try(detach(package:mixtools))
 try(detach(package:boot))
 ```
 
@@ -6135,6 +6135,7 @@ try(detach(package:mgcv))
 ```{r include=FALSE}
 library(car)
 library(DescTools)
+library(HH)
 library(multcomp)
 library(pander)
 library(gplots)
@@ -6442,7 +6443,6 @@ plotmeans(len ~ interaction(supp, dose, sep = " "),
 ```
 
 ```{r eval=F}
-library(HH)
 interaction2wt(len ~ supp * dose) #interaction2wt() 函数,因为它能展示任意复杂度设计(双因素方差分析、三因素方差分析等)的主效应(箱线图)和交互效应
 ```
 
@@ -7006,15 +7006,17 @@ anova(lmer(Y ~ Xb1*Xb2*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
 根据F值判断Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
 
 ```{r echo=F}
+try(detach(package:phia))
 try(detach(package:car))
 try(detach(package:DescTools))
+try(detach(package:HH))
 try(detach(package:multcomp))
 try(detach(package:pander))
 try(detach(package:gplots))
 try(detach(package:plyr))
 try(detach(package:effects))
-try(detach(package:phia))
 try(detach(package:nlme))
+try(detach(package:pbkrtest))
 try(detach(package:lme4))
 ```
 
@@ -8606,11 +8608,9 @@ tt$conf.int
 ```
 
 ```{r echo=F}
-try(detach(package:coin))
+# try(detach(package:coin))
 try(detach(package:DescTools))
 try(detach(package:polycor))
-try(detach(package:HH))
-try(detach(package:multcomp))
 try(detach(package:mvtnorm))
 try(detach(package:pROC))
 try(detach(package:rms))
@@ -8624,152 +8624,6 @@ try(detach(package:plyr))
 try(detach(package:boot))
 ```
 
-\pagebreak
-
-#地图展示
-```{r include=FALSE}
-library(bitops)
-library(RCurl)
-library(XML)
-library(maps)
-library(mapproj)
-library(dplyr)
-library(magrittr)
-library(rgdal)
-library(animation)
-library(plyr)
-library(leaflet)
-library(rgdal)
-library(htmltools)
-library(reshape2)
-library(scales)
-library(ggplot2)
-library(gpclib)
-library(sp)
-library(maptools)
-```
-
-流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
-
-```{r warning=F}
-# 读取地理信息数据
-city <- readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
-# 将数据转为数据框
-#gpclibPermit()  #install.packages("gpclib", type = "source")
-#fortity函数在rmd生成pdf时报错
-#tract <- ggplot2::fortify(city,region="CNTY_CODE")
-#write.csv(tract,file = "tract.csv")
-tract<- read.csv("/home/xuefliang/RInMedicine/tract.csv", 
-                 stringsAsFactors = FALSE)
-#发病数据
-data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", 
-                 stringsAsFactors = FALSE)
-data$id <- as.character(data$id)
-tract$id<- as.character(tract$id)
-plotData <- left_join(tract,data)
-```
-
-地图数据查看及加工
-```{r}
-names(city)
-#Linux环境是UTF-8，需要iconv函数转化
-table(iconv(city$NAME, from = "GBK"))
-#选择兰州的地图
-lanzhou = city[city$CNTY_CODE8 == 62010000,]
-#默认把经度和纬度作为普通数据，均匀平等对待，绘制在笛卡尔坐标系上
-plot(lanzhou)
-#地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，
-#ggplot2包提供了专门的coord_map()函数
-```
-
-##点密度地图(Dot Density Maps)
-###spsample()绘制地图
-```{r  warning=F}
-tract$group <- tract$id
-tract <- rbind(filter(tract,id=="62290000"),filter(tract,id=="62300000"))
 
 
-#发病数据
-data$id <- as.character(data$id)
-data$A <- round(data$rand*1000)
-data$B <- round(data$rand*100*4)
 
-plotData <- left_join(tract, data)
-pointCollector <- list()
-perNCapita <- 1
-
-for(ss in tract$id){
-  #print(ss)
-  stateShapeFrame <- tract[tract$id == ss, ]
-  if(nrow(stateShapeFrame) < 1){next()}
-  statePoly <- Polygons(lapply(split(stateShapeFrame[, c("long", "lat")],
-                                     stateShapeFrame$group), Polygon), ID = "b")
-  nA <- ceiling(data[data$id == ss, "A"]/perNCapita)
-  nB <- ceiling(data[data$id == ss, "B"]/perNCapita)
-  
-  pA <- data.frame(spsample(statePoly, nA, type = "random")@coords,
-                   Vote = "A") 
-  #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,
-  #nonaliged,hexagonal,clustered,Fibonacci
-  pB <- data.frame(spsample(statePoly, nB, type = "random")@coords,
-                   Vote = "B")
-  
-  allPoints <- data.frame(State = ss, rbind(pA, pB))
-  pointCollector[[ss]] <- allPoints
-}
-
-pointFrame <- do.call(rbind, pointCollector)
-pointFrame <- pointFrame[sample(1:nrow(pointFrame), nrow(pointFrame)), ]
-#head(pointFrame)
-
-new_theme_empty <- theme_bw()  # 创建自己的主题
-new_theme_empty$line <- element_blank()
-new_theme_empty$rect <- element_blank()
-new_theme_empty$strip.text <- element_blank()
-new_theme_empty$axis.text <- element_blank()
-#new_theme_empty$axis.title <- element_blank()
-new_theme_empty$plot.margin <- structure(c(0, 0, -1, -1), unit = "lines",
-                                         valid.unit = 3L, class = "unit")
-
-ggplot(tract)+
-  geom_point(data = pointFrame,aes(x = x, y = y, colour = Vote),size=1)+
-  geom_polygon(aes(x = long, y = lat, group = group),
-               colour = "BLACK", fill = "transparent")+
-  coord_map(project="conic", lat0 = 30)+
-  new_theme_empty+
-  scale_colour_manual(values = c("blue", "red"))+
-  ggtitle("Type by State")+
-  ylab("")+
-  xlab(paste("Each dot represents ",perNCapita, " Vote", sep = ""))+
-  guides(colour = guide_legend(override.aes =list(shape = 19, alpha = 1)))
-```
-
-###dotsInPolys()绘制地图
-在循环中使用spsample()方法获取点的速度较慢，可以dotsInPolys()方法提高作图的速度。
-```{r}
-city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")  
-#gpclibPermit()  #install.packages("gpclib", type = "source")
-#tract <- fortify(city,region="CNTY_CODE")
-tract<- read.csv("/home/xuefliang/RInMedicine/tract.csv", 
-                 stringsAsFactors = FALSE)
-
-data <- read.csv("/home/xuefliang/RInMedicine/city/data.csv", stringsAsFactors = FALSE)
-data$id <- as.character(data$id)
-data$CNTY_CODE <- as.integer(data$id)
-data$A <- round(data$rand*1000)
-data$B <- round(data$rand*100*4)
-
-plotDdata <- left_join(city@data, data)
-
-dots.A <- dotsInPolys(city, as.integer(plotDdata$A))
-dots.A$Vote <- "A"
-dots.B <- dotsInPolys(city, as.integer(plotDdata$B))
-dots.B$Vote <- "B"
-dots.all <- spRbind(dots.A, dots.B) 
-dots <- data.frame(coordinates(dots.all)[,1:2],Vote=dots.all$Vote)
-
-ggplot(tract, aes(x = long, y = lat)) + 
-  geom_polygon(aes(group = group), size=0.2, fill = "white") + 
-  coord_equal()+geom_point(data=dots, aes(x=x,y=y,colour=factor(Vote)), size=0.8)+
-  scale_colour_manual (values=c("blue", "orange")) 
-```
