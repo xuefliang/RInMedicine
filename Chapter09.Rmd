@@ -7,7 +7,7 @@ output:
     number_sections: yes
     template: !expr rticles::ctex_template()
 classoption: "hyperref,"
-geometry: margin=0.5in
+geometry: margin=0.7in
 ---
 #地图展示
 ```{r include=FALSE}
@@ -101,7 +101,6 @@ ggplot(data, aes(map_id = id)) + geom_map(aes(fill = rand),
 ```{r  warning=F}
 tract$group <- tract$id
 tract <- rbind(filter(tract,id=="62290000"),filter(tract,id=="62300000"))
-
 
 #发病数据
 data$id <- as.character(data$id)

@@ -8,6 +8,7 @@ output:
     template: !expr rticles::ctex_template()
     toc: yes
 classoption: "hyperref,"
+geometry: margin=0.7in
 ---
 \pagebreak
 
@@ -18,7 +19,10 @@ classoption: "hyperref,"
 在Linux Mint下安装R，需要安装如下依赖库和编译库
 ```{r eval=FALSE}
 sudo apt-get install build-essential git-core gfortran libxml2-dev 
-libcurl4-openssl-dev libcurl4-gnutls-dev libfreetype6-dev libbz2-dev liblapack-dev libpcre++-dev liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-* curl libgmp3-dev libmysql++-dev libmpfr-dev libgdal1-dev libproj-dev libglu1-mesa-dev r-cran-boot r-cran-class r-cran-cluster 
+libcurl4-openssl-dev libcurl4-gnutls-dev libfreetype6-dev 
+libbz2-dev liblapack-dev libpcre++-dev liblzma-dev r-cran-rcpp 
+r-cran-rjava openjdk-7-* curl libgmp3-dev libmysql++-dev 
+libmpfr-dev libgdal1-dev libproj-dev libglu1-mesa-dev r-cran-boot r-cran-class r-cran-cluster 
 r-cran-codetools r-cran-foreign r-cran-kernsmooth r-cran-lattice 
 r-cran-mass r-cran-matrix r-cran-mgcv r-cran-nlme r-cran-nnet 
 r-cran-rpart r-cran-spatial r-cran-survival r-cran-rodbc
