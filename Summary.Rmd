@@ -1,5 +1,12 @@
 ---
 documentclass: ctexart
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhf{}
+- \fancyfoot[C]{\thepage}
+- \renewcommand{\headrulewidth}{0pt}
+- \renewcommand{\footrulewidth}{0pt}
 output:
   pdf_document:
     fig_caption: yes
@@ -8,7 +15,7 @@ output:
     template: !expr rticles::ctex_template()
     toc: yes
 classoption: "hyperref,"
-geometry: margin=0.7in
+geometry: margin=0.8in
 ---
 \pagebreak
 

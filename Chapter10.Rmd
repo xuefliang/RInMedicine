@@ -2,6 +2,14 @@
 title: "生存分析"
 author: "梁雪枫"
 documentclass: ctexart
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhf{}
+- \fancyhead[C]{\leftmark}
+- \fancyfoot[C]{\thepage}
+- \renewcommand{\headrulewidth}{0pt}
+- \renewcommand{\footrulewidth}{0pt}
 output:
   pdf_document:
     fig_caption: yes
