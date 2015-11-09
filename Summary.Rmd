@@ -1,9 +1,12 @@
 ---
+classoption: hyperref,
 documentclass: ctexart
+geometry: margin=0.8in
 header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
+- \fancyhead[C]{\fontsize{7}{7}\selectfont\leftmark}
 - \fancyfoot[C]{\thepage}
 - \renewcommand{\headrulewidth}{0pt}
 - \renewcommand{\footrulewidth}{0pt}
@@ -12,10 +15,11 @@ output:
     fig_caption: yes
     latex_engine: xelatex
     number_sections: yes
-    template: !expr rticles::ctex_template()
+    template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.2/rticles/rmarkdown/templates/ctex/resources/default.latex
     toc: yes
-classoption: "hyperref,"
-geometry: margin=0.8in
+  html_document:
+    toc: yes
+  word_document: default
 ---
 \pagebreak
 
