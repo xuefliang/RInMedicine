@@ -1,12 +1,10 @@
 ---
-classoption: hyperref,
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 documentclass: ctexart
-geometry: margin=0.8in
 header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \fancyhead[C]{\fontsize{7}{7}\selectfont\leftmark}
 - \fancyfoot[C]{\thepage}
 - \renewcommand{\headrulewidth}{0pt}
 - \renewcommand{\footrulewidth}{0pt}
@@ -33,7 +31,8 @@ sudo apt-get install build-essential git-core gfortran libxml2-dev
 libcurl4-openssl-dev libcurl4-gnutls-dev libfreetype6-dev 
 libbz2-dev liblapack-dev libpcre++-dev liblzma-dev r-cran-rcpp 
 r-cran-rjava openjdk-7-* curl libgmp3-dev libmysql++-dev 
-libmpfr-dev libgdal1-dev libproj-dev libglu1-mesa-dev r-cran-boot r-cran-class r-cran-cluster 
+libmpfr-dev libgdal1-dev libproj-dev libglu1-mesa-dev r-cran-boot 
+r-cran-class r-cran-cluster 
 r-cran-codetools r-cran-foreign r-cran-kernsmooth r-cran-lattice 
 r-cran-mass r-cran-matrix r-cran-mgcv r-cran-nlme r-cran-nnet 
 r-cran-rpart r-cran-spatial r-cran-survival r-cran-rodbc
@@ -181,14 +180,17 @@ library(reshape2)
 若$$E(X^{k}Y^{l}),k,l=1,2,\cdot \cdot \cdot$$存在，则称它为X和Y的k+l阶混合距。
 若$$E\left \{ [X-E(X)]^{k}[Y-E(Y)]^{l} \right \},k,l=1,2,\cdot \cdot \cdot$$存在，则称它为X和Y的k+l阶混合中心距。
 X的数学期望E(X)是X的一阶原点矩，方差D(X)是X的二阶中心矩，协方差Cov(X,Y)是X和Y的二阶混合中心矩。
+
 ###  均值(Mean)
 一阶原点矩又称均数是一组数据的平均值,均数（记为$\bar{x}$）定义为
 $$\bar{X}=\frac{1}{n}\sum _{i=1}^{n}X_{i}$$
 用它来描述正态分布数据的集中趋势。
+
 ### 标准差(Standard Deviation)
 样本方差定义为$$S^{2}=\frac{1}{n-1}\sum_{i=1}^{n}(X_{i}-\bar{X})^{2}$$,标准差是方差的算术平方根，是一组数值自均数分散开来的程度的一种测量观念。定义为
 $$\delta = \sqrt{\frac{1}{N}\sum_{i=1}^{n}(x_i-u)^2}$$
 一个较大的标准差，代表大部分的数值和其平均值之间差异较大；一个较小的标准差，代表这些数值较接近平均值。
+
 例 已知50名患者的收缩压（mmHg）分别为：
 147 163 159 124 120  94 135 185 109 143 116 129 157 146 149 127 124 160 101 129 130 154 151
 119 128 147 127 122 145 159 141 131 117 139 142 152 147 157 134 146 144 119 160 136 122 172
@@ -225,6 +227,7 @@ t.test(sbp)
 ```{r}
 t.test(sbp,conf.level=0.99)
 ```
+
 ###中位数(Median)
 对于一组有限个数的数据来说，它们的中位数是这样的一种数：这群数据里的一半的数据比它大，而另外一半数据比它小。 计算有限个数的数据的中位数的方法是：把所有的同类数据按照大小的顺序排列。如果数据的个数是奇数，则中间那个数据就是这群数据的中位数；如果数据的个数是偶数，则中间那2个数据的算术平均值就是这群数据的中位数。通常用中位数来描述非正态分布数据的集中趋势，极值对中位数影响不大。定义为
 实数$x_1$, $x_2$, $\dots$, $x_n$按大小顺序（顺序，降序皆可）排列为$x'_1$, $x'_2$, $\dots$ , $x'_n$、实数数列$x=(x_1, x_2, \dots , x_n)$的中位数$\mathrm{Q}_\frac{1}{2}(x)$为
@@ -235,6 +238,7 @@ $$\mathrm{Q}_\frac{1}{2}(x) =
 \end{cases}
 $$
 odd 为奇数，even 为偶数。
+
 ###四分位差(quartile deviation)
 是上四分位数（QU，即位于75%）与下四分位数（QL，即位于25%）的差的一半。计算公式为：$Qd=QU-QL$。四分位差反映了中间50%数据的离散程度，其数值越小，说明中间的数据越集中；其数值越大，说明中间的数据越分散。四分位差不受极值的影响。
 例 某地17名患者的月收入分别为：
@@ -259,11 +263,13 @@ quantile(income)
 ```{r}
 wilcox.test(income, conf.int=TRUE)
 ```
+
 ### 数学期望(mathematical expectation)
 离散型随机变量：离散型随机变量的一切可能的取值$x_{i}$与对应的概率$P_{i}(=x_{i})$之积的和称为该离散型随机变量的数学期望，记为$E(X)$。数学期望是最基本的数学特征之一。它反映随机变量平均取值的大小
 $$E(X)=\sum_{i}x_{i}p_{i}$$
 连续型随机变量：若随机变量X的分布函数$F(x)$可表示成一个非负可积函数$f(x)$的积分，则称$X$为连续性随机变量，$f(x)$称为$X$的概率密度函数，积分值为X的数学期望，记为$E(X)$。
 $$E(X)=\int_{-\infty }^{+\infty }xf(x)dx$$
+
 ###方差(Variance)
 方差是各个数据与平均数之差的平方的平均数。在概率论和数理统计中，方差用来度量随机变量和其数学期望（即均值）之间的偏离程度。
 设$X$为随机变量，如果$E{[X-E(X)]^2}$存在，则称$E{[X-E(X)]^2}$为$X$的方差，记为$Var(X)$。
@@ -273,6 +279,7 @@ $$E(X)=\int_{-\infty }^{+\infty }xf(x)dx$$
 s <- c(2,5,78,45,89,124)
 var(s)
 ```
+
 ###众数(Mode)
 观察资料中出现次数最多的数值或类别，不受极值影响，由于可能有不只一个，也可能没有众数，一般不适合进行统计分析。
 例 计算样本(4,22,31,33,3,27,27,27,27,569,110,8,21,31,33,33)的众数
@@ -280,6 +287,7 @@ var(s)
 S <- c(4,22,31,33,3,27,27,27,27,569,110,8,21,31,33,33)
 names(which.max(table(S)))
 ```
+
 ###协方差(Covariance)
 协方差用于衡量两个变量的总体误差。而方差是协方差的一种特殊情况，即当两个变量是相同的情况。设$X$,$Y$为两个随机变量，称$E{[X-E(X)][Y-E(Y)]}$为$X$和$Y$的协方差，记录$Cov(X,Y)$。方差是协方差的一种特殊情况，即当两个变量是相同的情况。
 $$Cov(X,Y)=E\left \{ [X-E(X)][Y-E(Y)] \right \}=E(XY)-E(X)E(Y)$$
@@ -289,6 +297,7 @@ x <- c(2,5,7)
 y <- c(6,7,9)
 cov(x,y)
 ```
+
 ###相关系数(Correlation coefficient)
 相关系数是用以反映变量之间相关关系密切程度的统计指标。相关系数是按积差方法计算，同样以两变量与各自平均值的离差为基础，通过两个离差相乘来反映两变量之间相关程度。当$Var(X)>0, Var(Y)>0$时，称$Cov(X,Y)/sqrt(Var(X)*Var(Y))$为$X$与$Y$的相关系统。
 $$\rho (X,Y)=\frac{Cov(X,Y)}{\sqrt{Var(X)Var(Y)}}$$
@@ -298,9 +307,11 @@ x <- c(2,5,7)
 y <- c(6,7,9)
 cor(x,y)
 ```
+
 ### 偏度(skewness)
 是统计数据分布偏斜方向和程度的度量，是统计数据分布非对称程度的数字特征。设分布函数$F(x)$有中心矩$\mu_{2}=E(X-E(X))^2$,$\mu_{3}=E(X-E(X))^3$,则$\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$为偏度系数。当$C_{s}$>0时，概率分布偏向均值右则,$C_{s}$<0时，概率分布偏向均值左则。
 $$C_{s}=\frac{\mu_{3}}{\mu_{2}^{\frac{3}{2}}}$$
+
 ###峰度(kurtosis)
 表征概率密度分布曲线在平均值处峰值高低的特征数。峰度刻划不同类型的分布的集中和分散程序。设分布函数$F(x)$有中心矩$\mu_{2}=E(X-E(X))^2$, $\mu_{4}=E(X-E(X))^4$，则$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$为峰度系数。
 $$C_{k}=\frac{\mu_{4}}{\mu_{2}^{2}}-3$$
@@ -311,6 +322,7 @@ skewness(S)
 kurtosis(S)
 hist(S,breaks=100)
 ```
+
 ###几何平均数（Geometric mean）
 是n个变量值连乘积的n次方根,是用于反映一组经对数转换后呈对称分布的变量值在数量上的平均水平即对数正态分布数据，在医学研究中常适用于免疫学的指标。对于变量值呈倍数关系或呈对数正态分布（正偏态分布），如抗体效价及抗体滴度，某些传染病的潜伏期，细菌计数等，宜用几何均数表示其平均水平。
 $$H=G=\sqrt[n]{X_{1}*X_{2}*...*X_{n}}=\sum \sqrt[n]{\prod_{i=1}^{n}X_{n}}$$
@@ -330,16 +342,21 @@ geomean(s)
 geosd(s)
 ```
 也可以安装NCStats包，调用geomean和geosd()函数。
+
 ###变异系数（Coefficient of Variation）
 是刻画数据相对分散性的一种度量，记为$c_v$,是概率分布离散程度的一个归一化量度，其定义为标准差$\ \sigma$与平均值$\ \mu$ 之比
 $$c_v = {\sigma \over \mu }$$
+
 ###样本校正平方和（CSS）
 样本与均值差的平方的求和$CSS=\sum_{i=1}^{n}(x_{i}-\overline{x})$
+
 ###样本未校正平方和（USS）
 样本值平方的求和$USS=\sum_{i=1}^{n}x_{i}^{2}$
+
 ###标准误（Standard Deviation）
 是某种统计量在抽样分布上的标准差称为该种统计量的标准误，即样本统计量的标准差，是描述对应的样本统计量抽样分布的离散程度及衡量对应样本统计量抽样误差大小的尺度。设n个测量值的误差为v1、v2……vn，则这组测量值的标准误差$\sigma$
 $$\sigma =\sqrt{\frac{1}{n-1}\sum_{i=1}^{n}v_{i}^2}$$
+
 ###极差
 描述样本分散性，数据越分散，其极差越大。
 $$R=max(x)-min(x)$$
@@ -359,6 +376,7 @@ r
 sd <- sd(sbp)/sqrt(length(sbp))
 sd
 ```
+
 ###数据中心化和标准化
 数据中心化是将某变量中的观察值减去该变量的平均数，数据标准化将某变量中的观察值减去该变量的平均数，然后除以该变量的标准差。经标准化的数据都是没有单位的纯数量。对变量进行的标准差标准化可以消除量纲（单位）影响和变量自身变异的影响。
 例 对下表中三科成绩进行标准化。
@@ -412,7 +430,8 @@ readr包中的函数使数据读入的速度更快，相对于基础包中的函
 WHO<- read_csv("WHO.csv",col_names=T) #col_names相当于header=T，默认为True
 #可以从压缩包或网站上直接输入
 mtcars <- read_csv(system.file("extdata/mtcars.csv.bz2", package = "readr"))
-#mtcars <- read_csv("https://github.com/hadley/readr/raw/master/inst/extdata/mtcars.csv")
+#mtcars <- 
+#read_csv("https://github.com/hadley/readr/raw/master/inst/extdata/mtcars.csv")
 ```
 ###数据输出
 用readr包读入的数据，变量的引用使用如下格式WHO$`Adolescent fertility rate (%)`，不同于通常的引用。write_csv()将数据框快速的输出为csv文件。
@@ -599,6 +618,7 @@ ddply(.data = HW93,.(agegr),.fun = function(x){rate(x$epg)})
 ```
 ##频数表和列联表
 table(var1, var2, …, varN) 使用 N 个类别型变量（因子）创建一个 N 维列联表。xtabs(formula, data) 根据一个公式和一个矩阵或数据框创建一个 N 维列联表。prop.table(table, margins) 依margins定义的边际列表将表中条目表示为分数形式。margin.table(table, margins) 依margins定义的边际列表计算表中条目的和addmargins(table, margins) 将概述边margins（默认是求和结果）放入表中。ftable(table) 创建一个紧凑的“平铺”式列联表
+
 ###一维列联表
 ```{r}
 data(Arthritis,package = "vcd")
@@ -610,6 +630,7 @@ mytable
 ```{r}
 prop.table(mytable)
 ```
+
 ###二维列联表
 对于二维列联表，table()函数的使用格式为：table(A,B),其中的A是行变量，B是列变量。xtabs()函数还可使用公式风格的输入创建列联表，格式为：xtabs(\~A+B,data=mydata)，其中的mydata是一个矩阵或数据框，要进行交叉分类的变量应出现在公式的右侧（即\~符号的右方），以+作为分隔符。若某个变量写在公式的左侧，则其为一个频数向量（在数据已经被表格化时很有用）。
 ```{r}
@@ -1528,7 +1549,8 @@ $EX=\lambda,A_{1}=\frac{1}{n}\sum_{i=1}^{n}X_{i}=\bar{X}$,
 ```{r}
 x<-rnorm(100) #产生N（0,1）的100个随机数
 mu<-mean(x)   #对N(mu,sigma)中的mu做矩估计
-sigma<-var(x) #这里的var并不是样本方差的计算函数，而是修正的样本方差，其实也就是x的总体方差
+sigma<-var(x) #这里的var并不是样本方差的计算函数，
+#而是修正的样本方差，其实也就是x的总体方差
 mu
 sigma
 ```
@@ -1550,18 +1572,27 @@ $$f(x)=pN(x_i;\mu_1,\sigma_1)+(1-p)N(x_i;\mu_2,\sigma_2)$$
 $$l=\sum_{i=1}^n\log \{pN(x_i;\mu_1,\sigma_1)+(1-p)N(x_i;\mu_2,\sigma_2)\}$$
 在R中定义对数似然函数
 ```{r}
-LL<-function(params,data) #定义log-likelihood函数,参数"params"是一个向量，依次包含了五个参数：p,mu1,sigma1,#mu2,sigma2.#参数"data"，是观测数据。
+LL<-function(params,data) 
+  #定义log-likelihood函数,参数"params"是一个向量，
+  #依次包含了五个参数：p,mu1,sigma1,#mu2,sigma2.#参数"data"，是观测数据。
 {
-t1<-dnorm(data,params[2],params[3])  #这里的dnorm()函数是用来生成正态密度函数的。
+t1<-dnorm(data,params[2],params[3])  
+#这里的dnorm()函数是用来生成正态密度函数的。
 t2<-dnorm(data,params[4],params[5])
 f<-params[1]*t1+(1-params[1])*t2
-ll<-sum(log(f))  #混合密度函数,log-likelihood函数
-return(-ll) #nlminb()函数是最小化一个函数的值，但我们是要最大化log-likeilhood函数，所以需要在“ll”前加个“-”号。
+ll<-sum(log(f))  
+#混合密度函数,log-likelihood函数
+return(-ll) #nlminb()函数是最小化一个函数的值，
+#但我们是要最大化log-likeilhood函数，所以需要在“ll”前加个“-”号。
 }
 #参数估计
 hist(geyser$waiting,freq = F)
-lines(density(geyser$waiting)) #初始值为p=0.5,mu1=50,sigma1=10,mu2=80,sigma2=10
-geyser.res<-nlminb(c(0.5,50,10,80,10),LL,data=geyser$waiting,lower=c(0.0001,-Inf,0.0001,-Inf,-Inf,0.0001),upper=c(0.9999,Inf,Inf,Inf,Inf))
+lines(density(geyser$waiting)) 
+#初始值为p=0.5,mu1=50,sigma1=10,mu2=80,sigma2=10
+geyser.res<-nlminb(c(0.5,50,10,80,10),LL,
+                   data=geyser$waiting,
+                   lower=c(0.0001,-Inf,0.0001,-Inf,-Inf,0.0001),
+                   upper=c(0.9999,Inf,Inf,Inf,Inf))
 ```
 估计结果
 ```{r}
@@ -1572,10 +1603,13 @@ mu1<-geyser.res$par[2]
 sig1<-geyser.res$par[3]
 mu2<-geyser.res$par[4]
 sig2<-geyser.res$par[5]
-f<-p*dnorm(X,mu1,sig1)+(1-p)*dnorm(X,mu2,sig2) #将估计的参数函数代入原密度函数。
-hist(geyser$waiting,probability=T,col=0,ylab="Density", #作出数据的直方图
+f<-p*dnorm(X,mu1,sig1)+(1-p)*dnorm(X,mu2,sig2) 
+#将估计的参数函数代入原密度函数。
+hist(geyser$waiting,probability=T,col=0,ylab="Density", 
+     #作出数据的直方图
      ylim=c(0,0.04),xlab="Eruption waiting times")
-lines(X,f) #画出拟合的曲线
+lines(X,f) 
+#画出拟合的曲线
 ```
 
 ###最小二乘法
@@ -1619,7 +1653,8 @@ for (i in 1:2000) {
 }
 plot(density(sim.x), main = "Density plot of sim.x")
 
-mix.model <- normalmixEM(sim.x, lambda = c(0.3, 0.3, 0.4), mu = c(-20, 0, 20), sigma = c(1, 1, 1), k = 3)
+mix.model <- normalmixEM(sim.x, lambda = c(0.3, 0.3, 0.4), 
+                         mu = c(-20, 0, 20), sigma = c(1, 1, 1), k = 3)
 summary(mix.model)
 plot(mix.model, which = 2, density = TRUE)
 ```
@@ -1674,7 +1709,8 @@ z.test<-function(x,sigma,conf.level=0.95,u0=0,alt="two.sided"){
   else if (alt == "greater"|alt =="less" ){
     result$p.value<p
   }
-  result$interval<-c(mean-sigma*qnorm(1-a/2,0,1)/sqrt(n),mean+sigma*qnorm(1-a/2,0,1)/sqrt(n))
+  result$interval<-c(mean-sigma*qnorm(1-a/2,0,1)/sqrt(n),
+                     mean+sigma*qnorm(1-a/2,0,1)/sqrt(n))
   result
 }
 
@@ -1695,13 +1731,15 @@ t.test(x)
 方差置信水平$1-\alpha$的置信区间为$\left ( \frac{(n-1)S^{2}}{\chi_{1-\alpha /2}^{2}(n-1)},\frac{(n-1)S^{2}}{\chi_{\alpha/2}^{2}(n-1)} \right )$
 例 假设不知道例题5中总体的方差，要求估计该单位员工身高方差的置信区间，置信水平为95%。
 ```{r}
-chisq.var.test<-function(x,conf.level=0.95,alt="two.sided",sigma0=1)   #默认95%的置信区间 双侧检验
+chisq.var.test<-function(x,conf.level=0.95,alt="two.sided",sigma0=1)   
+  #默认95%的置信区间 双侧检验
 {
   result<-list()
   n <- length(x)
   a=1-conf.level
   v<-var(x)
-  result$interval<-c((n-1)*v/qchisq(1-a/2,n-1,lower.tail=T),(n-1)*v/qchisq(a/2,n-1,lower.tail=T))
+  result$interval<-c((n-1)*v/qchisq(1-a/2,n-1,lower.tail=T),
+                     (n-1)*v/qchisq(a/2,n-1,lower.tail=T))
   chi2<-(n-1)*v/sigma0
   result$chi2<-chi2
   p<-pchisq(chi2,n-1)
@@ -1788,9 +1826,13 @@ myfun <- function(data,indices){
   return (rs)
 }
 
-results=boot(data=mtcars,statistic=myfun ,R=1000) #results这个数据结构中包括了原始样本的统计(results$t0)和再抽样样本的统计量(results$t0)，
+results=boot(data=mtcars,statistic=myfun ,R=1000)
+
+#results这个数据结构中包括了原始样本的统计(results$t0)
+#和再抽样样本的统计量(results$t0)
 boot.ci(results,conf=0.95,type=c('perc','bca')) 
-#其中conf表示置信水平，type表示了用何种算法来求区间，perc即使用百分位方法，bca表示adjusted bootstrap percentile，即对偏差进行了调整
+#其中conf表示置信水平，type表示了用何种算法来求区间，
+#perc即使用百分位方法，bca表示adjusted bootstrap percentile，即对偏差进行了调整
 
 rsq=function(data,indices){
 d=data[indices,]
@@ -1800,7 +1842,9 @@ return(summary(fit)$r.square)
 results=boot(data=mtcars,statistic=rsq,R=1000)
 print(results)
 plot(results) 
-#左侧的直方图表示了再抽样样本的统计量的经验分布，其中的虚线表示了原始样本的统计量，从中可以观察到偏差。右侧QQ图有助于判断经验分布是否正态。
+#左侧的直方图表示了再抽样样本的统计量的经验分布，
+#其中的虚线表示了原始样本的统计量，从中可以观察到偏差。
+#右侧QQ图有助于判断经验分布是否正态。
 boot.ci(results,conf=0.95,type=c('perc','bca'))
 
 ```
@@ -1873,8 +1917,10 @@ OneSampleMean.Equality2 <- function(alpha, beta, sigma, margin,m=1000)
   t1 <- qt(alpha/2,n0,lower.tail=FALSE)+qt(beta,n0,lower.tail=FALSE)
   n1<-(t1*sigma/margin)^2
   while(abs(n1-n0)>0.5){
-    n0<-((qt(alpha/2,n1,lower.tail=FALSE)+qt(beta,n1,lower.tail=FALSE))*sigma/margin)^2
-    n1<-((qt(alpha/2,n0,lower.tail=FALSE)+qt(beta,n0,lower.tail=FALSE))*sigma/margin)^2
+    n0<-((qt(alpha/2,n1,lower.tail=FALSE)+
+            qt(beta,n1,lower.tail=FALSE))*sigma/margin)^2
+    n1<-((qt(alpha/2,n0,lower.tail=FALSE)+
+            qt(beta,n0,lower.tail=FALSE))*sigma/margin)^2
   }
   n1
 }
@@ -1991,14 +2037,20 @@ $k$  $\alpha=0.01$  $\alpha=0.05$  $\alpha=0.01$  $\alpha=0.05$
 查表$\lambda=14.18$
 ```{r}
 k <- c(2:20)
-dim <- c("alpha0.01beta0.2","alpha0.05beta0.2","alpha0.01beta0.1","alpha0.05beta0.1")
-data <- c(11.68,13.89,15.46,16.75,17.87,18.88,19.79,20.64,21.43,22.18,22.89,23.57,
-          24.22,24.84,25.44,26.02,26.58,27.12,27.65,7.85,9.64,10.91,11.94,12.83,13.63,
-          14.36,15.03,15.65,16.25,16.81,17.34,17.85,18.34,18.82,19.27,19.71,20.14,
-          20.56, 14.88,17.43,19.25,20.74,22.03,23.19,24.24,25.22,26.13,26.99,27.80,
-          28.58,29.32,30.04,30.73,31.39,32.04,32.66,33.27,10.51,12.66,14.18,15.41,
-          16.47,17.42,18.29,19.09,19.83,20.54,21.20,21.84,22.44,23.03,23.59,24.13,
-          24.65,25.16,25.66 )
+dim <- c("alpha0.01beta0.2","alpha0.05beta0.2","alpha0.01beta0.1",
+         "alpha0.05beta0.1")
+data <- c(11.68,13.89,15.46,16.75,17.87,18.88,19.79,20.64,21.43,
+          22.18,22.89,23.57,
+          24.22,24.84,25.44,26.02,26.58,27.12,27.65,7.85,9.64,
+          10.91,11.94,12.83,13.63,
+          14.36,15.03,15.65,16.25,16.81,17.34,17.85,18.34,18.82,
+          19.27,19.71,20.14,
+          20.56, 14.88,17.43,19.25,20.74,22.03,23.19,24.24,25.22,
+          26.13,26.99,27.80,
+          28.58,29.32,30.04,30.73,31.39,32.04,32.66,33.27,10.51,
+          12.66,14.18,15.41,
+          16.47,17.42,18.29,19.09,19.83,20.54,21.20,21.84,22.44,
+          23.03,23.59,24.13,24.65,25.16,25.66 )
 z <- array(data,c(19,4),dimnames<-list(k,dim))
 
 delta<- function(mu,sigma){
@@ -2007,7 +2059,8 @@ delta<- function(mu,sigma){
 }
 
 MutiSampleMean <- function(alpha, beta, sigma, k, mu){
-  lambda <- z[k-1,paste(paste("alpha",alpha,sep = ""),paste("beta",beta,sep = ""),
+  lambda <- z[k-1,paste(paste("alpha",alpha,sep = ""),
+                        paste("beta",beta,sep = ""),
                         sep = "")]
   n <- lambda/delta(mu,sigma)
 }
@@ -2095,7 +2148,8 @@ OneSampleProportion.Equality(0.05,0.1,0.95,(0.95-0.85))
 ```{r}
 OneSampleProportion.NIS2 <- function (alpha, beta, p, delta, margin) 
 {
-    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * p * (1 - p)/(margin-delta)^2
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * 
+      p * (1 - p)/(margin-delta)^2
     n
 }
 OneSampleProportion.NIS2(0.05,0.1,0.95,-0.05,(0.95-0.85)) 
@@ -2108,7 +2162,8 @@ OneSampleProportion.NIS2(0.05,0.1,0.95,-0.05,(0.95-0.85))
 例 用传统的方法治疗运动负胫骨结节股骺损伤的有效率约为85%，现采用小刚针做胫骨结节股骺穿刺，估计有效率为95%,界值为5%，在$\alpha=0.05$,$\beta=0.1$，双侧等效性检验，问需要多大的样本容量？
 
 ```{r}
-OneSampleProportion.Equivalence2 <- function(alpha, beta, p, delta, margin) 
+OneSampleProportion.Equivalence2 <- function(alpha, beta, p, 
+                                             delta, margin) 
 {
     n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * p * (1 - 
         p)/(delta - abs(margin))^2
@@ -2135,9 +2190,11 @@ $p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率�
 例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1非劣效设计，界值为5%，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量？
 
 ```{r}
-TwoSampleProportion.NIS2 <- function (alpha, beta, p1, p2, k, delta, margin) 
+TwoSampleProportion.NIS2 <- function (alpha, beta, p1, p2, 
+                                      k, delta, margin) 
 {
-    n2 <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * (p1 * (1 - p1)/k + p2 * (1 - p2))/(margin-delta)^2
+    n2 <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * 
+      (p1 * (1 - p1)/k + p2 * (1 - p2))/(margin-delta)^2
     n1 <- k * n2
     n1
 }
@@ -2152,10 +2209,11 @@ $p_{1}$为第一组(试验组)的率，$p_{2}$为第二组（对照组）的率�
 例 用两种药物对糖尿病患者进行康复治疗，经初步观察发现甲药的有效率为70%，乙药(对照)的有效率为90%，现进行进一步1:1等效性设计，界值为5%，在$\alpha=0.05$,$\beta=0.1$，问需要多大的样本容量?
 
 ```{r}
-TwoSampleProportion.Equivalence2 <- function (alpha, beta, p1, p2, k, delta, margin) 
+TwoSampleProportion.Equivalence2 <- function (alpha, beta, p1, p2,
+                                              k, delta, margin) 
 {
-    n2 <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * (p1 * (1 - 
-        p1)/k + p2 * (1 - p2))/(delta- abs(margin))^2
+    n2 <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * 
+      (p1 * (1 - p1)/k + p2 * (1 - p2))/(delta- abs(margin))^2
     n1 <- k * n2
     n1
 }
@@ -2172,9 +2230,11 @@ $\sigma$为两组率的差的标准差,$\epsilon$为试验组率-对照组率，
 例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%, 双侧显著性检验，需要多少样本含量? 
 
 ```{r}
-TwoSamplePropCrossOver.Equality <- function (alpha, beta, sigma, margin) 
+TwoSamplePropCrossOver.Equality <- function (alpha, beta, 
+                                             sigma, margin) 
 {
-    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/2*(margin^2)
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      sigma^2/2*(margin^2)
     n
 }
 
@@ -2188,9 +2248,11 @@ $\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta })^{2}
 例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧非劣效检验，需要多少样本含量? 
 
 ```{r}
-TwoSamplePropCrossOver.NIS <- function (alpha, beta, sigma, delta,margin) 
+TwoSamplePropCrossOver.NIS <- function (alpha, beta, 
+                                        sigma, delta,margin) 
 {
-    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/2*(margin-delta)^2
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * 
+      sigma^2/2*(margin-delta)^2
     n
 }
 
@@ -2204,9 +2266,11 @@ $\sigma$为率的标准差，样本容量为$n=\frac{(z_{\alpha}+z_{\beta/2 })^{
 例 实验药和对照药品治疗中风，患者先服用对照药品 1 个月，洗脱2 周，再服用试验药1 个月，另一组反之。如果试验药能够比对照药品的有效率高 20%（差值），则认为有推广价值。预试验差值标准差为10。选用 $\alpha=0.05$,Power=90%,界值为10%，双侧等效性检验，需要多少样本含量? 
 
 ```{r}
-TwoSamplePropCrossOver.Equivalence <- function (alpha, beta, sigma, delta,margin) 
+TwoSamplePropCrossOver.Equivalence <- function (alpha, beta, 
+                                                sigma, delta,margin) 
 {
-    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/2*(delta-abs(margin))^2
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * 
+      sigma^2/2*(delta-abs(margin))^2
     n
 }
 
@@ -2240,10 +2304,11 @@ $\sigma$为标准差，$a$为组数，$\epsilon$为率差，样本容量为$n=\f
 例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，双侧差异性检验，需要多少样本？
 
 ```{r}
-PorpWilliamsDesign.Equality <- function (alpha, beta, sigma, a, margin) 
+PorpWilliamsDesign.Equality <- function (alpha, beta, 
+                                         sigma, a, margin) 
 {
-    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * sigma^2/(a * 
-        margin^2)
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      sigma^2/(a *  margin^2)
     n
 }
 
@@ -2257,9 +2322,11 @@ $\sigma$为标准差，$a$为组数，$\epsilon$为率差，a为组数,样本容
 例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，界值为5%，双侧非劣效检验，需要多少样本？
 
 ```{r}
-PropWilliamsDesign.NIS <- function (alpha, beta, sigma, a, delta, margin) 
+PropWilliamsDesign.NIS <- function (alpha, beta, 
+                                    sigma, a, delta, margin) 
 {
-  n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/(a * (margin - delta)^2)
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * 
+    sigma^2/(a * (margin - delta)^2)
   n
 }
 
@@ -2273,9 +2340,11 @@ $\sigma$为标准差，$a$为组数，$\epsilon$为率差，a为组数,样本容
 例 一个新型药品的两个剂量组与安慰剂进行临床试验，预计两个剂量组的有效率分别为60%和65%，安慰剂的有效率为20%，研究者感兴趣是第一剂量组与安慰剂的差别，其率差的标准差为50%，Williams三交叉设计，在$\alpha=0.05$,$\beta=0.1$，界值为5%，双侧等效性检验，需要多少样本？
 
 ```{r}
-PropWilliamsDesign.Equivalence <- function (alpha, beta, sigma, a, delta, margin) 
+PropWilliamsDesign.Equivalence <- function (alpha, beta, 
+                                            sigma, a, delta, margin) 
 {
-  n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/(a * (delta-abs(margin ))^2)
+  n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * 
+    sigma^2/(a * (delta-abs(margin ))^2)
   n
 }
 
@@ -2350,9 +2419,11 @@ OR为比值比，$\sigma^{2}_{d}$为差值的标准差，$\delta$为界值。样
 
 ```{r}
 OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
-RelativeRiskCrossOver.NIS <- function (alpha, beta, sigma, or,delta) 
+RelativeRiskCrossOver.NIS <- function (alpha, beta, 
+                                       sigma, or,delta) 
 {
-    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * sigma^2/(log(or) - delta)^2
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta))^2 * 
+      sigma^2/(log(or) - delta)^2
     n
 }
 RelativeRiskCrossOver.NIS(0.05,0.1,0.5,OR,-0.1)
@@ -2366,9 +2437,11 @@ OR为比值比，$\sigma^{2}_{d}$为差值的标准差,$\delta$为界值。样�
 
 ```{r}
 OR <- (0.2/(1-0.2))/(0.1/(1-0.1))
-RelativeRiskCrossOver.Equivalence <- function (alpha, beta, sigma, or, delta) 
+RelativeRiskCrossOver.Equivalence <- function (alpha, beta, 
+                                               sigma, or, delta) 
 {
-    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * sigma^2/(delta- abs(log(or)))^2
+    n <- (qnorm(1 - alpha) + qnorm(1 - beta/2))^2 * 
+      sigma^2/(delta- abs(log(or)))^2
     n
 }
 RelativeRiskCrossOver.Equivalence(0.05,0.1,0.5,OR,0.1)
@@ -2467,16 +2540,26 @@ $P_{0}$ $P_{1}$ r    n     r     n
 p <- seq(0.05,0.80,by=0.05)
 dim <- c("beta0.2r","beta0.2n","beta0.1r","beta0.1n")
 dim3 <- c("p0.15alpha0.05","p0.15alpha0.10","p0.20alpha0.05","p0.20alpha0.10")
-data<- c(3,7,11,16,21,26,30,35,38,41,45,43,41,39,38,27,27,40,48,56,62,67,68,71,70,69,
-         70,62,55,49,45,30,4,9,14,21,27,35,41,45,52,54,58,58,55,54,46,39,38,55,64,77,
-         83,93,96,94,98,93,92,85,75,69,55,44,2,5,8,12,15,19,21,24,28,31,31,32,33,29,
-         25,22,21,31,37,44,46,50,49,50,53,53,49,47,45,37,30,25,3,6,11,16,20,26,30,35,
-         39,41,44,43,44,41,33,28,32,40,53,61,64,71,72,75,75,72,71,64,61,53,40,32,2,5,
-         7,11,13,16,19,22,24,23,25,26,24,23,20,13,16,25,28,35,36,39,41,42,42,37,37,
-         36,31,28,23,14,3,6,9,14,17,21,24,28,30,32,33,32,32,30,25,13,25,33,38,47,49,
-         53,53,56,54,53,50,45,42,37,29,14,2,3,5,7,9,12,13,15,16,17,19,17,16,17,13,
-         10,16,18,22,24,26,30,29,30,29,28,29,24,21,21,15,11,2,4,7,10,13,15,19,20,24,
-         23,25,25,24,20,17,10,20,25,32,36,39,39,44,41,44,39,39,36,32,25,20,11)
+data<- c(3,7,11,16,21,26,30,35,38,41,45,43,41,39,38,27,27,40,48,
+         56,62,67,68,71,70,69,
+         70,62,55,49,45,30,4,9,14,21,27,35,41,45,52,54,58,58,
+         55,54,46,39,38,55,64,77,
+         83,93,96,94,98,93,92,85,75,69,55,44,2,5,8,12,15,19,
+         21,24,28,31,31,32,33,29,
+         25,22,21,31,37,44,46,50,49,50,53,53,49,47,45,37,30,
+         25,3,6,11,16,20,26,30,35,
+         39,41,44,43,44,41,33,28,32,40,53,61,64,71,72,75,
+         75,72,71,64,61,53,40,32,2,5,
+         7,11,13,16,19,22,24,23,25,26,24,23,20,13,16,25,
+         28,35,36,39,41,42,42,37,37,
+         36,31,28,23,14,3,6,9,14,17,21,24,28,30,32,33,
+         32,32,30,25,13,25,33,38,47,49,
+         53,53,56,54,53,50,45,42,37,29,14,2,3,5,7,9,
+         12,13,15,16,17,19,17,16,17,13,
+         10,16,18,22,24,26,30,29,30,29,28,29,24,21,21,
+         15,11,2,4,7,10,13,15,19,20,24,
+         23,25,25,24,20,17,10,20,25,32,36,39,39,44,
+         41,44,39,39,36,32,25,20,11)
 
 z <- array(data,c(16,4,4),dimnames<-list(p,dim,dim3))
 
@@ -2550,35 +2633,48 @@ $p_{1}$    $p_{2}$    $alpha0.10beta0.20$    $alpha0.10beta0.10$    $alpha0.05be
 例 预试验中某新型抗肿瘤药品治疗某癌症的治愈率为35%，标准治疗的治愈率为10%，两组平行对照1：1设计，双侧差异性检验，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
 
 ```{r}
-dim1 <- c("p1","p2","alpha0.10beta0.20","alpha0.10beta0.10","alpha0.05beta0.20"
-          ,"alpha0.05beta0.10")
+dim1 <- c("p1","p2","alpha0.10beta0.20","alpha0.10beta0.10",
+          "alpha0.05beta0.20","alpha0.05beta0.10")
 p <- seq(1:14)
-data1 <-c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,
-          0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,
-          25,31,34,39,40,41,41,41,41,40,39,34,31,25,33,41,48,52,56,57,57,57,57,
-          56,52,48,41,33,34,39,46,49,54,55,56,56,55,54,49,46,39,34,42,52,60,65,
+data1 <-c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,
+          0.50,0.55,0.60,0.65,0.70,
+          0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,
+          0.75,0.80,0.85,0.90,0.95,
+          25,31,34,39,40,41,41,41,41,40,39,34,31,25,
+          33,41,48,52,56,57,57,57,57,
+          56,52,48,41,33,34,39,46,49,54,55,56,56,55,
+          54,49,46,39,34,42,52,60,65,
           71,72,77,77,72,71,65,60,52,42)
 p0.25 <- array(data1,c(14,6),dimnames<-list(p,dim1))
 
 p <- seq(1:12)
-data2 <- c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.35,0.40,
-           0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,20,23,26,28,29,29,
-           33,29,29,28,26,23,26,32,35,39,40,40,40,40,40,39,35,32,25,30,34,36,
-           37,41,41,41,37,36,34,30,33,39,45,47,51,53,53,53,51,47,45,39)
+data2 <- c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,
+           0.50,0.55,0.60,0.35,0.40,
+           0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,
+           0.90,20,23,26,28,29,29,
+           33,29,29,28,26,23,26,32,35,39,40,40,40,40,40,
+           39,35,32,25,30,34,36,
+           37,41,41,41,37,36,34,30,33,39,45,47,51,53,
+           53,53,51,47,45,39)
 p0.30 <- array(data2,c(12,6),dimnames<-list(p,dim1))
 
 p <- seq(1:12)
-data3 <- c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.40,0.45,
-           0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,16,19,20,23,24,24,24,
-           24,23,20,19,16,21,24,28,29,29,33,33,29,29,28,24,21,20,24,26,27,30,31,
-           31,30,27,26,24,20,25,31,34,36,36,40,40,36,36,34,31,25)
+data3 <- c(0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,
+           0.50,0.55,0.60,0.40,0.45,
+           0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,
+           0.95,16,19,20,23,24,24,24,
+           24,23,20,19,16,21,24,28,29,29,33,33,29,29,28,
+           24,21,20,24,26,27,30,31,
+           31,30,27,26,24,20,25,31,34,36,36,40,40,36,
+           36,34,31,25)
 p0.35 <- array(data3,c(12,6),dimnames<-list(p,dim1))
 z <- list(p0.25=p0.25,p0.30=p0.30,p0.35=p0.35)
 
 FisherTest <- function(alpha,beta,p1,p2){
   table <- paste("p",format(p2-p1,digits = 2,nsmall = 2),sep="")
   row <- as.numeric(which(z[[table]][,1]==p1))
-  col <- paste(paste("alpha",alpha,sep=""),paste("beta",format(beta,nsmall=2),
+  col <- paste(paste("alpha",alpha,sep=""),
+               paste("beta",format(beta,nsmall=2),
                                                  sep=""),sep="")
   z[[table]][row,col]
 }
@@ -2631,7 +2727,9 @@ panderOptions('digits', 2)
 panderOptions('table.split.table',500)  
 #panderOptions('table.alignment.default','left')
 #panderOptions('table.split.cells',40)
-pander(data,justify = c('center','center','center','center', 'center', 'center')) #调整对齐方式
+pander(data,justify = c('center','center','center',
+                        'center', 'center', 'center')) 
+#调整对齐方式
 ```
 
 例 一新型抗肿瘤药品进行二期临床试验，标准治疗的有效率为20%，如果新型药品的有效率达40%，则认为有临床价值。优化灵活两阶段设计，在$\alpha=0.05$,$\beta=0.1$，需要多少病例？
@@ -2896,8 +2994,9 @@ gof.Pearson.twoway <- function (alpha, beta, trt, ctl, r, c)
   b = 0
   noncen = 0
   for (i in 1:1000) {
-    b[i + 1] <- pchisq(qchisq(alpha, df = (r-1)*(c-1), ncp = 0, 
-                              lower.tail = FALSE), df = (r-1)*(c-1), ncp = i/100)
+    b[i + 1] <- pchisq(qchisq(alpha, df = (r-1)*(c-1),
+                              ncp = 0, lower.tail = FALSE), 
+                       df = (r-1)*(c-1), ncp = i/100)
     noncen = rbind(noncen, c(i, b[i], b[i + 1]))
   }
   delta = noncen[which(noncen[, 2] > beta & noncen[, 3] < 
@@ -3141,7 +3240,8 @@ Cox.Equality(0.05,0.2,2,0.5,0.5,0.8)
 ```{r}
 Cox.NIS <- function (alpha, beta, loghr, p1, p2, d, margin) 
 {
-  n = (qnorm(1-alpha) + qnorm(1 - beta))^2/((log(loghr) - margin)^2 * p1 * p2 * d)
+  n = (qnorm(1-alpha) + qnorm(1 - beta))^2/
+    ((log(loghr) - margin)^2 * p1 * p2 * d)
   n
 }
 
@@ -3174,8 +3274,9 @@ Cox.Equivalence(0.05,0.2,2,0.5,0.5,0.8,0.5)
 例 一为期2年的某心血管药物的临床试验（Lakatos 1998），假设试验组年风险率为1（年事件发生率为$1-e^{-1}$）,对照组年风险率为0.5（年事件发生率为$1-e^{-0.5}$）,年失访率为3%，年不依从率为4%，对照组有5%患者选择了其他与试验组类似的治疗（drop-in）。试验组的总事件发生率83.7%，对照组总事件发生率62.7%。
 
 ```{r}
-Logrank.test <- function(alpha, beta, k, year, loss, herate, hcrate, noncompliance, 
-    dropin, pe, pc) {
+Logrank.test <- function(alpha, beta, k, year, loss, 
+                         herate, hcrate, noncompliance, 
+                         dropin, pe, pc) {
     eeventrate <- 1 - exp(-herate)
     ceventrate <- 1 - exp(-hcrate)
     e <- matrix(c(0, 0, 1, 0))
@@ -3184,11 +3285,14 @@ Logrank.test <- function(alpha, beta, k, year, loss, herate, hcrate, noncomplian
         1 - (1 - x)^(1/k)
     }
     
-    T <- matrix(c(1, 0, 0, 0, 0, 1, 0, 0, transition(loss, k), transition(eeventrate, 
-        k), 1 - transition(noncompliance, k) - transition(eeventrate, k) - 
-        transition(loss, k), transition(noncompliance, k), transition(loss, 
-        k), transition(ceventrate, k), transition(dropin, k), 1 - transition(loss, 
-        k) - transition(ceventrate, k) - transition(dropin, k)), nrow = 4)
+    T <- matrix(c(1, 0, 0, 0, 0, 1, 0, 0, 
+                  transition(loss, k), transition(eeventrate, k), 
+                  1 - transition(noncompliance, k) - 
+                    transition(eeventrate, k) - transition(loss, k), 
+                  transition(noncompliance, k), transition(loss, k), 
+                  transition(ceventrate, k), transition(dropin, k), 
+                  1 - transition(loss, k) - transition(ceventrate, k)
+                  - transition(dropin, k)), nrow = 4)
     
     
     for (i in 1:(k * year)) {
@@ -3208,11 +3312,13 @@ Logrank.test <- function(alpha, beta, k, year, loss, herate, hcrate, noncomplian
             phi <- append(phi, (E[[i - 1]][3] + E[[i - 1]][4])/(C[[i - 
                 1]][3] + C[[i - 1]][4]))  ##φ
             eta <- append(eta, phi[i]/(1 + phi[i])^2)  ##η
-            theta <- append(theta, log(1 - (E[[i]][2] - E[[i - 1]][2]))/log(1 - 
-                (C[[i]][2] - C[[i - 1]][2])))  ##θ
-            gamma <- append(gamma, phi[i] * theta[i]/(1 + phi[i] * theta[i]) - 
+            theta <- append(theta, log(1 - (E[[i]][2] - E[[i - 1]][2]))/
+                              log(1 - (C[[i]][2] - C[[i - 1]][2])))  ##θ
+            gamma <- append(gamma, phi[i] * theta[i]/
+                              (1 + phi[i] * theta[i]) - 
                 phi[i]/(1 + phi[i]))
-            rho <- append(rho, ((E[[i]][2] - E[[i - 1]][2]) + (C[[i]][2] - 
+            rho <- append(rho, ((E[[i]][2] - 
+                                   E[[i - 1]][2]) + (C[[i]][2] - 
                 C[[i - 1]][2]))/(pe + pc))  ##ρ
         }
     }
@@ -3223,7 +3329,8 @@ Logrank.test <- function(alpha, beta, k, year, loss, herate, hcrate, noncomplian
         numerator = numerator + rho[i] * eta[i]
         denominator = denominator + rho[i] * gamma[i]
     }
-    d <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * numerator/denominator^2
+    d <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      numerator/denominator^2
     n <- 2 * d/(pe + pc)
     n
 }
@@ -3256,17 +3363,20 @@ K期Pocock 检验的样本量计算，首先根据没有期中分析的设计计
 ```{r}
 data <- read.csv("Rp.csv",header = T)
 panderOptions('digits', 4)
-pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+pandoc.table(data, use.hyphening = TRUE, 
+             split.cells =8,justify = 'center')
 ```
 
 例 一5期的比较某药及安慰剂疗效临床成组序贯试验，根据预试验总体的标准差为2（$\sigma ^{2}=\sigma_{1} ^{2}=\sigma_{2} ^{2}=4$），$\mu_{T} - \mu_{P} = 1$,在$\alpha=0.05,\beta=0.10$时，Pocock设计，每期需要多少病例？
 
 ```{r}
 Pocock.Test <- function(alpha, beta, sigma1, sigma2, mu, k) {
-    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (sigma1^2 + sigma2^2)/(mu)^2
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (sigma1^2 + sigma2^2)/(mu)^2
     
     data <- read.csv("Rp.csv", header = T)
-    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+    col <- paste(paste("alpha", alpha, sep = ""), 
+                 paste("beta", format(beta, 
         nsmall = 2), sep = ""), sep = "")
     rp <- as.matrix(data)[k, col]
     nmax <- rp * nfixed
@@ -3284,7 +3394,8 @@ Pocock.Test(0.05, 0.1, 2, 2, 1, 5)
 ```{r}
 data <- read.csv("Cb.csv",header = T)
 panderOptions('digits', 4)
-pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
+pandoc.table(data, use.hyphening = TRUE, split.cells =8,
+             justify = 'center')
 ```
 
 K期O’Brien and Fleming’s 检验的样本量计算，首先根据没有期中分析的设计计算固定样本量，然后乘以$R_{b}(K,\alpha ,\beta )$。固定样本量计算公式如下$$n_{fixed}=\frac{(z_{1-\alpha /2}+z_{1-\beta })^{2}(\sigma_{1}^{2}+\sigma_{2}^{2})}{(\mu _{1}-\mu _{2})^{2}}$$,$R_{b}$可查询下表：
@@ -3299,10 +3410,12 @@ pandoc.table(data, use.hyphening = TRUE, split.cells =8,justify = 'center')
 
 ```{r}
 OBF.Test <- function(alpha, beta, sigma1, sigma2, mu, k) {
-    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (sigma1^2 + sigma2^2)/(mu)^2
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (sigma1^2 + sigma2^2)/(mu)^2
     
     data <- read.csv("Rb.csv", header = T)
-    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+    col <- paste(paste("alpha", alpha, sep = ""), 
+                 paste("beta", format(beta, 
         nsmall = 2), sep = ""), sep = "")
     rb <- as.matrix(data)[k, col]
     nmax <- rb * nfixed
@@ -3335,10 +3448,12 @@ pandoc.table(data, use.hyphening = TRUE, split.cells = 8, justify = "center")
 
 ```{r}
 WT.Test <- function(alpha, beta, sigma1, sigma2, mu, k, delta) {
-    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (sigma1^2 + sigma2^2)/(mu)^2
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (sigma1^2 + sigma2^2)/(mu)^2
     
     data <- read.csv("Rwt.csv", header = T)
-    col <- paste(paste("delta", format(delta, nsmall = 2), sep = ""), paste("beta", 
+    col <- paste(paste("delta", format(delta, nsmall = 2), sep = ""), 
+                 paste("beta", 
         format(beta, nsmall = 2), sep = ""), sep = "")
     rwt <- as.matrix(data)[k, col]
     nmax <- rwt * nfixed
@@ -3365,7 +3480,8 @@ pander(data)
 
 ```{r}
 InnerWedge.Test <- function(alphap,betap,sigma1,sigma2,mu,kp,deltap){
-  nfixed <- (qnorm(1-alphap/2) + qnorm(1 - betap))^2*(sigma1^2+sigma2^2)/(mu)^2
+  nfixed <- (qnorm(1-alphap/2) + qnorm(1 - betap))^2*
+    (sigma1^2+sigma2^2)/(mu)^2
   data <- read.csv("Rw.csv",header = T)
   data%>>%
     subset(beta==betap)%>>%
@@ -3387,10 +3503,11 @@ InnerWedge.Test (0.05,0.20,1,1,0.2,5,0.25)
 
 ```{r}
 Pocock.Test.Binary <- function(alpha, beta, p1, p2, k) {
-    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + 
-        p2 * (1 - p2))/(p1 - p2)^2
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (p1 * (1 - p1) + p2 * (1 - p2))/(p1 - p2)^2
     data <- read.csv("Rp.csv", header = T)
-    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+    col <- paste(paste("alpha", alpha, sep = ""), 
+                 paste("beta", format(beta, 
         nsmall = 2), sep = ""), sep = "")
     rp <- as.matrix(data)[k, col]
     nmax <- rp * nfixed
@@ -3403,10 +3520,11 @@ Pocock.Test.Binary(0.05, 0.2, 0.6, 0.5, 5)
 
 ```{r}
 OBF.Test.Binary <- function(alpha, beta, p1, p2, k) {
-    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + 
-        p2 * (1 - p2))/(p1 - p2)^2
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (p1 * (1 - p1) +  p2 * (1 - p2))/(p1 - p2)^2
     data <- read.csv("Rb.csv", header = T)
-    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+    col <- paste(paste("alpha", alpha, sep = ""), 
+                 paste("beta", format(beta, 
         nsmall = 2), sep = ""), sep = "")
     rb <- as.matrix(data)[k, col]
     nmax <- rb * nfixed
@@ -3419,10 +3537,11 @@ OBF.Test.Binary(0.05, 0.2, 0.6, 0.5, 5)
 
 ```{r}
 WT.Test.Binary <- function(alpha, beta, p1, p2, k, delta) {
-    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + 
-        p2 * (1 - p2))/(p1 - p2)^2
+    nfixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (p1 * (1 - p1) +  p2 * (1 - p2))/(p1 - p2)^2
     data <- read.csv("Rwt.csv", header = T)
-    col <- paste(paste("delta", format(delta, nsmall = 2), sep = ""), paste("beta", 
+    col <- paste(paste("delta", format(delta, nsmall = 2), 
+                       sep = ""), paste("beta", 
         format(beta, nsmall = 2), sep = ""), sep = "")
     rwt <- as.matrix(data)[k, col]
     nmax <- rwt * nfixed
@@ -3444,7 +3563,8 @@ Pocock、O’Brien and Fleming’s和Wang and Tsitis($\Delta=0.1$)设计，每�
 Cox.Test <- function(alpha, beta, theta, k) {
     Ifixed <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/theta^2
     data <- read.csv("Rb.csv", header = T)
-    col <- paste(paste("alpha", alpha, sep = ""), paste("beta", format(beta, 
+    col <- paste(paste("alpha", alpha, sep = ""), 
+                 paste("beta", format(beta, 
         nsmall = 2), sep = ""), sep = "")
     rb <- as.matrix(data)[k, col]
     Imax <- Ifixed * rb
@@ -3486,7 +3606,8 @@ time为信息时间，iuse为1表示O'Brien Fleming方法，为2表示Pocock方�
 类似的5阶段Opower family方法的消耗函数的界值可如下获得
 ```{r}
 options(digits = 4)
-power.bd <- bounds(time, iuse = c(3,3), phi = c(2,2),alpha = c(0.025, 0.025))
+power.bd <- bounds(time, iuse = c(3,3), phi = c(2,2),
+                   alpha = c(0.025, 0.025))
 summary(power.bd)
 plot(power.bd)
 ```
@@ -3501,7 +3622,8 @@ plot(power.bd)
 根据$0.4p_{1} + 0.6p_{2} = 0.6$和$0.6p_{1} + 0.4p_{2} = 0.5$,可$p_{1}=0.3,p_{2}=0.8$
 ```{r}
 GroupSeqReEstimation <- function(alpha, beta, p1, p2) {
-    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * (p1 * (1 - p1) + p2 * 
+    n <- (qnorm(1 - alpha/2) + qnorm(1 - beta))^2 * 
+      (p1 * (1 - p1) + p2 * 
         (1 - p2))/(p1 - p2)^2
     n
 }
@@ -3525,7 +3647,8 @@ ISV.Equality <- function(alpha, beta, sigma1, sigma2, m) {
     ratio = sigma1/sigma2
     n = 0
     for (i in 1:1000) {
-        ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(alpha/2, 
+        ratio.f = qf(p = (1 - beta), i * (m - 1), 
+                     i * (m - 1), lower.tail = FALSE)/qf(alpha/2, 
             i * (m - 1), i * (m - 1), lower.tail = FALSE)
         if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
             n = i
@@ -3549,7 +3672,8 @@ ISV.NIS <- function(alpha, beta, sigma1, sigma2, m, margin) {
     ratio = sigma1/(sigma2 * margin^2)
     n = 0
     for (i in 1:1000) {
-        ratio.f = qf(p = (1 - beta), i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(alpha, 
+        ratio.f = qf(p = (1 - beta), i * (m - 1),
+                     i * (m - 1), lower.tail = FALSE)/qf(alpha, 
             i * (m - 1), i * (m - 1), lower.tail = FALSE)
         if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
             n = i
@@ -3573,7 +3697,8 @@ ISV.Equivalence <- function(alpha, beta, sigma1, sigma2, m, margin) {
     ratio = margin^2 * sigma1/sigma2
     n = 0
     for (i in 1:1000) {
-        ratio.f = qf(beta/2, i * (m - 1), i * (m - 1), lower.tail = FALSE)/qf(1 - 
+        ratio.f = qf(beta/2, i * (m - 1), 
+                     i * (m - 1), lower.tail = FALSE)/qf(1 - 
             alpha, i * (m - 1), i * (m - 1), lower.tail = FALSE)
         if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
             n = i
@@ -3598,8 +3723,8 @@ ISV.Equivalence(0.05, 0.2, 0.3, 0.45, 3, 2)
 ISCV.Equality <- function(alpha, beta, CVt, CVr, m) {
     sigma1 = 1/(2 * m) * CVt^2 + CVt^4
     sigma2 = 1/(2 * m) * CVr^2 + CVr^4
-    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(CVt - 
-        CVr)^2
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) +
+                               qnorm(1 - beta))^2/(CVt - CVr)^2
     n
 }
 
@@ -3616,8 +3741,9 @@ ISCV.Equality(0.05, 0.2, 0.7, 0.5, 2)
 ISCV.NIS <- function(alpha, beta, CVt, CVr, m, margin) {
     sigma1 = 1/(2 * m) * CVt^2 + CVt^4
     sigma2 = 1/(2 * m) * CVr^2 + CVr^4
-    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(CVt - 
-        CVr - margin)^2
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + 
+                               qnorm(1 - beta))^2/
+      (CVt - CVr - margin)^2
     n
 }
 
@@ -3634,7 +3760,8 @@ ISCV.NIS(0.05, 0.2, 0.7, 0.5, 2, -0.1)
 ISCV.Equivalence <- function(alpha, beta, CVt, CVr, m, margin) {
     sigma1 = 1/(2 * m) * CVt^2 + CVt^4
     sigma2 = 1/(2 * m) * CVr^2 + CVr^4
-    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(margin - 
+    n = (sigma1 + sigma2) * (qnorm(1 - alpha) + 
+                               qnorm(1 - beta))^2/(margin - 
         abs(CVt - CVr))^2
     n
 }
@@ -3655,9 +3782,11 @@ $$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{BT}^{2}-\sig
 
 ```{r}
 InterSV.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, m) {
-    sigma = 2 * (vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 + vwt^4/(m^2 * 
+    sigma = 2 * (vbt^2 + vwt^2/m)^2 + 
+      (vbr^2 + vwr^2/m)^2 + vwt^4/(m^2 * 
         (m - 1)) + vwr^4/(m^2 * (m - 1))
-    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 - vbr^2)^2
+    n = sigma * (qnorm(1 - alpha/2) + 
+                   qnorm(1 - beta))^2/(vbt^2 - vbr^2)^2
     n
 }
 
@@ -3675,10 +3804,12 @@ InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
 
 ```{r}
 InterSV.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin) {
-    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 + 
-        vwt^4/(m^2 * (m - 1)) + margin^4 * vwr^4/(m^2 * (m - 1)))
-    n = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 - margin^2 * 
-        vbr^2)^2
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + 
+                   margin^4 * (vbr^2 + vwr^2/m)^2 + 
+        vwt^4/(m^2 * (m - 1)) +
+          margin^4 * vwr^4/(m^2 * (m - 1)))
+    n = sigma * (qnorm(1 - alpha) +
+                   qnorm(1 - beta))^2/(vbt^2 - margin^2 * vbr^2)^2
     n
 }
 
@@ -3744,7 +3875,8 @@ Variabilities.Parallel.Equality <- function(alpha, beta, vtt, vtr) {
     ratio = vtt^2/vtr^2
     n = 0
     for (i in 2:1000) {
-        ratio.f = qf(p = (1 - beta), i - 1, i - 1, lower.tail = FALSE)/qf(alpha/2, 
+        ratio.f = qf(p = (1 - beta), i - 1, i - 1, 
+                     lower.tail = FALSE)/qf(alpha/2, 
             i - 1, i - 1, , lower.tail = FALSE)
         if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
             n = i
@@ -3766,7 +3898,8 @@ Variabilities.Parallel.NIS <- function(alpha, beta, vtt, vtr, margin) {
     ratio = vtt^2/margin^2 * vtr^2
     n = 0
     for (i in 2:1000) {
-        ratio.f = qf(p = (1 - beta), i - 1, i - 1, lower.tail = FALSE)/qf(alpha, 
+        ratio.f = qf(p = (1 - beta), i - 1, i - 1, 
+                     lower.tail = FALSE)/qf(alpha, 
             i - 1, i - 1, , lower.tail = FALSE)
         if (round(ratio, digits = 2) == round(ratio.f, digits = 2)) {
             n = i
@@ -3784,11 +3917,13 @@ Variabilities.Parallel.NIS(0.05, 0.2, 0.55, 0.75, -1.1)
 
 例 设计一无重复的平行对照的临床试验，根据预试验，T组和R组的方差分别为0.55和0.75,在$\alpha=0.05,\beta=0.20$时，等效性设计，在界值为1.8时，需要多少样本量？
 ```{r}
-Variabilities.Parallel.Equivalence <- function(alpha, beta, vtt, vtr, margin) {
+Variabilities.Parallel.Equivalence <- function(alpha, beta, vtt, 
+                                               vtr, margin) {
     ratio = margin^2 * vtt^2/vtr^2
     n = 0
     for (i in 2:1000) {
-        ratio.f = qf(beta/2, i - 1, i - 1, lower.tail = FALSE)/qf(p = (1 - 
+        ratio.f = qf(beta/2, i - 1, i - 1, 
+                     lower.tail = FALSE)/qf(p = (1 - 
             alpha), i - 1, i - 1, , lower.tail = FALSE)
         if (round(ratio, digits = 1) == round(ratio.f, digits = 1)) {
             n = i
@@ -3814,8 +3949,8 @@ Variabilities.Parallel.Rep.Equality <- function(alpha, beta, vbt, vwt,
     vbr, vwr, m) {
     sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 + (m - 1) * 
         vwt^4/m^2 + (m - 1) * vwr^4/m^2)
-    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
-        (vbr^2 + vwr^2))^2
+    n = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/
+      (vbt^2 + vwt^2 - (vbr^2 + vwr^2))^2
     n
 }
 
@@ -3857,10 +3992,10 @@ $$n_{s}= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-
 ```{r}
 Variabilities.Cross.Equality <- function(alpha, beta, vbt, vwt, vbr, vwr, 
     rho) {
-    sigma = 2 * ((vbt^2 + vwt^2)^2 + (vbr^2 + vwr^2)^2 - 2 * rho^2 * vbt^2 * 
-        vbr^2)
-    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
-        (vbr^2 + vwr^2))^2
+    sigma = 2 * ((vbt^2 + vwt^2)^2 + (vbr^2 + vwr^2)^2 - 
+                   2 * rho^2 * vbt^2 * vbr^2)
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/
+      (vbt^2 + vwt^2 - (vbr^2 + vwr^2))^2
     ns
 }
 
@@ -3875,11 +4010,13 @@ Variabilities.Cross.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 1)
 例 设计一个2×2的标准交叉对照实验，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20，\rho=1$时,1：1非劣性检验设计，在界值为1.1的情况下需要多少样本量？
 
 ```{r}
-Variabilities.Cross.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, margin, 
-    rho) {
-    sigma = 2 * ((vbt^2 + vwt^2)^2 + margin^4 * (vbr^2 + vwr^2)^2 - 2 * 
+Variabilities.Cross.NIS <- function(alpha, beta, vbt, 
+                                    vwt, vbr, vwr, margin, rho) {
+    sigma = 2 * ((vbt^2 + vwt^2)^2 + margin^4 * 
+                   (vbr^2 + vwr^2)^2 - 2 * 
         margin^2 * rho^2 * vbt^2 * vbr^2)
-    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/
+      (vbt^2 + vwt^2 - 
         margin^2 * (vbr^2 + vwr^2))^2
     ns
 }
@@ -3898,9 +4035,11 @@ $$n= \frac{\sigma ^{*2}(z_{1-\alpha /2}+z_{1-\beta})^{2}}{(\sigma _{TT}^{2}-\sig
 ```{r}
 Variabilities.Cross.Rep.Equality <- function(alpha, beta, vbt, vwt, vbr, 
     vwr, m, rho) {
-    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 - 2 * rho^2 * 
-        vbt^2 * vbr^2 + (m - 1) * vwt^4/m^2 + (m - 1) * vwr^4/m^2)
-    ns = sigma * (qnorm(1 - alpha/2) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + (vbr^2 + vwr^2/m)^2 - 
+                   2 * rho^2 * vbt^2 * vbr^2 + (m - 1) * 
+                   vwt^4/m^2 + (m - 1) * vwr^4/m^2)
+    ns = sigma * (qnorm(1 - alpha/2) + 
+                    qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
         (vbr^2 + vwr^2))^2
     ns
 }
@@ -3916,12 +4055,15 @@ Variabilities.Cross.Rep.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 2, 0.75)
 例 设计一个2组每个个体重复2次的交叉对照实验(ABAB,BABA)，根据预试验，T组和R组的个体间标准差分别为0.3,0.4,T组和R组的个体内标准差分别为0.2,0.3,在$\alpha=0.05,\beta=0.20,\rho= 0.75$时，1：1非劣性设计，需要多少样本量？
 
 ```{r}
-Variabilities.Cross.Rep.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, 
-    m, margin, rho) {
-    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * (vbr^2 + vwr^2/m)^2 - 
-        2 * margin^2 * rho^2 * vbt^2 * vbr^2 + (m - 1) * vwt^4/(m^2) + 
+Variabilities.Cross.Rep.NIS <- function(alpha, beta, vbt, 
+                                        vwt, vbr, vwr, m, margin, rho) {
+    sigma = 2 * ((vbt^2 + vwt^2/m)^2 + margin^4 * 
+                   (vbr^2 + vwr^2/m)^2 - 
+        2 * margin^2 * rho^2 * vbt^2 * 
+          vbr^2 + (m - 1) * vwt^4/(m^2) + 
         margin^4 * (m - 1) * vwr^4/(m^2))
-    ns = sigma * (qnorm(1 - alpha) + qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
+    ns = sigma * (qnorm(1 - alpha) + 
+                    qnorm(1 - beta))^2/(vbt^2 + vwt^2 - 
         margin^2 * (vbr^2 + vwr^2))^2
     ns
 }
@@ -3972,18 +4114,26 @@ IBE <- function(alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR,
     }
     U <- function(n, alpha, beta, delta, sigmaD, sigmaWT, sigmaWR, a, b, 
         thetaIBE) {
-        U = ((abs(delta) + qt(alpha, 2 * n - 2) * Sigma(sigmaD, sigmaWT, 
-            sigmaWR, 0.5, 0.5)/2 * sqrt(2/n))^2 - delta^2)^2 + Sigma(sigmaD, 
-            sigmaWT, sigmaWR, 0.5, 0.5)^4 * ((2 * n - 2)/qchisq(1 - alpha, 
-            2 * n - 2) - 1)^2 + 0.5^2 * sigmaWT^4 * ((2 * n - 2)/qchisq(1 - 
-            alpha, 2 * n - 2) - 1)^2 + (1.5 + thetaIBE)^2 * sigmaWR^4 * 
+        U = ((abs(delta) + qt(alpha, 2 * n - 2) * 
+                Sigma(sigmaD, sigmaWT, 
+            sigmaWR, 0.5, 0.5)/2 * sqrt(2/n))^2 - 
+              delta^2)^2 + Sigma(sigmaD, 
+            sigmaWT, sigmaWR, 0.5, 0.5)^4 * 
+          ((2 * n - 2)/qchisq(1 - alpha, 
+            2 * n - 2) - 1)^2 + 0.5^2 *
+          sigmaWT^4 * ((2 * n - 2)/qchisq(1 - 
+            alpha, 2 * n - 2) - 1)^2 + 
+          (1.5 + thetaIBE)^2 * sigmaWR^4 * 
             ((2 * n - 2)/qchisq(alpha, 2 * n - 2) - 1)^2
     }
-    gamma = delta^2 + sigmaD^2 + sigmaWT^2 - sigmaWR^2 - thetaIBE * sigmaWR^2
+    gamma = delta^2 + sigmaD^2 + sigmaWT^2 - 
+      sigmaWR^2 - thetaIBE * sigmaWR^2
     n <- 0
     for (i in 2:1000) {
-        bound = gamma + sqrt(U(i, alpha, 0.05, delta, sigmaD, sigmaWT, 
-            sigmaWR, a, b, thetaIBE)) + sqrt(U(i, alpha, beta, delta, sigmaD, 
+        bound = gamma + sqrt(U(i, alpha, 0.05, 
+                               delta, sigmaD, sigmaWT, 
+            sigmaWR, a, b, thetaIBE)) + 
+          sqrt(U(i, alpha, beta, delta, sigmaD, 
             sigmaWT, sigmaWR, a, b, thetaIBE))
         if (round(bound, digits = 2) == 0) {
             n = i
@@ -4002,25 +4152,28 @@ IBE(0.05, 0.2, 0, 0.1, 0.4, 0.6, 0.4, 0.5, 0.5, 5.11, 0.75)
 
 例 某研究者预设计一个无重复的平行对照的体外实验法，根据药代动力学的预试验 $\sigma _{BT}=0.5,\sigma _{BR}=0.5,\sigma _{WT}=0.5,\sigma _{WR}=0.5,\delta=0,a=b=0.5,\theta_{BE}=15$ ,在$\alpha=0.05,\beta=0.20$时，需要多少样本量？
 ```{r}
-Vitro.BE <- function(alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR, 
-    thetaBE) {
-    U <- function(m, n, alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, 
-        sigmaWR, thetaBE) {
-        U = ((abs(delta) + qnorm(alpha) * sqrt(sigmaBT^2/m + sigmaBR^2/m))^2 - 
-            delta^2)^2
-        +(sigmaBT^2 + sigmaWT^2)^2 * ((m - 1)/qchisq(1 - alpha, m - 1) - 
-            1)^2
-        +(1 + thetaBE)^2 * (sigmaBR^2 + sigmaWR^2)^2 * ((m - 1)/qchisq(alpha, 
-            m - 1) - 1)^2
+Vitro.BE <- function(alpha, beta, delta, sigmaBT, sigmaBR, 
+                     sigmaWT, sigmaWR,  thetaBE) {
+    U <- function(m, n, alpha, beta, delta, sigmaBT,
+                  sigmaBR, sigmaWT, sigmaWR, thetaBE) {
+        U = ((abs(delta) + qnorm(alpha) * 
+                sqrt(sigmaBT^2/m + sigmaBR^2/m))^2 - 
+            delta^2)^2+(sigmaBT^2 + sigmaWT^2)^2 *
+          ((m - 1)/qchisq(1 - alpha, m - 1) - 1)^2
+        +(1 + thetaBE)^2 *
+          (sigmaBR^2 + sigmaWR^2)^2 * ((m - 1)/
+                          qchisq(alpha,  m - 1) - 1)^2
     }
     sigmaT = sqrt(sigmaBT^2 + sigmaWT^2)
     sigmaR = sqrt(sigmaBR^2 + sigmaWR^2)
     gamma = delta^2 + sigmaT^2 - sigmaR^2 - thetaBE * sigmaR^2
     n <- 0
     for (i in 2:1000) {
-        bound = gamma + sqrt(U(i, 1, alpha, 0.05, delta, sigmaBT, sigmaBR, 
+        bound = gamma + sqrt(U(i, 1, alpha, 0.05, 
+                               delta, sigmaBT, sigmaBR, 
             sigmaWT, sigmaWR, thetaBE))
-        +sqrt(U(i, 1, alpha, beta, delta, sigmaBT, sigmaBR, sigmaWT, sigmaWR, 
+        +sqrt(U(i, 1, alpha, beta, delta, sigmaBT, 
+                sigmaBR, sigmaWT, sigmaWR, 
             thetaBE))
         if (round(bound, digits = 2) == 0) {
             n = i
@@ -4045,7 +4198,8 @@ II期临床试验目的在于对新药的安全性和有效性进行初步评价
 ```{r}
 mui=c(0.05,0.12,0.14,0.16)
 ci=c(-6,1,2,3)
-(Dose.Response.Linear(alpha=0.05,beta=0.2,sigma=0.22,mui=mui,ci=ci,fi=1/4))
+(Dose.Response.Linear(alpha=0.05,beta=0.2,
+                      sigma=0.22,mui=mui,ci=ci,fi=1/4))
 ```
 每组需要`r round((Dose.Response.Linear(alpha=0.05,beta=0.2,sigma=0.22,mui=mui,ci=ci,fi=1/4)))/4`例。
 
@@ -4070,10 +4224,12 @@ $T_{0}$为试验的纳入时间，$T$为整个试验时间，$c_{i}$为分组情
 ```{r}
 Ti=c(14,20,22,24);
 ci=c(-6,1,2,3);
-(Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,T=16,Ti=Ti,ci=ci,fi=1/4))
+(Dose.Response.time.to.event(alpha=0.05,beta=0.2,
+                             T0=9,T=16,Ti=Ti,ci=ci,fi=1/4))
 ```
 
-每组需要`r round((Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,T=16,Ti=Ti,ci=ci,fi=1/4)))/4`例。
+每组需要`r round((Dose.Response.time.to.event(alpha=0.05,beta=0.2,T0=9,
+T=16,Ti=Ti,ci=ci,fi=1/4)))/4`例。
 
 ###最小有效剂量（MED）
 基于Williams检验的最小有效剂量样本量可根据$$n=\frac{2\sigma ^{2}[t_{k}(\alpha )+z\beta ]^{2}}{\Delta ^{2}}$$进行计算，$t_{k}(\alpha )$ 依赖于自由度。
@@ -4161,7 +4317,8 @@ TwoSide.fixEffect(m=4000,m1=40,delta=1,a1=0.5,r1=24,fdr=0.01)
 例 设计一个4000个候选基因的微阵列(m=4000)研究，预计两组之间有40($m_{1}$=40)个不同表达的基因,实际拒绝基因数约为24($r_{1}$=40)，双侧可变效应设计，预计错误发现率为0.01，$\delta_{j}= \begin{cases} 1& \text{if } 1\leq i \leq 20\\ 1/2& \text{if } 21\leq i \leq 40\end{cases}$,$,在$a_{1}=a_{2}=0.5$时，需要多少样本量？
 ```{r}
 delta=c(rep(1,40/2),rep(1/2,40/2))
-TwoSide.varyEffect(s1=100,s2=200,m=4000,m1=40,delta=delta,a1=0.5,r1=24,fdr=0.01)
+TwoSide.varyEffect(s1=100,s2=200,m=4000,m1=40,
+                   delta=delta,a1=0.5,r1=24,fdr=0.01)
 ```
 每组需要`r round(TwoSide.varyEffect(s1=100,s2=200,m=4000,m1=40,delta=delta,a1=0.5,r1=24,fdr=0.01)$s2)/2`例。
 
@@ -4595,7 +4752,8 @@ P值较小，分性别来看，治疗情况和改善情况并不独立。
 
 ```{r}
 who <- read.csv("WHO.csv", header = T)
-plot(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., who$Medical_Doctors)
+plot(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., 
+     who$Medical_Doctors)
 cor.test(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year., 
     who$Medical_Doctors, method = "pearson")
 ```
@@ -4603,7 +4761,8 @@ cor.test(who$Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.,
 
 ```{r eval=FALSE}
 #调用MINE.jar，Java中列以0开始
-col1 <- which(names(who) == "Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.")-1
+col1 <- which(names(who) == 
+                "Deaths.due.to.HIV.AIDS..per.100.000.population.per.year.")-1
 col2 <- which(names(who) == "Medical_Doctors")-1
 
 source("MINE.r")
@@ -4691,7 +4850,10 @@ P值小于0.05,拒绝原假设，可以认为血液病患者年龄与真菌感�
 例 某地35名难产儿出生体重为3.38 3.51 4.08 4.44 3.44 3.25 3.49 3.29 3.93 4.06 3.29 2.99 3.87 3.19 3.30 3.45 3.50 3.52 3.01 3.80 3.20 3.64 3.85 4.09 3.53 3.93 3.29 3.70 4.13 3.81 2.96 4.44 3.98 2.82 4.23，一般婴儿出生体重$\mu _{0}$ 3.30（大规模调查获得），问相同否？
 
 ```{r}
-weight <- c(3.38,3.51,4.08,4.44,3.44,3.25,3.49,3.29,3.93,4.06,3.29,2.99,3.87,3.19,3.30,3.45,3.50,3.52,3.01,3.80,3.20,3.64,3.85,4.09,3.53,3.93,3.29,3.70,4.13,3.81,2.96,4.44,3.98,2.82,4.23)
+weight <- c(3.38,3.51,4.08,4.44,3.44,3.25,3.49,3.29,3.93,
+            4.06,3.29,2.99,3.87,3.19,3.30,3.45,3.50,3.52,
+            3.01,3.80,3.20,3.64,3.85,4.09,3.53,3.93,3.29,
+            3.70,4.13,3.81,2.96,4.44,3.98,2.82,4.23)
 shapiro.test(weight) #正态性检验
 t.test(weight,alternative = "two.side",mu=3.30)
 ```
@@ -4728,7 +4890,8 @@ t.test(x,y,var.equal = T)
 ```
 
 ```{r eval=FALSE}
-tIndDf <- data.frame(DV=c(x, y),IV=factor(rep(c("f", "m"), c(length(x),length(y)))))
+tIndDf <- data.frame(DV=c(x, y),
+                     IV=factor(rep(c("f", "m"), c(length(x),length(y)))))
 t.test(DV ~ IV, var.equal=TRUE, data=tIndDf)
 ```
 
@@ -4907,7 +5070,8 @@ Global Stat给模型假设提供了一个单独的综合检验（通过/不通�
 
 ```{r}
 outlierTest(model) #Bonferroni离群点检验
-qqPlot(model,labels=row.names(df),id.method = "identify",simulate=T,main="QQPlot") #car包
+qqPlot(model,labels=row.names(df),
+       id.method = "identify",simulate=T,main="QQPlot") #car包
 ```
 outlierTest（）函数是根据单个最大（或正或负）残差值的显著性来判断是否有离群点，若不显著，则说明数据集中没有离群点，若显著，则必须删除该离群点，然后再检验是否还有其他离群点存在。qqPlot图中落在置信区间带外的点可被认为时离群点。本例中未发现有离群点。
 
@@ -5033,7 +5197,8 @@ age sbp dbp wbc   mtfc
 records <- read.table("example1")
 ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
 attach(ex)
-#scatterplotMatrix()函数默认在非对角线区域绘制变量间的散点图，并添加平滑（loess）和线性拟合区间
+#scatterplotMatrix()函数默认在非对角线区域绘制变量间的散点图，
+#并添加平滑（loess）和线性拟合区间
 scatterplotMatrix(ex,spread=F,lty.smooth=2,main="scatter plot matrix")
 ```
 绘制因变量与自变量的散点图矩阵显示mtfc和wbc线性关系不是很好。首先做单因素的线性回归，尽管有时候单因素的分析不是必须的，其结果也不一定可靠，但有助于初步探索自变量和因变量之间的关系。
@@ -5068,7 +5233,7 @@ wbc变量的变异系数远高于其他连个变量，为减少wbc变量的变�
 fit <- lm(mtfc~age+sbp+log10(wbc),data = ex)
 summary(fit)
 gvlma(fit)
-influence.measures(fit)
+#influence.measures(fit)
 ```
 所建立的模型通过回归诊断，影响分析存在异常点，但没有理由怀疑是异常点所以予以保留。
 
@@ -5143,7 +5308,8 @@ plot(subsets,scale="adjr2") #基于调整R平方，不同子集大小的最佳�
 图的顶部的图形便是最适合的模型，校正R平方值0.98最高，x1和x2两预测变量是最佳模型。也可以通过$C_{p}$统计量完成变量的选择。
 ```{r}
 sbs<- regsubsets(y~x1+x2+x3+x4,data=df)
-subsets(sbs,legend=FALSE,statistic="cp",main="cp plot for all subsets regression")
+subsets(sbs,legend=FALSE,statistic="cp",
+        main="cp plot for all subsets regression")
 abline(1,1,lty=2,col="red") #画截距项和斜率均为1的直线
 summary(sbs)
 ```
@@ -5542,7 +5708,7 @@ rocplot(fit.glm)
 对于异常值识别仍然可用influence.measures()函数获得。
 ```{r}
 influencePlot(fit.glm)
-influence.measures(fit.glm)
+#influence.measures(fit.glm)
 ```
 
 #### 多重共线性
@@ -5576,13 +5742,16 @@ AER包中包含一个Affairs数据，记录了一组婚外情数据，其中包�
 data(Affairs,package="AER")
 Affairs$ynaffair[Affairs$affairs > 0] <- 1
 Affairs$ynaffair[Affairs$affairs==0] <- 0
-Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
+Affairs$ynaffair <- factor(Affairs$ynaffair,
+                           levels=c(0,1),labels=c("No","Yes"))
 ```
 与线性回归相似，bestglm包中bestglm函数可以完成logistic回归的全子集的自变量筛选。
 ```{r}
 Affairs <- Affairs[,c("gender","age","yearsmarried","children",
-                      "religiousness","education","occupation","rating","ynaffair")]
-best.logistic <-bestglm(Affairs,family = binomial,IC = "AIC",method = "exhaustive") 
+                      "religiousness","education",
+                      "occupation","rating","ynaffair")]
+best.logistic <-bestglm(Affairs,family = binomial,
+                        IC = "AIC",method = "exhaustive") 
 best.logistic$BestModels
 summary(best.logistic$BestModel)
 ```
@@ -5891,6 +6060,7 @@ clmNP <- clm(intense~shoes, nominal=~agegr, data=HW93)
 anova(clmP, clmNP)
 ```
 平行性假设检验结果表明，P值小于0.05，可以认为平行性假设不成立。检验结果可用is.parallel()函数获得。
+
 ### 精确Logistic回归
 例 elrm包的drugDat数据集记录不同性别人群在某种药物治疗的结果，recovered表示恢复数量，n表示总人数。
 ```{r}
@@ -6214,7 +6384,9 @@ plot.design(length ~ site, fun = mean, data = dfCRp, main = "Group means")
 方差分析需要一定的假设，即数据集应该符合正态和各组的方差相等，可以分别用shapiro.test和bartlett.test检验从P值观察到这两个假设是符合的。对于不符合假设的情况，我们就要用到非参数方法，例如Kruskal-Wallis秩和检验
 ```{r}
 shapiro.test(dfCRp$length)
-bartlett.test(length ~ site,data = dfCRp) #Fligner-Killeen(fligner.test()函数)和Brown-Forsythe检验(HH包中的hov()函数)也可以用来检验方差齐性
+bartlett.test(length ~ site,data = dfCRp) 
+#Fligner-Killeen(fligner.test()函数)和
+#Brown-Forsythe检验(HH包中的hov()函数)也可以用来检验方差齐性
 ```
 正态性检验和方差齐性检验P值均大于0.05，可以认为数据满足正态性和方差齐性的要求。
 
@@ -6258,6 +6430,7 @@ $\eta^{2},\omega^{2},f^{2}$值如上，如$\eta^{2}$实验处理之后各组间�
 
 ###多重比较
 方差分析只告诉我们这三组之间是不同的，但没有告诉哪两组之间有明显差别，此时需要使用TukeyHSD函数进行均值的多重比较分析，从结果中观察到有一个两两比较是不显著的。
+
 ####计划好的多重比较(Planned comparisons - a-priori)
 在收集数据之前就已确定。它与实验目的有关，反映了实验者的意图。可以直接进行计划好的多重比较，不用考虑基本的“均值相等的 F-test”。
 ```{r}
@@ -6267,7 +6440,9 @@ cntrMat <- rbind("a-c"          =c(1,0,-1),
 summary(glht(aovCRp, linfct=mcp(site=cntrMat), alternative="less"),
         test=adjusted("none"))
 
-#pairwise.t.test(dfCRp$length, dfCRp$site, p.adjust.method="bonferroni") #结果与glht()函数类似。
+#pairwise.t.test(dfCRp$length, dfCRp$site, p.adjust.method="bonferroni")
+
+#结果与glht()函数类似。
 ```
 依据事先实验的目的，进行多重比较，a组和c组，a、b组和c组的差异有显著意义。
 
@@ -6286,7 +6461,8 @@ multcomp包中glht()函数提供了多重均值更全面的方法，适用于线
 ```{r}
 tukey <- glht(aovCRp, linfct=mcp(site="Tukey"))
 summary(tukey)
-plot(cld(tukey,level = .05),col="lightgrey") #cld()函数中level选项设置了使用显著水平0.05，即95%的置信区间
+#cld()函数中level选项设置了使用显著水平0.05，即95%的置信区间
+plot(cld(tukey,level = .05),col="lightgrey")
 ```
 有相同字母的组（箱线图表示）说明均值差异不显著。
 
@@ -6339,7 +6515,8 @@ effect("dose",ancova)
 
 ###多重比较
 ```{r}
-contrast <- rbind("no drug vs drug"=c(3,-1,-1,-1)) #设定第一组和其他三组的均值进行比较
+#设定第一组和其他三组的均值进行比较
+contrast <- rbind("no drug vs drug"=c(3,-1,-1,-1)) 
 summary(glht(ancova,linfct=mcp(dose=contrast)))
 ```
 在未用药和用药条件下，出生体重有显著的不同。
@@ -6438,7 +6615,8 @@ par(mfrow=c(1,1))
 ```{r}
 ToothGrowth$supp <- as.factor(ToothGrowth$supp) #转为因子
 ToothGrowth$dose <- as.factor(ToothGrowth$dose)
-fitIII <- lm(len ~ supp + dose + supp:dose, data=ToothGrowth,contrasts=list(supp=contr.sum, dose=contr.sum))
+fitIII <- lm(len ~ supp + dose + supp:dose, 
+             data=ToothGrowth,contrasts=list(supp=contr.sum, dose=contr.sum))
 Anova(fitIII, type="III")
 ```
 得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
@@ -6446,7 +6624,10 @@ Anova(fitIII, type="III")
 ###绘制边际均数及格均数图
 ```{r}
 plot.design(len ~ supp*dose, data=ToothGrowth, main="Marginal means")
-interaction.plot(ToothGrowth$dose, ToothGrowth$supp,ToothGrowth$len,main="Cell means", col=c("red", "blue", "green"), lwd=2) #interaction.plot(f1, f2, y)展示双因素方差分析的交互效应，如果f1和f2是因子,作y的均值图,以f1的不同值作为x轴,而f2的不同值对应不同曲线;可以用选项fun指定y的其他的统计量(缺省计算均值,fun=mean)
+interaction.plot(ToothGrowth$dose, ToothGrowth$supp,
+                 ToothGrowth$len,main="Cell means", 
+                 col=c("red", "blue", "green"), lwd=2) 
+#interaction.plot(f1, f2, y)展示双因素方差分析的交互效应，如果f1和f2是因子,作y的均值图,以f1的不同值作为x轴,而f2的不同值对应不同曲线;可以用选项fun指定y的其他的统计量(缺省计算均值,fun=mean)
 ```
 
 gplots包中的plotmeans()函数来展示交互效应，HH包中interaction2wt()函数来展示交互效应
@@ -6459,7 +6640,9 @@ plotmeans(len ~ interaction(supp, dose, sep = " "),
 ```
 
 ```{r eval=F}
-interaction2wt(len ~ supp * dose) #interaction2wt() 函数,因为它能展示任意复杂度设计(双因素方差分析、三因素方差分析等)的主效应(箱线图)和交互效应
+#interaction2wt() 函数,因为它能展示任意复杂度设计(双因素方差分析、三因素方差分析等)
+#的主效应(箱线图)和交互效应
+interaction2wt(len ~ supp * dose) 
 ```
 
 ###效果大小(Effect size estimate)
@@ -6514,8 +6697,10 @@ summary(glht(aovCRFpqA, linfct=mcp(comb=cntrMat), alternative="greater"),
 
 ###非计划Scheffe检验
 ```{r}
-ScheffeTest(aovCRFpqA, which="comb", contrasts=t(cntrMat)) #Post-hoc Scheffe tests using the associated one-way ANOVA
-ScheffeTest(aovCRFpq, which="dose", contrasts=c(-1, 1/2, 1/2)) #Post-hoc Scheffe tests for marginal means
+ScheffeTest(aovCRFpqA, which="comb", contrasts=t(cntrMat)) 
+#Post-hoc Scheffe tests using the associated one-way ANOVA
+ScheffeTest(aovCRFpq, which="dose", contrasts=c(-1, 1/2, 1/2)) 
+#Post-hoc Scheffe tests for marginal means
 ```
 
 ###残差的相关检验
@@ -6557,7 +6742,8 @@ aov()函数在处理重复测量设计时,需要有长格式(long format)数据�
 ```{r}
 dfRBpL <- subset(MAS,treatment=="ps")
 dfRBpL$id <- as.factor(dfRBpL$id)
-aovRBp <- aov(value ~ time + Error(id/time), data=dfRBpL) #id和time需为因子
+#id和time需为因子
+aovRBp <- aov(value ~ time + Error(id/time), data=dfRBpL) 
 summary(aovRBp)
 ```
 在治疗组，不同时间记录的VEGF差异显著。
@@ -6585,15 +6771,19 @@ summary(AnovaRBp, multivariate=FALSE, univariate=TRUE)
 传统的重复测量方差分析假设任意组内因子的协方差矩阵为球形,并且任意组内因子两水平间的方差之差都相等.
 ```{r}
 mauchly.test(fitRBp, M=~time, X=~1, idata=inRBp) #Mauchly球形检验
-anova(fitRBp, M=~time, X=~1, idata=inRBp, test="Spherical") ## 如果不满足球形假设，可用Greenhouse-Geisser和 Huynh-Feldt校正或者用多变量方差分析
+#如果不满足球形假设，可用Greenhouse-Geisser和 
+#Huynh-Feldt校正或者用多变量方差分析
+anova(fitRBp, M=~time, X=~1, idata=inRBp, test="Spherical") 
 ```
 P大于0.05，符合球形假设。
 
 ####重复测量的多变量方差分析(Multivariate approach)
 $Hotelling's T^{2}$检验是单变量检验的推广，常用于两组均向量的比较。
 ```{r}
-DVw<- data.matrix(subset(dfRBpW,select=c("value.time0", "value.time24", "value.time72")))
-diffMat <- combn(1:length(levels(dfRBpL$time)), 2, function(x) {DVw[ , x[1]] - DVw[ , x[2]]})
+DVw<- data.matrix(subset(dfRBpW,select=c("value.time0", 
+                                         "value.time24", "value.time72")))
+diffMat <- combn(1:length(levels(dfRBpL$time)), 2, 
+                 function(x) {DVw[ , x[1]] - DVw[ , x[2]]})
 DVdiff<- diffMat[ , 1:(length(levels(dfRBpL$time))-1), drop=FALSE]
 muH0 <- rep(0, ncol(DVdiff))
 HotellingsT2Test(DVdiff, mu=muH0)
@@ -6616,12 +6806,16 @@ P值小于0.05，可以认为不同时间记录(time)的VEGF差异显著，截�
 aov()同样需要长格式数据。
 ```{r}
 dfRBFpqL <- read.csv("MAS.csv",header = T)
-id <- factor(rep(1:21, times=2*3))  #dfRBFpqL$id <- as.factor(dfRBFpqL$id)这种法方法每组因子水平不是21，而是42
+#dfRBFpqL$id <- as.factor(dfRBFpqL$id)
+#这种法方法每组因子水平不是21，而是42
+id <- factor(rep(1:21, times=2*3))  
 dfRBFpqL$id <- id
 aovRBFpq <- aov(value ~ treatment*time + Error(id/(treatment*time)), data=dfRBFpqL)
 summary(aovRBFpq)
 
-with(dfRBFpqL,interaction.plot(time,treatment, value, type = "b", col = c("red", "blue"), pch = c(16, 18), main = "Interaction Plot for treatment and time"))
+with(dfRBFpqL,interaction.plot(time,treatment, value, type = "b",
+                               col = c("red", "blue"), pch = c(16, 18), 
+                               main = "Interaction Plot for treatment and time"))
 
 boxplot(value ~ treatment*time, data = dfRBFpqL, col = (c("gold", 
     "green")), main = "treatment and time", 
@@ -6636,7 +6830,9 @@ dfTemp   <- reshape(dfRBFpqL, v.names="value", timevar="treatment",
 dfRBFpqW <- reshape(dfTemp, v.names=c("value.contrast", "value.ps"),
                     timevar="time", idvar="id", direction="wide")
 
-fitRBFpq   <- lm(cbind(value.contrast.time0,value.ps.time0,value.contrast.time24,value.ps.time24,value.contrast.time72,value.ps.time72) ~ 1,data=dfRBFpqW)
+fitRBFpq   <- lm(cbind(value.contrast.time0,value.ps.time0,
+                       value.contrast.time24,value.ps.time24,
+                       value.contrast.time72,value.ps.time72) ~ 1,data=dfRBFpqW)
 inRBFpq    <- expand.grid(treatment=gl(2, 1), time=gl(3, 1))
 AnovaRBFpq <- Anova(fitRBFpq, idata=inRBFpq, idesign=~treatment*time)
 summary(AnovaRBFpq, multivariate=FALSE, univariate=TRUE)
@@ -6646,11 +6842,15 @@ summary(AnovaRBFpq, multivariate=FALSE, univariate=TRUE)
 ### anova.mlm() 和 mauchly.test()
 ```{r}
 anova(fitRBFpq, M=~treatment, X=~1, idata=inRBFpq, test="Spherical")
-anova(fitRBFpq, M=~treatment + time, X=~treatment, idata=inRBFpq, test="Spherical")
-anova(fitRBFpq, M=~treatment + time + treatment:time, X=~treatment + time,idata=inRBFpq, test="Spherical")
+anova(fitRBFpq, M=~treatment + time, 
+      X=~treatment, idata=inRBFpq, test="Spherical")
+anova(fitRBFpq, M=~treatment + time + treatment:time, 
+      X=~treatment + time,idata=inRBFpq, test="Spherical")
 mauchly.test(fitRBFpq, M=~treatment, X=~1, idata=inRBFpq)
-mauchly.test(fitRBFpq, M=~treatment + time, X=~treatment, idata=inRBFpq)
-mauchly.test(fitRBFpq, M=~treatment + time + treatment:time, X=~treatment + time, idata=inRBFpq)
+mauchly.test(fitRBFpq, M=~treatment + time,
+             X=~treatment, idata=inRBFpq)
+mauchly.test(fitRBFpq, M=~treatment + time + treatment:time,
+             X=~treatment + time, idata=inRBFpq)
 ```
 
 ###效果大小(Effect size estimates)
@@ -6660,9 +6860,12 @@ EtaSq(aovRBFpq, type=1)
 
 ###简单效应(Simple effects)
 ```{r}
-summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time0")))
-summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time24")))
-summary(aov(value ~ treatment + Error(id/treatment), data=dfRBFpqL, subset=(time=="time72")))
+summary(aov(value ~ treatment + Error(id/treatment),
+            data=dfRBFpqL, subset=(time=="time0")))
+summary(aov(value ~ treatment + Error(id/treatment), 
+            data=dfRBFpqL, subset=(time=="time24")))
+summary(aov(value ~ treatment + Error(id/treatment), 
+            data=dfRBFpqL, subset=(time=="time72")))
 ```
 
 ###多元方法(Multivariate approach)
@@ -6691,7 +6894,8 @@ summary(AnovaRBFpq, multivariate=TRUE, univariate=FALSE)
 
 ```{r}
 diameter<- c(15.75,15.50,15.50,17.00,16.50,19.00,20.75,18.50,
-             20.50,20.00,18.25,18.50,19.75,21.25,20.75,22.25,21.50,23.50,24.75,23.75)
+             20.50,20.00,18.25,18.50,19.75,21.25,20.75,22.25
+             ,21.50,23.50,24.75,23.75)
 
 dfSPFpqL <- data.frame(id=factor(rep(1:5, times=4)),
                        B=factor(rep(1:2,each=5,times=2)),
@@ -6857,7 +7061,8 @@ summary(aov(Y ~ Xw1 + Error(id/Xw1), data=d1))
 #没有明确是否符合compound symmetry假设
 anova(lme(Y ~ Xw1, random=~1 | id, method="ML", data=d1))  
 #符合compound symmetry假设
-lmeFit <- lme(Y ~ Xw1, random=~1 | id, correlation=corCompSymm(form=~1|id),
+lmeFit <- lme(Y ~ Xw1, random=~1 | id, 
+              correlation=corCompSymm(form=~1|id),
               method="ML", data=d1)
 anova(lmeFit)
 
@@ -6902,11 +7107,13 @@ summary(aov(Y ~ Xw1*Xw2 + Error(id/(Xw1*Xw2)), data=d2))
 ####Mixed-effects analysis
 #####nlme包lme方法（Using lme() from package nlme）
 ```{r}
-anova(lme(Y ~ Xw1*Xw2, random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+anova(lme(Y ~ Xw1*Xw2, random=list(id=pdBlocked(list(~1, 
+         pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
           method="ML", data=d2))
 #符合compound symmetry假设
 anova(lme(Y ~ Xw1*Xw2,
-          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          random=list(id=pdBlocked(list(~1, 
+           pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
           method="ML", data=d2))
 ```
 结果显示自变量Xw1有统计学意义。
@@ -6929,10 +7136,12 @@ summary(aov(Y ~ Xb1*Xw1 + Error(id/Xw1), data=d1))
 #没有明确是否符合compound symmetry假设
 anova(lme(Y ~ Xb1*Xw1, random=~1 | id, method="ML", data=d1))
 #符合compound symmetry假设
-anova(lme(Y ~ Xb1*Xw1, random=~1 | id, correlation=corCompSymm(form=~1|id),
+anova(lme(Y ~ Xb1*Xw1, random=~1 | id, 
+          correlation=corCompSymm(form=~1|id),
           method="ML", data=d1))
 
-anova(lme(Y ~ Xb1*Xw1, random=list(id=pdCompSymm(~Xw1-1)), method="REML", data=d1))
+anova(lme(Y ~ Xb1*Xw1, random=list(id=pdCompSymm(~Xw1-1)),
+          method="REML", data=d1))
 ```
 自变量Xb1、Xw1和其交互效应均有统计学意义。
 
@@ -6984,7 +7193,8 @@ anova(lme(Y ~ Xb1*Xw1*Xw2,
           method="ML", data=d2))
 #符合compound symmetry假设
 anova(lme(Y ~ Xb1*Xw1*Xw2,
-          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), 
+                                        pdCompSymm(~Xw2-1)))),
           method="ML", data=d2))
 ```
 Xb1、Xw1和其交互作用有统计学意义。
@@ -7248,7 +7458,8 @@ legend(x="bottomright", lwd=2, col=1:3, legend=LETTERS[1:3])
 ####比例风险假定(Proportional hazards assumption)
 将纵轴取对数后，绘制时间的对数值图形，可以比较Clinic变量两种取值的生存曲线。如果两条曲线平行，则不太可能违反比例风险假定。
 ```{r}
-plot(survfit(surv~Clinic,data=addicts),fun="cloglog",conf.int = F,col = c("red","blue"))
+plot(survfit(surv~Clinic,data=addicts),fun="cloglog",
+     conf.int = F,col = c("red","blue"))
 ```
 两条曲线相交不止一次，从图形很难判断是否违反比例风险假定。可采取如下检验
 ```{r}
@@ -7852,7 +8063,8 @@ FN <- c21 <- contT1[2, 1]       ## false negative / miss 假阴性
 (sensitivity <- recall <- TP / (TP+FN))  #灵敏度
 (specificity <- TN / (TN+FP))  #特异度
 (relevance <- precision <- TP / (TP+FP)) #阳性预测值
-(CCR <- sum(diag(contT1)) / sum(contT1)) #正确分类率 accuracy = (TP + TN)/(TP + FP + FN + TN)
+#正确分类率 accuracy = (TP + TN)/(TP + FP + FN + TN)
+(CCR <- sum(diag(contT1)) / sum(contT1)) 
 (Fval <- 1 / mean(1 / c(precision, recall))) #F得分 = 2*TP /(2*TP + FP + FN) % 
 ```
 
@@ -7996,7 +8208,8 @@ lrm(yDi ~ x)$stats
 
 #绘制ROC曲线
 (rocRes <- roc(yDi ~ x, plot=TRUE, ci=TRUE, main="ROC-curve",
-               xlab="specificity (TN / (TN+FP))", ylab="sensitivity (TP / (TP+FN))"))
+               xlab="specificity (TN / (TN+FP))", 
+               ylab="sensitivity (TP / (TP+FN))"))
 rocCI <- ci.se(rocRes)
 plot(rocCI, type="shape")
 ```
@@ -8190,7 +8403,8 @@ ot
 ```{r}
 supp <- support(ot)
 dens <- sapply(supp, dperm, object=ot)
-plot(supp, dens, xlab="Support", ylab=NA, pch=20, main="Density permutation distribution")
+plot(supp, dens, xlab="Support", ylab=NA, pch=20, 
+     main="Density permutation distribution")
 ```
 
 QQ图
@@ -8218,7 +8432,8 @@ tDepDf <- data.frame(DV=c(pre, post),
                      IV=factor(rep(0:1, each=N), labels=c("pre", "post")))
 id     <- factor(rep(1:N, times=2))
 set.seed(123)
-oneway_test(DV ~ IV | id, alternative="less", distribution=approximate(B=9999), data=tDepDf)
+oneway_test(DV ~ IV | id, alternative="less", 
+            distribution=approximate(B=9999), data=tDepDf)
 ```
 P值大于0.05，治疗前后的血压值没有不同。
 
@@ -8592,7 +8807,9 @@ bs <- function(formula,data,indices){
   return (coef(fit))
 }
 
-result <- boot(data = Affairs,statistic = bs,R=1000,formula=ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating)
+result <- boot(data = Affairs,statistic = bs,R=1000,
+               formula=ynaffair~gender+age+yearsmarried+
+                 children+religiousness+education+occupation+rating)
 print(result)
 #print(result,index = 8) #多个统计量，添加索引
 plot(result,index = 8)
@@ -8640,6 +8857,12 @@ try(detach(package:plyr))
 try(detach(package:boot))
 ```
 
+\pagebreak
 
+#地图展示
+
+\pagebreak
+
+#参考文献
 
 

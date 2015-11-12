@@ -4,16 +4,14 @@ header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \fancyhead[C]{\fontsize{7}{7}\selectfont\leftmark}
 - \fancyfoot[C]{\thepage}
-- \renewcommand{\headrulewidth}{0.4pt}
+- \renewcommand{\headrulewidth}{0pt}
 - \renewcommand{\footrulewidth}{0pt}
 output:
   pdf_document:
     latex_engine: xelatex
     template: !expr rticles::ctex_template()
-classoption: "hyperref,"
-geometry: margin=0.8in
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 ---
 #参考文献
 1.Chow SC, Shao J, Wang H. Sample Size Calculation in Clinical Research[M]. New York: Marcel

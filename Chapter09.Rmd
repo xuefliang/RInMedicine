@@ -1,21 +1,21 @@
 ---
+classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
 documentclass: ctexart
 header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \fancyhead[C]{\leftmark}
 - \fancyfoot[C]{\thepage}
-- \renewcommand{\headrulewidth}{0.1pt}
+- \renewcommand{\headrulewidth}{0pt}
 - \renewcommand{\footrulewidth}{0pt}
 output:
   pdf_document:
     fig_caption: yes
     latex_engine: xelatex
     number_sections: yes
-    template: !expr rticles::ctex_template()
-classoption: "hyperref,"
-geometry: margin=0.7in
+    template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.2/rticles/rmarkdown/templates/ctex/resources/default.latex
+  html_document: default
+  word_document: default
 ---
 #地图展示
 ```{r include=FALSE}
@@ -33,6 +33,7 @@ library(plyr)
 library(leaflet)
 library(htmltools)
 library(reshape2)
+library(rgl)
 ```
 
 流行病学的数据讲究“三间分布”，即人群分布、时间分布和空间分布。其中的“空间分布”最好是在地图上展示，才比较清楚。R语言中ggplot2包无疑是最佳选择。地图数据基本可以分为点、线、面三种数据，在maptools包内分别有对应的函数来读取（readShapePoints、readShapeLines和readShapePoly函数）
@@ -61,7 +62,8 @@ table(iconv(city$NAME, from = "GBK"))
 lanzhou = city[city$CNTY_CODE8 == 62010000,]
 #默认把经度和纬度作为普通数据，均匀平等对待，绘制在笛卡尔坐标系上
 plot(lanzhou)
-#地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，ggplot2包提供了专门的coord_map()函数
+#地球的球面图形映射到平面图上，在地理学上是有不同的专业算法，
+#ggplot2包提供了专门的coord_map()函数
 ```
 
 ## Choropleth map
@@ -73,7 +75,8 @@ p <- ggplot() + geom_polygon(data = plotData, aes(x = long,
     theme(legend.position = "right", axis.line = element_blank(), 
         axis.text.x = element_blank(), axis.text.y = element_blank(), 
         axis.ticks = element_blank(), axis.title.x = element_blank(), 
-        axis.title.y = element_blank(), panel.border = element_blank(), 
+        axis.title.y = element_blank(), 
+        panel.border = element_blank(), 
         panel.grid.major = element_line(colour = NA)) + 
     xlab("") + ylab("") + labs(title = "甘肃省") + 
     scale_fill_gradient2(low = "darkgreen", high = "red", 
@@ -129,7 +132,9 @@ for(ss in tract$id){
   nB <- ceiling(data[data$id == ss, "B"]/perNCapita)
   
   pA <- data.frame(spsample(statePoly, nA, type = "random")@coords,
-                   Vote = "A") #空间数据抽样，样本数nDems，抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
+                   Vote = "A") 
+  #空间数据抽样，样本数nDems，
+  #抽样方法random,regular,stratified,nonaliged,hexagonal,clustered,Fibonacci
   pB <- data.frame(spsample(statePoly, nB, type = "random")@coords,
                    Vote = "B")
   
@@ -152,7 +157,8 @@ new_theme_empty$plot.margin <- structure(c(0, 0, -1, -1), unit = "lines",
 
 ggplot(tract)+
   geom_point(data = pointFrame,aes(x = x, y = y, colour = Vote),size=1)+
-  geom_polygon(aes(x = long, y = lat, group = group),colour = "BLACK", fill = "transparent")+
+  geom_polygon(aes(x = long, y = lat, group = group),
+               colour = "BLACK", fill = "transparent")+
   coord_map(project="conic", lat0 = 30)+
   new_theme_empty+
   scale_colour_manual(values = c("blue", "red"))+
@@ -195,7 +201,7 @@ ggplot(tract, aes(x = long, y = lat)) + geom_polygon(aes(group = group),
 ggmap包中get_map()函数用于获取基于位置名称和经纬度的地图(非矢量图片)，get_map()函数最重要的参数是location（默认取值为德克萨斯州的休斯敦市），用来指定地图中心的经纬度，它伴随有参数zoom。zoom取值为3到20，用来指定地图中心所在区域扩展的大小， 其中3是大陆级别，20是建筑级别，一般城市级别是12。getcode()函数获取地点的经纬度，主要基于Google Maps；ggmap主要用于画图，与ggplot函数用途一致。qmap()快速画图，整合了get_map()和ggmap()；qmplot()对上述函数的整合，可以直接画图。
 
 Center：get_googlemap的函数。可以放经纬度，如c(25.09026,121.52111)，也可以直接放地名，如'taipei city'。地图类型，有'terrain'（地形图）、'satellite'（卫星图）、'roadmap'（街道地图）、'hybrid'（混合式）；extent：ggmap的函数，有'normal'、'panel'和'device'三种可以选择。
-```{r warning=F}
+```{r warning=F,eval=F}
 #由于goole的API被封，国内需要使用代理服务器完成访问
 BeijinMap <-get_map(location = 'beijin', zoom = 12,maptype='roadmap')
 ggmap(BeijinMap,extent='device')
@@ -212,7 +218,7 @@ qmap(baylor, zoom = 14,source = "osm")
 ```
 
 例 data.csv数据用经纬度记录了某时刻甘肃省的流感疾病的发病地点，请用地图展现流感波及的范围和流行过程。
-```{r warning=F}
+```{r warning=F,eval=F}
 city = readShapePoly("/home/xuefliang/RInMedicine/city/city_region.shp")
 gpclibPermit()  #install.packages('gpclib', type = 'source')
 tract <- fortify(city, region = "CNTY_CODE")
@@ -248,11 +254,12 @@ plotfunc <- function(x) {
 # 获取日期
 time <- sort(unique(data$date))
 # 生成并保存动画
-saveHTML(for (i in time) print(plotfunc(i)))  #用getwd()查看目录，此目录下有生成html文件
+saveHTML(for (i in time) print(plotfunc(i)))  
+#用getwd()查看目录，此目录下有生成html文件
 ```
 
 ##添加标记和路径
-```{r}
+```{r eval=F}
 dat <- read.table(text = "
 location lat long
 A	33.29	104.6
@@ -278,7 +285,7 @@ print(p)
 ```
 
 添加路径
-```{r}
+```{r eval=F}
 dat.pts <- data.frame(x = dat$long, y = dat$lat)
 map <- get_googlemap("gansu", zoom = 6, maptype = "satellite", 
     markers = dat.pts, path = dat.pts, scale = 2)
@@ -385,7 +392,8 @@ leaflet(cities) %>% addTiles() %>%
 countries <- readOGR("/home/xuefliang/RInMedicine/countries.geojson", "OGRGeoJSON")
 map <- leaflet(countries)
 
-qpal <- colorQuantile("Blues", countries$gdp_md_est, n = 7) #将GDP这个连续性变量分为7段
+qpal <- colorQuantile("Blues", countries$gdp_md_est, n = 7) 
+#将GDP这个连续性变量分为7段
 map %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
     color = ~qpal(gdp_md_est)
@@ -416,7 +424,8 @@ map %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
     color = ~pal(gdp_md_est)
   ) %>%
-  addLegend("bottomright", pal = pal, values = ~gdp_md_est,  #addLegend（）函数添加图例
+  addLegend("bottomright", pal = pal, values = ~gdp_md_est,  
+    #addLegend（）函数添加图例
     title = "Est. GDP (2010)",
     labFormat = labelFormat(prefix = "$"),
     opacity = 1
@@ -425,7 +434,8 @@ map %>%
 
 ###比例图例
 ```{r eval=F}
-qpal <- colorQuantile("RdYlBu", countries$gdp_md_est, n = 5) #用不同颜色表示所占比例
+qpal <- colorQuantile("RdYlBu", countries$gdp_md_est, n = 5) 
+#用不同颜色表示所占比例
 map %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
     color = ~qpal(gdp_md_est)
@@ -459,7 +469,7 @@ map
 ```
 
 ##等高线
-```{r}
+```{r eval=F}
 volcano3d <- melt(volcano) #reshape2包
 names(volcano3d) <- c("x", "y", "z")
 
