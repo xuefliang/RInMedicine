@@ -676,7 +676,8 @@ table()和xtabs()都可以基于三个或更多的类别型变量生成多维列
 mytable<-xtabs(~Treatment+Sex+Improved,data=Arthritis)
 mytable
 ftable(mytable)
-margin.table(mytable,c(1,3))#治疗情况（Treatment） × 改善情况（Improved）的边际频数
+#治疗情况（Treatment） × 改善情况（Improved）的边际频数
+margin.table(mytable,c(1,3))
 ```
 
 ```{r,echo=FALSE}
@@ -756,7 +757,8 @@ ggplot(NULL, aes(x=x, colour = g)) +
   stat_function(data = data.frame(x = -5:5, g = factor(2)), fun = fun2) +
   stat_function(data = data.frame(x = -5:5, g = factor(3)), fun = fun3) +
   scale_colour_manual(values = c("red", "green","blue"), 
-                      labels = c("red","green","blue"))+ylab(label = "density")+
+                      labels = c("red","green","blue"))+
+  ylab(label = "density")+
   labs(title="The Normal Density Distribution")
 ```
 
@@ -1495,11 +1497,16 @@ summary(fitg)
 summary(fitln)
 #plot(fitg, demp = TRUE)
 #plot(fitg, histo = FALSE, demp = TRUE)
-cdfcomp(list(fitW, fitg, fitln), legendtext=c("Weibull", "gamma", "lognormal"))
-denscomp(list(fitW, fitg, fitln), legendtext=c("Weibull", "gamma", "lognormal"))
-qqcomp(list(fitW, fitg, fitln), legendtext=c("Weibull", "gamma", "lognormal"))
-ppcomp(list(fitW, fitg, fitln), legendtext=c("Weibull", "gamma", "lognormal"))
-gofstat(list(fitW, fitg, fitln), fitnames=c("Weibull", "gamma", "lognormal"))
+cdfcomp(list(fitW, fitg, fitln), 
+        legendtext=c("Weibull", "gamma", "lognormal"))
+denscomp(list(fitW, fitg, fitln), 
+         legendtext=c("Weibull", "gamma", "lognormal"))
+qqcomp(list(fitW, fitg, fitln), 
+       legendtext=c("Weibull", "gamma", "lognormal"))
+ppcomp(list(fitW, fitg, fitln), 
+       legendtext=c("Weibull", "gamma", "lognormal"))
+gofstat(list(fitW, fitg, fitln), 
+        fitnames=c("Weibull", "gamma", "lognormal"))
 ```
 选择AIC和BIC值较小的gamma分布
 
@@ -3116,7 +3123,8 @@ Stuart.Maxwell.Test <- function(alpha,beta, p.ij, p.ji, r){
   
   for (i in 1:2000) {
     b[i + 1] <- pchisq(qchisq(alpha, df = r*(r - 1)/2, ncp = 0, 
-                              lower.tail = FALSE), df = r*(r - 1)/2, ncp = i/100)
+                       lower.tail = FALSE), 
+                       df = r*(r - 1)/2, ncp = i/100)
     noncen = rbind(noncen, c(i, b[i], b[i + 1]))
   }
   
@@ -3803,7 +3811,8 @@ InterSV.Equality(0.05, 0.2, 0.3, 0.2, 0.4, 0.3, 3)
 
 
 ```{r}
-InterSV.NIS <- function(alpha, beta, vbt, vwt, vbr, vwr, m, margin) {
+InterSV.NIS <- function(alpha, beta, vbt, vwt, 
+                        vbr, vwr, m, margin) {
     sigma = 2 * ((vbt^2 + vwt^2/m)^2 + 
                    margin^4 * (vbr^2 + vwr^2/m)^2 + 
         vwt^4/(m^2 * (m - 1)) +
@@ -4951,8 +4960,10 @@ library(quantreg)
 做散点图，观察是否存在线性关系。由于线性回归的条件（线性、正态性、方差齐性和独立性）是通过残差来完成的，可先建立回归方程，然后通过回归诊断来完成线性回归条件的检验。
 线性条件可通过散点图直接观察。
 ```{r}
-y <- c(546,553,562,563,570,575,581,605,607,621,624,626,632,640,656)
-x <- c(6.8,7.8,8.7,8.7,8.9,9.5,10.1,10.2,10.3,10.4,11.1,12.4,13.3,13.1,13.2)
+y <- c(546,553,562,563,570,575,581,605,607,621,
+       624,626,632,640,656)
+x <- c(6.8,7.8,8.7,8.7,8.9,9.5,10.1,10.2,10.3,
+       10.4,11.1,12.4,13.3,13.1,13.2)
 df <- as.data.frame(cbind(x,y))
 
 #ggplot(df,aes(x,y))+geom_point()+stat_smooth(method = "lm")
@@ -5195,7 +5206,8 @@ age sbp dbp wbc   mtfc
 
 ```{r warning=FALSE}
 records <- read.table("example1")
-ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
+ex <- rename(records, c("V1"="age","V2"="sbp",
+            "V3"="dbp","V4"="wbc","V5"="mtfc"))
 attach(ex)
 #scatterplotMatrix()函数默认在非对角线区域绘制变量间的散点图，
 #并添加平滑（loess）和线性拟合区间
@@ -5291,7 +5303,8 @@ x1<- c(7,1,11,11,7,11,3,1,2,21,1,11,10)
 x2<- c(26,29,56,31,52,55,71,31,54,47,40,66,68)
 x3<- c(6,15,8,8,6,9,17,22,18,4,23,9,8)
 x4<- c(60,52,20,47,33,22,6,44,22,26,34,12,12)
-y<- c(78.5,74.3,104.3,87.6,95.9,109.2,102.7,72.5,93.1,115.9,83.8,113.3,109.4)
+y<- c(78.5,74.3,104.3,87.6,95.9,109.2,102.7,72.5,
+      93.1,115.9,83.8,113.3,109.4)
 df <- as.data.frame(cbind(x1,x2,x3,x4,y))
 
 leapmodels <- leaps(x = cbind(x1,x2,x3,x4),y = y)
@@ -5416,7 +5429,8 @@ tau表示计算多个分位点的分位数回归结果，如tau = c(0.25,0.5,0.7
 ###穷人和富人的消费比较
 ```{r}
 data(engel,package = "quantreg")
-z=rq(foodexp~income,tau=-1,data = engel) #tau不再[0,1]时，表示按最细分位点划分
+ #tau不再[0,1]时，表示按最细分位点划分
+z=rq(foodexp~income,tau=-1,data = engel)
 x.poor=quantile(income,0.1) #10%分位点的收入，穷人
 x.rich=quantile(income,0.9) #90%分位点的收入，富人
 ps=z$sol[1,] #每个分位点的tau值
@@ -5501,8 +5515,10 @@ MM2005 = function(formu,taus, data, group, pic=F){
   colnames(tab) = c("分位数","总差异","回报影响","变量影响")
   rownames(tab) = rep("",dim(tab)[1])
   for( i in 1:length(taus) ){
-    ya = cbind(1,engel1[,names(engel1)!=formu[[2]]] ) %*% fita[[i]]$coef[,1]
-    yb = cbind(1,engel2[,names(engel2)!=formu[[2]]] ) %*% fitb[[i]]$coef[,1]
+    ya = cbind(1,engel1[,names(engel1)!=formu[[2]]] ) %*% 
+      fita[[i]]$coef[,1]
+    yb = cbind(1,engel2[,names(engel2)!=formu[[2]]] ) %*% 
+      fitb[[i]]$coef[,1]
     # 这里以group==1为基准模型，用group==2的数据计算反常规模型拟合值
     ystar = cbind(1,engel2[,names(engel2)!=formu[[2]]] ) %*% fita[[i]]$coef[,1]
     ya = mean(ya)
@@ -5510,14 +5526,17 @@ MM2005 = function(formu,taus, data, group, pic=F){
     ystar = mean(ystar)
     tab[i,1] = fita[[i]]$tau
     tab[i,2] = yb - ya
-    tab[i,3] = yb - ystar # 回报影响，数据相同，模型不同：模型机制的不同所产生的差异
-    tab[i,4] = ystar - ya # 变量影响，数据不同，模型相同：样本点不同产生的差异
+    # 回报影响，数据相同，模型不同：模型机制的不同所产生的差异
+    tab[i,3] = yb - ystar 
+    # 变量影响，数据不同，模型相同：样本点不同产生的差异
+    tab[i,4] = ystar - ya 
   }
   # 画图
   if( pic ){
     attach(engel)
     windows(5,5)
-    plot(income, foodexp, cex=0.5, type="n",main="两组分位数回归结果比较")
+    plot(income, foodexp, cex=0.5, type="n",
+         main="两组分位数回归结果比较")
     points(engel1, cex=0.5, col=2)
     points(engel2, cex=0.5, col=3)
     for( i in 1:length(taus) ){
@@ -5690,7 +5709,8 @@ goodfit <- function(glmFit)
   
   McFadden <- as.vector(1 - (LLf / LL0))
   CoxSnell <- as.vector(1 - exp((2/N) * (LL0 - LLf)))
-  Nagelkerke <- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+  Nagelkerke <- as.vector((1 - exp((2/N) * (LL0 - LLf))) / 
+                            (1 - exp(LL0)^(2/N)))
   
  result <- list(McFadden=McFadden, CoxSnell= CoxSnell,Nagelkerke=Nagelkerke)
  return (result)
@@ -5720,7 +5740,8 @@ influencePlot(fit.glm)
 ```{r}
 overdispersion <- function(fit.glm){
   Phi <- fit.glm$deviance/fit.glm$df.residual
-  fit.od <- glm(fit.glm$formula,family = quasibinomial, data = fit.glm$data)
+  fit.od <- glm(fit.glm$formula,family = quasibinomial, 
+                data = fit.glm$data)
   p <- pchisq(summary(fit.od)$dispersion*fit.glm$df.residual,
               fit.glm$df.residual,lower=F)
   return (list(Phi=Phi,p.value=p))
@@ -5768,7 +5789,8 @@ step(fit.full)
 fit <- glm(ynaffair ~ gender + age + yearsmarried + 
              religiousness + rating, family = binomial(), data = Affairs)
 
-lrm(ynaffair ~ gender + age + yearsmarried + religiousness + rating,data=Affairs)
+lrm(ynaffair ~ gender + age + yearsmarried + 
+      religiousness + rating,data=Affairs)
 ```
 AUC=0.70,模型尚可。
 ```{r}
@@ -5906,7 +5928,8 @@ vglm函数结果中并没有系数及模型的检验情况。对模型的系数�
 sumMN   <- VGAM::summary(vglmFitMN)
 coefMN <- VGAM::coef(sumMN)
 zCrit   <- qnorm(c(0.05/2, 1 - 0.05/2))
-ciCoef <- t(apply(coefMN, 1, function(x) x["Estimate"] - zCrit*x["Std. Error"] ))
+ciCoef <- t(apply(coefMN, 1, function(x) x["Estimate"] - 
+                    zCrit*x["Std. Error"] ))
 coefMN
 ciCoef
 ```
@@ -5961,9 +5984,11 @@ vglmFit <- vglm(intense.ord~agegr+shoes, family=propodds, data=HW93)
 VGAM包能进行所有类型的logistic回归的计算，并且能进行累计Logistic回归模型的平行性假设检验，其他包则不能。模型中family=cumulative(parallel=TRUE, reverse=TRUE)指定拟合累计Logistic回归模型，而且parallel=T指定模型按平行性假定进行拟合，该选项可简写为amily=propodds。
 ```{r,eval=FALSE}
 vglm(intense.ord~agegr+shoes, family=cumulative(parallel=TRUE, 
-                                                reverse=TRUE),data=HW93)
-vglm(intense.ord~agegr+shoes, family=acat(parallel=TRUE), data=HW93)
-vglm(intense.ord~agegr+shoes, family=sratio(parallel=TRUE), data=HW93)
+     reverse=TRUE),data=HW93)
+vglm(intense.ord~agegr+shoes, family=acat(parallel=TRUE),
+     data=HW93)
+vglm(intense.ord~agegr+shoes, family=sratio(parallel=TRUE), 
+     data=HW93)
 ```
 
 rms包
@@ -6005,7 +6030,8 @@ LLf   <- VGAM::logLik(vglmFit)
 LL0   <- VGAM::logLik(vglm0)
 McFadden <- as.vector(1 - (LLf / LL0))
 CoxSnell<- as.vector(1 - exp((2/N) * (LL0 - LLf)))
-Nagelkerke<- as.vector((1 - exp((2/N) * (LL0 - LLf))) / (1 - exp(LL0)^(2/N)))
+Nagelkerke<- as.vector((1 - exp((2/N) * (LL0 - LLf))) / 
+                         (1 - exp(LL0)^(2/N)))
 McFadden
 CoxSnell
 Nagelkerke
@@ -6017,7 +6043,8 @@ sumOrd   <- summary(vglmFit)
 coefOrd <- coef(sumOrd)
 exp(coefOrd[,1])
 zCrit   <- qnorm(c(0.05/2, 1 - 0.05/2))
-ciCoef <- t(apply(coefOrd, 1, function(x) x["Estimate"] - zCrit*x["Std. Error"] ))
+ciCoef <- t(apply(coefOrd, 1, function(x) x["Estimate"] - 
+                    zCrit*x["Std. Error"] ))
 ```
 
 MASS包建立的模型可直接使用confint()函数计算OR值及其可信区间。
@@ -6071,7 +6098,8 @@ pander(drugDat)
 ```{r,eval=FALSE}
 data(drugDat)
 drug.elrm=elrm(formula=recovered/n~sex+treatment,
-               interest=~sex+treatment,iter=100000,burnIn=1000,dataset=drugDat)
+               interest=~sex+treatment,iter=100000,
+               burnIn=1000,dataset=drugDat)
 summary(drug.elrm)
 ```
 
@@ -6130,13 +6158,15 @@ qcc.overdispersion.test(breslow.dat$sumY,type = "poisson")
 P值小于0.05,表明确实存在过度离散。通过用family="quasipoisson" 替换family="poisson",以完成对过度离散数据的拟合。
 
 ```{r}
-fit.od <- glm(sumY~Base+Age+Trt,data=breslow.dat,family = quasipoisson())
+fit.od <- glm(sumY~Base+Age+Trt,data=breslow.dat,
+              family = quasipoisson())
 summary(fit.od)
 ```
 
 VGAM包vglm()方法获得类似结果
 ```{r,eval=FALSE}
-vglm <- vglm(sumY~Base+Age+Trt, family=quasipoissonff, data=breslow.dat)
+vglm <- vglm(sumY~Base+Age+Trt, family=quasipoissonff, 
+             data=breslow.dat)
 summary(vglm)
 ```
 
@@ -6179,7 +6209,8 @@ vglm(Y ~ X1 + X2, family=zipoissonff, data=dfCount)
 ###稳健Poisson回归
 influence.measures()对拟合的模型完成影响分析后，如存在离群点和强影响点，可用robust包中glmRob()方法拟合稳健广义线性模型。
 ```{r}
-fit.rob <- glmRob(sumY~Base+Age+Trt, family = poisson(), data=breslow.dat)
+fit.rob <- glmRob(sumY~Base+Age+Trt, family = poisson(), 
+                  data=breslow.dat)
 summary(fit.rob)
 ```
 
@@ -6287,7 +6318,8 @@ $$g(\mu )=s_{0}+X\beta +\sum_{i=1}^{p}s_{i}(X_{i})$$。
 
 ```{r}
 data(breslow.dat,package="robust")
-model=gam(sumY~s(Base)+s(Age),data=breslow.dat,family = poisson())
+model=gam(sumY~s(Base)+s(Age),data=breslow.dat,
+          family = poisson())
 par(mfrow=c(1,2))
 plot(model,se=T,resid=T,pch=16)
 par(mfrow=c(1,1))
@@ -6367,12 +6399,12 @@ aov()函数的语法为aov(formula,data=dataframe),formula可使用的特殊符�
 例 某医院欲研究A、B、C三种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），c组（47 48 45 46 46 44 45 48 49 50 49 48 47 44 45 46 45 43 44 45 46 43 42），问三组家兔血清ACE浓度是否相同？
 
 ```{r}
-a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
-    46, 45, 43, 44)
-b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
-    45, 46, 44, 45, 46, 44, 43, 42, 45)
-c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48, 47, 44, 45, 46, 
-    45, 43, 44, 45, 46, 43, 42)
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 
+       43, 46, 47, 45, 46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 
+       47, 46, 47, 46, 45, 46, 44, 45, 46, 44, 43, 42, 45)
+c <- c(47, 48, 45, 46, 46, 44, 45, 48, 49, 50, 49, 48,
+       47, 44, 45, 46, 45, 43, 44, 45, 46, 43, 42)
 dfCRp <- data.frame(length = c(a, b, c), site = factor(c(rep("1", 20), 
     rep("2", 25), rep("3", 23))))
 boxplot(length ~ site, data = dfCRp, xlab = "Sites", ylab = "Length")
@@ -6419,8 +6451,8 @@ SSb   <- anovaCRp["site",        "Sum Sq"]
 MSb   <- anovaCRp["site",        "Mean Sq"]
 SSw   <- anovaCRp["Residuals", "Sum Sq"]
 MSw   <- anovaCRp["Residuals", "Mean Sq"]
-
-(etaSq <- SSb / (SSb + SSw))#   DescTools包中EtaSq(aovCRp, type=1)函数可以计算
+#   DescTools包中EtaSq(aovCRp, type=1)函数可以计算
+(etaSq <- SSb / (SSb + SSw))
 (omegaSq <- dfSSb * (MSb-MSw) / (SSb + SSw + MSw)) 
 (f <- sqrt(etaSq / (1-etaSq)))
 ```
@@ -6549,7 +6581,8 @@ II类型的平方和效应根据同水平或低水平的效应做调整。A根�
 据A和B调整。III类型的平方和每个效应根据模型其他各效应做相应调整。A根据B和A:B做调整,A:B交互项根据A和B
 调整。
 ```{r}
-fitFiii <- lm(weight~gesttime+dose,contrasts=list(dose=contr.sum), data=litter)
+fitFiii <- lm(weight~gesttime+dose,
+              contrasts=list(dose=contr.sum), data=litter)
 Anova(fitFiii, type="III")
 ```
 
@@ -6613,10 +6646,12 @@ par(mfrow=c(1,1))
 
 ###II/III型双因素方差分析(SS type II or III)
 ```{r}
-ToothGrowth$supp <- as.factor(ToothGrowth$supp) #转为因子
+ #转为因子
+ToothGrowth$supp <- as.factor(ToothGrowth$supp)
 ToothGrowth$dose <- as.factor(ToothGrowth$dose)
 fitIII <- lm(len ~ supp + dose + supp:dose, 
-             data=ToothGrowth,contrasts=list(supp=contr.sum, dose=contr.sum))
+             data=ToothGrowth,
+             contrasts=list(supp=contr.sum, dose=contr.sum))
 Anova(fitIII, type="III")
 ```
 得到方差分析表,可以看到主效应(supp和dose)和交互效应都非常显著。
@@ -6627,7 +6662,10 @@ plot.design(len ~ supp*dose, data=ToothGrowth, main="Marginal means")
 interaction.plot(ToothGrowth$dose, ToothGrowth$supp,
                  ToothGrowth$len,main="Cell means", 
                  col=c("red", "blue", "green"), lwd=2) 
-#interaction.plot(f1, f2, y)展示双因素方差分析的交互效应，如果f1和f2是因子,作y的均值图,以f1的不同值作为x轴,而f2的不同值对应不同曲线;可以用选项fun指定y的其他的统计量(缺省计算均值,fun=mean)
+#interaction.plot(f1, f2, y)展示双因素方差分析的交互效应，
+#如果f1和f2是因子,作y的均值图,以f1的不同值作为x轴,
+#而f2的不同值对应不同曲线;
+#可以用选项fun指定y的其他的统计量(缺省计算均值,fun=mean)
 ```
 
 gplots包中的plotmeans()函数来展示交互效应，HH包中interaction2wt()函数来展示交互效应
@@ -6640,7 +6678,8 @@ plotmeans(len ~ interaction(supp, dose, sep = " "),
 ```
 
 ```{r eval=F}
-#interaction2wt() 函数,因为它能展示任意复杂度设计(双因素方差分析、三因素方差分析等)
+#interaction2wt() 函数,因为它能展示任意
+#复杂度设计(双因素方差分析、三因素方差分析等)
 #的主效应(箱线图)和交互效应
 interaction2wt(len ~ supp * dose) 
 ```
@@ -6664,7 +6703,9 @@ testInteractions(aovCRFpq, fixed="dose", across="supp", adjustment="none")
 ```{r warning=FALSE}
 cMat <- rbind("c1"=c(1/2, 1/2,-1),"c2"=c(-1,0,1)) 
 aovCRFpq <- aov(len~ supp*dose, data=ToothGrowth)
-summary(glht(aovCRFpq), linfct=mcp(dose=cMat), alternative="two.sided",test=adjusted("bonferroni"))
+summary(glht(aovCRFpq), 
+        linfct=mcp(dose=cMat), alternative="two.sided",
+        test=adjusted("bonferroni"))
 ```
 结果显示0.5mg、1mg和2mg剂量，0.5mg和2mg剂量之间的差异显著。
 
@@ -6760,7 +6801,8 @@ car包中Anova()通常处理的数据集是宽格式(wide format),即列是变�
 ```{r}
 dfRBpW <- reshape(dfRBpL, v.names="value", timevar="time", idvar="id",
                   direction="wide")
-fitRBp   <- lm(cbind(value.time0, value.time24, value.time72) ~ 1, data=dfRBpW)
+fitRBp   <- lm(cbind(value.time0, value.time24,
+                     value.time72) ~ 1, data=dfRBpW)
 inRBp    <- data.frame(time=gl(length(levels(dfRBpL$time)), 1))
 AnovaRBp <- Anova(fitRBp, idata=inRBp, idesign=~time)
 summary(AnovaRBp, multivariate=FALSE, univariate=TRUE)
@@ -6814,8 +6856,8 @@ aovRBFpq <- aov(value ~ treatment*time + Error(id/(treatment*time)), data=dfRBFp
 summary(aovRBFpq)
 
 with(dfRBFpqL,interaction.plot(time,treatment, value, type = "b",
-                               col = c("red", "blue"), pch = c(16, 18), 
-                               main = "Interaction Plot for treatment and time"))
+     col = c("red", "blue"), pch = c(16, 18), 
+     main = "Interaction Plot for treatment and time"))
 
 boxplot(value ~ treatment*time, data = dfRBFpqL, col = (c("gold", 
     "green")), main = "treatment and time", 
@@ -6832,7 +6874,8 @@ dfRBFpqW <- reshape(dfTemp, v.names=c("value.contrast", "value.ps"),
 
 fitRBFpq   <- lm(cbind(value.contrast.time0,value.ps.time0,
                        value.contrast.time24,value.ps.time24,
-                       value.contrast.time72,value.ps.time72) ~ 1,data=dfRBFpqW)
+                       value.contrast.time72,value.ps.time72) ~ 1,
+                 data=dfRBFpqW)
 inRBFpq    <- expand.grid(treatment=gl(2, 1), time=gl(3, 1))
 AnovaRBFpq <- Anova(fitRBFpq, idata=inRBFpq, idesign=~treatment*time)
 summary(AnovaRBFpq, multivariate=FALSE, univariate=TRUE)
@@ -7031,7 +7074,8 @@ summary(AnovaSPFp.qr, multivariate=FALSE, univariate=TRUE)
 anova(fitSPFp.qr, M=~1, X=~0,idata=inSPFp.qr, test="Spherical")
 anova(fitSPFp.qr, M=~B, X=~1,idata=inSPFp.qr, test="Spherical")
 anova(fitSPFp.qr, M=~B + C, X=~B,idata=inSPFp.qr, test="Spherical")
-anova(fitSPFp.qr, M=~B + C + B:C, X=~B + C,idata=inSPFp.qr, test="Spherical")
+anova(fitSPFp.qr, M=~B + C + B:C, X=~B + C,
+      idata=inSPFp.qr, test="Spherical")
 mauchly.test(fitSPFp.qr, M=~B, X=~1,idata=inSPFp.qr)
 mauchly.test(fitSPFp.qr, M=~B + C, X=~B,
              idata=inSPFp.qr)
@@ -7189,7 +7233,8 @@ Xb1、Xw1和Xw2无统计学意义。
 ```{r}
 #没有明确是否符合compound symmetry假设
 anova(lme(Y ~ Xb1*Xw1*Xw2,
-          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), 
+                                        pdIdent(~Xw2-1)))),
           method="ML", data=d2))
 #符合compound symmetry假设
 anova(lme(Y ~ Xb1*Xw1*Xw2,
@@ -7216,18 +7261,21 @@ Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义
 ```{r}
 #没有明确是否符合compound symmetry假设
 anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
-          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1), pdIdent(~Xw2-1)))),
+          random=list(id=pdBlocked(list(~1, pdIdent(~Xw1-1),
+                                        pdIdent(~Xw2-1)))),
           method="ML", data=d2))
 #符合compound symmetry假设
 anova(lme(Y ~ Xb1*Xb2*Xw1*Xw2,
-          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1), pdCompSymm(~Xw2-1)))),
+          random=list(id=pdBlocked(list(~1, pdCompSymm(~Xw1-1),
+                                        pdCompSymm(~Xw2-1)))),
           method="ML", data=d2))
 ```
 Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
 
 #####lme4包lmer()方法（Using lmer() from package lme4）
 ```{r}
-anova(lmer(Y ~ Xb1*Xb2*Xw1*Xw2 + (1|id) + (1|Xw1:id) + (1|Xw2:id), data=d2))
+anova(lmer(Y ~ Xb1*Xb2*Xw1*Xw2 + (1|id) + (1|Xw1:id) + 
+             (1|Xw2:id), data=d2))
 ```
 根据F值判断Xb1、Xb2、Xb1:Xb2、Xw1、Xb1:Xw1、Xb2:Xw1和Xb1:Xb2:Xw1均有统计学意义。
 
@@ -7284,7 +7332,8 @@ kml <- summary(KM0,censor=T)
 attributes(kml)
 plot(kml$time,kml$surv,type="s")
 plot(survfit(addicts$surv~1))
-#绘制一条曲线时，图形中a包含95%的置信区间和删失标记，不需要可设置为False
+#绘制一条曲线时，图形中a包含95%的置信区间和删失标记，
+#不需要可设置为False
 plot(survfit(addicts$surv~1),conf.int = F,mark.time = F)
 abline(h=0.5,lty=2,col="red")
 #中位生存期
@@ -7361,22 +7410,29 @@ anova(fitR, fitWeib)
 
 ###生存曲线估计
 ```{r}
-dfNew <- data.frame(Clinic=factor(c("1", "2"), levels=levels(addicts$Clinic)),
-                      Dose=c(50, 60),
-                     Prison=factor(c("0", "1"), levels=levels(addicts$Prison)))
+dfNew <- data.frame(Clinic=factor(c("1", "2"), 
+                    levels=levels(addicts$Clinic)),
+                    Dose=c(50, 60),Prison=factor(c("0", "1"), 
+                     levels=levels(addicts$Prison)))
 percs <- (1:99)/100
-FWeib <- predict(fitWeib, newdata=dfNew, type="quantile", p=percs, se=TRUE)
+FWeib <- predict(fitWeib, newdata=dfNew, type="quantile",
+                 p=percs, se=TRUE)
 
 matplot(cbind(FWeib$fit[1, ],
               FWeib$fit[1, ] - 2*FWeib$se.fit[1, ],
               FWeib$fit[1, ] + 2*FWeib$se.fit[1, ]), 1-percs,
-        type="l", main=expression(paste("Weibull-Fit ", hat(S)(t), " mit SE")),
-        xlab="t", ylab="Survival", lty=c(1, 2, 2), lwd=2, col="blue")
+        type="l", main=expression(paste("Weibull-Fit ", 
+        hat(S)(t), " mit SE")),
+        xlab="t", ylab="Survival", 
+        lty=c(1, 2, 2), lwd=2, col="blue")
 matlines(cbind(FWeib$fit[2, ],
                FWeib$fit[2, ] - 2*FWeib$se.fit[2, ],
-               FWeib$fit[2, ] + 2*FWeib$se.fit[2, ]), 1-percs, col="red", lwd=2)
-legend(x="topright", lwd=2, lty=c(1, 2, 1, 2), col=c("blue", "blue", "red", "red"),
-       legend=c("Clinic=1, Dose=50, Prison=0", "+- 2*SE", "Clinic=2, Dose=60, Prison=1", "+- 2*SE"))
+               FWeib$fit[2, ] + 2*FWeib$se.fit[2, ]), 
+         1-percs, col="red", lwd=2)
+legend(x="topright", lwd=2, lty=c(1, 2, 1, 2), 
+       col=c("blue", "blue", "red", "red"),
+       legend=c("Clinic=1, Dose=50, Prison=0", 
+      "+- 2*SE", "Clinic=2, Dose=60, Prison=1", "+- 2*SE"))
 ```
 
 ##半参数法(COX回归)
@@ -7411,7 +7467,8 @@ as.vector(1 - exp((2/nrow(addicts)) * (LL0 - LLf)))
 ```
 Nagelkerke
 ```{r}
-as.vector((1 - exp((2/nrow(addicts)) * (LL0 - LLf))) / (1 - exp(LL0)^(2/nrow(addicts))))
+as.vector((1 - exp((2/nrow(addicts)) * (LL0 - LLf))) /
+            (1 - exp(LL0)^(2/nrow(addicts))))
 ```
 
 ####模型比较
@@ -7428,17 +7485,19 @@ quantile(CPH, probs=c(0.25, 0.5, 0.75), conf.int=FALSE)
 
 ####估计生存函数(Estimated survival function for new specific data)
 ```{r}
-dfNew  <- data.frame(Clinic=factor(c("2", "2"), levels=levels(addicts$Clinic)),
-                       X=c(-2, -2),
-                      Prison=factor(c("0", "1"), levels=levels(addicts$Prison)))
+dfNew  <- data.frame(Clinic=factor(c("2", "2"), 
+       levels=levels(addicts$Clinic)),X=c(-2, -2),
+        Prison=factor(c("0", "1"), levels=levels(addicts$Prison)))
 CPHnew <- survfit(model, newdata=dfNew)
 par(mar=c(5, 4.5, 4, 2)+0.1, cex.lab=1.4, cex.main=1.4)
-plot(CPH, main=expression(paste("Cox PH-estimate ", hat(S)(t), " with CI")),
+plot(CPH, main=expression(paste("Cox PH-estimate ",
+                                hat(S)(t), " with CI")),
      xlab="t", ylab="Survival", lwd=2)
 lines(CPHnew$time, CPHnew$surv[ , 1], lwd=2, col="blue")
 lines(CPHnew$time, CPHnew$surv[ , 2], lwd=2, col="red")
 legend(x="topright", lwd=2, col=c("black", "blue", "red"),
-       legend=c("pseudo-observation", "Clinic=2, X=-2, Prison=0", "Clinic=2, X=-2, Prison=1"))
+legend=c("pseudo-observation", "Clinic=2, X=-2, Prison=0",
+         "Clinic=2, X=-2, Prison=1"))
 ```
 
 ####累积基础风险函数(Cumulative baseline hazard)
@@ -7447,8 +7506,10 @@ expCoef  <- exp(coef(model))
 Lambda0A <- basehaz(model, centered=FALSE)
 Lambda0B <- expCoef[2]*Lambda0A$hazard
 Lambda0C <- expCoef[3]*Lambda0A$hazard
-plot(hazard ~ time, main=expression(paste("Cox PH-estimate ", hat(Lambda)[g](t), " per group")),
-     type="s", ylim=c(0, 5), xlab="t", ylab="cumulative hazard", lwd=2, data=Lambda0A)
+plot(hazard ~ time, main=expression(paste("Cox PH-estimate ", 
+    hat(Lambda)[g](t), " per group")),
+     type="s", ylim=c(0, 5), xlab="t",
+    ylab="cumulative hazard", lwd=2, data=Lambda0A)
 lines(Lambda0A$time, Lambda0B, lwd=2, col="red")
 lines(Lambda0A$time, Lambda0C, lwd=2, col="green")
 legend(x="bottomright", lwd=2, col=1:3, legend=LETTERS[1:3])
@@ -7472,16 +7533,20 @@ plot(czph)
 
 ####影响分析(Influential observations)
 ```{r}
-dfbetas <- residuals(coxph(surv~Clinic+Prison,data=addicts), type="dfbetas")
+dfbetas <- residuals(coxph(surv~Clinic+Prison,data=addicts),
+                     type="dfbetas")
 par(mfrow=c(1, 2))
-plot(dfbetas[ , 1], type="h", main="DfBETAS for Clinic", ylab="DfBETAS", lwd=2)
-plot(dfbetas[ , 2], type="h", main="DfBETAS for Prison", ylab="DfBETAS", lwd=2)
+plot(dfbetas[ , 1], type="h", main="DfBETAS for Clinic", 
+     ylab="DfBETAS", lwd=2)
+plot(dfbetas[ , 2], type="h", main="DfBETAS for Prison", 
+     ylab="DfBETAS", lwd=2)
 ```
 
 ####对数线性假设(Linearity of log hazard)
 对自变量是连续性变量，需检测其线性的假设
 ```{r}
-resMart <- residuals(coxph(surv~Clinic+Dose,data=addicts), type="martingale")
+resMart <- residuals(coxph(surv~Clinic+Dose,data=addicts), 
+                     type="martingale")
 par(mfrow=c(1, 1))
 plot(addicts$Dose, resMart, main="Martingale-residuals for Dose",
      xlab="Dose", ylab="Residuen", pch=20)
@@ -7598,12 +7663,13 @@ wilcox.test(IQ, alternative="greater", mu=medH0, conf.int=TRUE)
 P值小于0.05，可以认为这10名儿童的智力大于当地智力中位数110。
 
 ##两独立样本(Two independent samples)
-###符合检验(Sign-test)
+###符号检验(Sign-test)
 例 在某项研究中，经随机抽样获得甲乙两组病人的血尿素氮(BUN)mmol/L，甲组:4.98  3.90  4.02  0.68  4.98  5.04 1.20  2.64  6.23  3.00,乙组：4.17 4.95 3.96 3.59 4.89 3.03 3.71 5.91 5.55 6.29 4.82 3.90 6.11，试比较甲乙组病人血尿素氮(BUN)的含量有无差别？
 ```{r}
 Nj  <- c(10, 13)
 x <- c(4.98,3.90,4.02,0.68,4.98,5.04,1.20,2.64,6.23,3.00)
-y <- c(4.17,4.95,3.96,3.59,4.89,3.03,3.71,5.91,5.55,6.29,4.82,3.90,6.11)
+y <- c(4.17,4.95,3.96,3.59,4.89,3.03,3.71,5.91,5.55,6.29,
+       4.82,3.90,6.11)
 wIndDf <- data.frame(DV=c(x, y),
                      IV=factor(rep(1:2, Nj), labels=LETTERS[1:2]))
 median_test(DV ~ IV, distribution="exact", data=wIndDf)
@@ -7636,8 +7702,10 @@ P值大于0.05，接受原假设，认为该工厂的尿氟含量高于当地正
 例 某研究者欲研究保健食品对小鼠抗疲劳作用，将同种属的小鼠按性别和年龄相同、体重相近配成对子，共10对，并将每对中的两只小鼠随机分到保健食品两个不同的剂量组，过一定时期将小鼠杀死，测得10对小鼠肝糖原含量（mg/100g）中剂量组620.16 866.50 641.22 812.91 738.96 899.38 760.78 694.95 749.92 793.94 高剂量组958.47 838.42 788.90 815.20 783.17 910.92 758.49 870.80 862.26 805.48，问不同剂量组的小鼠肝糖原含量有无差别？
 
 ```{r}
-x <- c(620.16,866.50,641.22,812.91,738.96,899.38,760.78,694.95,749.92,793.94)
-y <- c(958.47,838.42,788.90,815.20,783.17,910.92,758.49,870.80,862.26,805.48)
+x <- c(620.16,866.50,641.22,812.91,738.96,899.38,
+       760.78,694.95,749.92,793.94)
+y <- c(958.47,838.42,788.90,815.20,783.17,910.92,
+       758.49,870.80,862.26,805.48)
 wilcox.test(x,y,paired = T)
 ```
 P值小于0.05，可以认为该保健食品的不同剂量对小鼠肝糖原含量的作用不同。
@@ -7646,7 +7714,8 @@ P值小于0.05，可以认为该保健食品的不同剂量对小鼠肝糖原含
  
 ```{r}
 x <- c(4.98,3.90,4.02,0.68,4.98,5.04,1.20,2.64,6.23,3.00)
-y <- c(4.17,4.95,3.96,3.59,4.89,3.03,3.71,5.91,5.55,6.29,4.82,3.90,6.11)
+y <- c(4.17,4.95,3.96,3.59,4.89,3.03,3.71,5.91,5.55,
+       6.29,4.82,3.90,6.11)
 wilcox.test(x,y,exact = FALSE,correct =F) 
 wilcox.test(x,y,exact = FALSE) 
 ```
@@ -7683,9 +7752,12 @@ D  <- c(117, 125, 140, 109, 128, 137, 110, 138, 127, 141, 119, 148)
 Nj   <- c(length(A), length(B), length(C), length(D))
 KWdf <- data.frame(DV=c(A,B,C,D),
                    IV=factor(rep(1:4, Nj), labels=c("A", "B", "C", "D")))
-kruskal.test(DV ~ IV, data=KWdf) #stats包
-kruskal_test(DV ~ IV, distribution=approximate(B=9999), data=KWdf) #coin包
-pairwise.wilcox.test(KWdf$DV, KWdf$IV, p.adjust.method="holm") #两两比较
+#stats包
+kruskal.test(DV ~ IV, data=KWdf) 
+#coin包
+kruskal_test(DV ~ IV, distribution=approximate(B=9999), data=KWdf)
+#两两比较
+pairwise.wilcox.test(KWdf$DV, KWdf$IV, p.adjust.method="holm") 
 ```
 P值均大于0.05，不能拒绝原假设，可以认为四组的智力没有差异。两两比较结果，没有智力差异。
 permutation检验即置换检验，在当样本量不够大，样本分布未知的情况下，用置换检验模拟出样本均值分布，然后再进行比较。
@@ -7696,7 +7768,8 @@ P值均大于0.05，不能拒绝原假设，可以认为四组的智力没有差
 
 例 三名评分员对10名测试的分别打分如下：A：1 2 5 3 2 1 1 3 2 1，B：4 3 6 5 2 6 1 6 5 4，C：9,6,7,7,5,1,8,9,6,5，问不同的评分员之间是否有差异？
 ```{r}
-Value <- c(1,2,5,3,2,1,1,3,2,1,4,3,6,5,2,6,1,6,5,4,9,6,7,7,5,1,8,9,6,5)
+Value <- c(1,2,5,3,2,1,1,3,2,1,4,3,6,5,2,6,1,6,5,4,9,6,
+           7,7,5,1,8,9,6,5)
 Group <- factor(c(rep(1,10),rep(2,10),rep(3,10)))
 data <- data.frame(Group, Value)
 
@@ -7844,17 +7917,21 @@ D <- c(-3.23,2.00,4.43,3.95,2.54,3.45,0.66,0.91,0.06,-1.47)
 Pdf <- data.frame(id=factor(rep(1:10, times=4)),
                   DV=c(A,B,C,D),
                   IV=ordered(rep(LETTERS[1:4], each=10)))
-PageTest(DV ~ IV | id, data=Pdf) #DescTools包
-friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Pdf) #coin包
+#DescTools包
+PageTest(DV ~ IV | id, data=Pdf) 
+#coin包
+friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Pdf) 
 ```
 p值大于0.05，可以认为四种不同的测试方式之间没有差异。
 
 ##二项分布检验(Binomial test)
 二项分布检验是对二分类变量的拟合优度检验，它考察每个类别中观察值的频数与特定二项分布下的预期频数间是否存在统计学差异。在二项分布检验中，实际上采用的和K-S检验的原理相同，只是这里主要使用的是二分变量，是一个离散分布的检验情况。
+
 ###单侧(One-sided)
 例 某研究检测7份血清标本，乙肝HBsAg的抗体结果如下："+", "+", "-", "+", "-", "+", "+"，问研究的血清标本阳性率是否小于等于0.25？
 ```{r}
-DV   <- factor(c("+", "+", "-", "+", "-", "+", "+"), levels=c("+", "-"))
+DV   <- factor(c("+", "+", "-", "+", "-", "+", "+"),
+               levels=c("+", "-"))
 N    <- length(DV)
 (tab <- table(DV))
 pH0 <- 0.25
@@ -7874,7 +7951,8 @@ P值小于0.05，可以认为研究的血清标本阳性率时候不等于0.25�
 ###置信区间(Confidence intervals)
 例 某研究检测7份血清标本，乙肝HBsAg的抗体结果如下："+", "+", "-", "+", "-", "+", "+"，问研究的血清标本阳性率和其置信区间？
 ```{r}
-DV   <- factor(c("+", "+", "-", "+", "-", "+", "+"), levels=c("+", "-"))
+DV   <- factor(c("+", "+", "-", "+", "-", "+", "+"),
+               levels=c("+", "-"))
 N    <- length(DV)
 tab <- table(DV)
 BinomCI(tab[1], sum(tab), method="wilson")
@@ -8054,27 +8132,40 @@ P值大于0.05，可以认为影像学诊断和确诊结果没有差别。
 
 ###灵敏度、特异度等(Prevalence, sensitivity, specificity, CCR, F-score)
 ```{r}
-TN <- c11 <- contT1[1, 1]       ## true negative 真阴性
-TP <- c22 <- contT1[2, 2]       ## true positive / hit 真阳性
-FP <- c12 <- contT1[1, 2]       ## false positive 假阳性
-FN <- c21 <- contT1[2, 1]       ## false negative / miss 假阴性
+## true negative 真阴性
+TN <- c11 <- contT1[1, 1]       
+## true positive / hit 真阳性
+TP <- c22 <- contT1[2, 2]       
+## false positive 假阳性
+FP <- c12 <- contT1[1, 2]       
+## false negative / miss 假阴性
+FN <- c21 <- contT1[2, 1]       
 
-(prevalence <- sum(contT1[2, ]) / sum(contT1)) #盛行率
-(sensitivity <- recall <- TP / (TP+FN))  #灵敏度
-(specificity <- TN / (TN+FP))  #特异度
-(relevance <- precision <- TP / (TP+FP)) #阳性预测值
+#盛行率
+(prevalence <- sum(contT1[2, ]) / sum(contT1))
+#灵敏度
+(sensitivity <- recall <- TP / (TP+FN))
+#特异度
+(specificity <- TN / (TN+FP))  
+#阳性预测值
+(relevance <- precision <- TP / (TP+FP)) 
 #正确分类率 accuracy = (TP + TN)/(TP + FP + FN + TN)
 (CCR <- sum(diag(contT1)) / sum(contT1)) 
-(Fval <- 1 / mean(1 / c(precision, recall))) #F得分 = 2*TP /(2*TP + FP + FN) % 
+#F得分 = 2*TP /(2*TP + FP + FN) % 
+(Fval <- 1 / mean(1 / c(precision, recall))) 
 ```
 
 ### OR值、相对危险度等(Odds ratio, Yule's Q and risk ratio)
 ```{r}
-(OR <- OddsRatio(contT1, conf.level=0.95)) # OR值
-YuleQ(contT1)  ## Goodman-Kruskal γ值，属于2×2四格表的列联比例函数
-RelRisk(contT1) #相对危险度
+# OR值
+(OR <- OddsRatio(contT1, conf.level=0.95))
+## Goodman-Kruskal γ值，属于2×2四格表的列联比例函数
+YuleQ(contT1)  
+#相对危险度
+RelRisk(contT1) 
 (risk    <- prop.table(contT1, margin=1))
-(relRisk <- risk[1, 1] / risk[2, 1]) #相对危险度
+#相对危险度
+(relRisk <- risk[1, 1] / risk[2, 1]) 
 ```
 
 ###(r×c)列联表
@@ -8123,9 +8214,10 @@ MHC 检验在存在第三个类别变量的情况下有条件地检验两个二�
 例 检验在A、B两组组别因素存在的情况下，性别和工作而分类变量的关联度
 ```{r}
 set.seed(123)
-myDf <- data.frame(work =factor(sample(c("home", "office"), 10, replace=TRUE)),
-                   sex=factor(sample(c("f", "m"),10, replace=TRUE)),
-                   group=factor(sample(c("A", "B"), 10, replace=TRUE)))
+myDf <- data.frame(work =factor(sample(c("home", "office"), 
+                                       10, replace=TRUE)),
+        sex=factor(sample(c("f", "m"),10, replace=TRUE)),
+        group=factor(sample(c("A", "B"), 10, replace=TRUE)))
 tab3 <- xtabs(~ work + sex + group, data=myDf)
 tab3
 cmh_test(tab3, distribution=approximate(B=9999))
@@ -8251,7 +8343,8 @@ mydata <- table2flat(mytable)
 cTab    <- table(mydata$pre, mydata$post)
 addmargins(cTab)
 mcnemar.test(cTab, correct=FALSE)
-symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
+#coin包
+symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) 
 ```
 P值大于0.05，不但能认为治疗前后的症状有差异。
 例 研究人员将患霍奇金淋巴瘤的病人和非病人按同性别及年龄在5岁以内的条件进行配对，共配对85对病人。两组人群中扁桃体切除情况如下，试问配对的两组人群扁桃体切除率是否有差别？
@@ -8279,16 +8372,24 @@ P值大于0.05，不能认为两组人群扁桃体切除率有差异。
 kappa.test <- function(x)
 {
   N=sum(x)
-  Po=sum(diag(x)/N) #观察到的一致数
-  mr=apply(x,1,sum) #行边际
+  #观察到的一致数
+  Po=sum(diag(x)/N) 
+  #行边际
+  mr=apply(x,1,sum) 
   mr=mr/N
-  mc=apply(x,2,sum) #列边际
+  #列边际
+  mc=apply(x,2,sum) 
   mc=mc/N
-  Pe=sum(mc * mr) #期望一致数
-  k=(Po-Pe)/(1-Pe) #kappa统计量
-  se_k = sqrt((Pe+Pe^2-sum(mr*mc*(mr+mc)))/(N*(1-Pe)^2)) # kappa统计量的标准误
-  z=k/se_k #检验统计量
-  p.value=1-pnorm(z) # p值
+   #期望一致数
+  Pe=sum(mc * mr)
+  #kappa统计量
+  k=(Po-Pe)/(1-Pe) 
+  # kappa统计量的标准误
+  se_k = sqrt((Pe+Pe^2-sum(mr*mc*(mr+mc)))/(N*(1-Pe)^2)) 
+  #检验统计量
+  z=k/se_k 
+  # p值
+  p.value=1-pnorm(z) 
   res=list(kappa=k,se_k=se_k,p.value=p.value,z=z)
 }
 
@@ -8317,8 +8418,10 @@ mytable <- as.data.frame(cbind(A,B,Freq))
 mydata <- table2flat(mytable)
 cTab  <- table(mydata$A, mydata$B)
 addmargins(cTab)
-mcnemar.test(cTab) #对于大于2*2的列联表mcnemar.test自动采用Bowke检验
-symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) #coin包
+#对于大于2*2的列联表mcnemar.test自动采用Bowke检验
+mcnemar.test(cTab) 
+#coin包
+symmetry_test(cTab, teststat="quad", distribution=approximate(B=9999)) 
 ```
 P值大于0.05，不能认为两医生的诊断有差异。
 
@@ -8386,16 +8489,17 @@ coin函数中，y和x是数值变量，A和B是分类因子，C是类别型区�
 
 例 某医院欲研究A、B两种降血脂药物对家兔血清肾素血管紧张素转化酶（ACE）的影响，将家兔随机分为三组，均喂以高脂饮食，分别给予不同的降血脂药物。一定时间后测定家兔血清ACE浓度（u/ml），A组（45 44 43 47 48 44 46 44 40 45 42 40 43 46 47 45 46 45 43 44），B组（45 48 47 43 46 47 48 46 43 49 46 43 47 46 47 46 45 46 44 45 46 44 43 42 45），问两组家兔血清ACE浓度是否相同？
 ```{r}
-a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 46, 47, 45, 
-    46, 45, 43, 44)
-b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 46, 47, 46, 
-    45, 46, 44, 45, 46, 44, 43, 42, 45)
+a <- c(45, 44, 43, 47, 48, 44, 46, 44, 40, 45, 42, 40, 43, 
+       46, 47, 45, 46, 45, 43, 44)
+b <- c(45, 48, 47, 43, 46, 47, 48, 46, 43, 49, 46, 43, 47, 
+       46, 47, 46, 45, 46, 44, 45, 46, 44, 43, 42, 45)
 
 dfCRp <- data.frame(length = c(a, b), site = factor(c(rep("1", 20), 
     rep("2", 25))))
 
 set.seed(123)
-ot <- oneway_test(length ~ site, data = dfCRp,distribution=approximate(B=9999))
+ot <- oneway_test(length ~ site, data = dfCRp,
+                  distribution=approximate(B=9999))
 ot
 ```
 
@@ -8429,7 +8533,7 @@ N <- 10
 pre <- c(86,120,82,137,96,104,142,86,77,82)
 post <- c(75,107,88,111,111,132,67,115,103,136)
 tDepDf <- data.frame(DV=c(pre, post),
-                     IV=factor(rep(0:1, each=N), labels=c("pre", "post")))
+         IV=factor(rep(0:1, each=N), labels=c("pre", "post")))
 id     <- factor(rep(1:N, times=2))
 set.seed(123)
 oneway_test(DV ~ IV | id, alternative="less", 
@@ -8452,7 +8556,8 @@ CMH检验可以对一些分层变量进行调整，从而获得反应率的总�
 例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）、性别（Sex）和改善情况（Improved），在性别分层的情况下治疗情况和改善情况是否独立？
 ```{r}
 set.seed(123)
-cmh_test(Treatment~Improved|Sex,distribution=approximate(B=9999),data=Arthritis)
+cmh_test(Treatment~Improved|Sex,
+         distribution=approximate(B=9999),data=Arthritis)
 ```
 P值较小，分性别来看，治疗情况和改善情况并不独立。
 
@@ -8460,7 +8565,8 @@ P值较小，分性别来看，治疗情况和改善情况并不独立。
 例 vcd包中Arthritis数据集包含了关节炎的治疗情况（Treatment）和改善情况（Improved），问治疗情况和改善情况是否存在线性趋势？
 ```{r}
 set.seed(123)
-lbl_test(Treatment~Improved,distribution=approximate(B=9999),data=Arthritis)
+lbl_test(Treatment~Improved,
+         distribution=approximate(B=9999),data=Arthritis)
 ```
 P值较小，治疗情况和改善情况存在线性趋势。
 
@@ -8501,8 +8607,10 @@ spearman_test(x~y,data=df,distribution=approximate(B=9999))
 Wilcoxon符号秩检验适用于成对观测的数据，主要用于成对比较，比传统的单独用正负号的检验更加有效。
 例 某医生为了探讨缺碘地区母婴TSH水平的关系，应用免疫放射分析测定了160名孕妇（15-17周）及分娩时脐带血TSH水平（mU/L），现随机抽取10对数据，母血TSH1.21 1.30 1.39	1.42 1.47 1.56 1.68	1.72 1.98	2.1,脐血TSH3.90 4.5 4.20	4.83 4.16 4.93 4.32	4.99 4.7 5.2，试对母血TSH水平与新生儿脐带血TSH水平进行相关分析。
 ```{r}
-x <- c(1.21,3.90,1.30,4.50,1.39,4.20,1.42,4.83,1.47,4.16)
-y <- c(1.56,4.93,1.68,4.32,1.72,4.99,1.98,4.70,2.10,5.20)
+x <- c(1.21,3.90,1.30,4.50,1.39,4.20,1.42
+       ,4.83,1.47,4.16)
+y <- c(1.56,4.93,1.68,4.32,1.72,4.99,1.98
+       ,4.70,2.10,5.20)
 df <- as.data.frame(cbind(x,y))
 
 set.seed(123)
@@ -8546,7 +8654,8 @@ Fdf <- data.frame(id=factor(rep(1:N, times=P)),
                   IV=factor(rep(1:P, each=N),
                             labels=LETTERS[1:P]))
 set.seed(123)
-friedman_test(DV ~ IV | id, distribution=approximate(B=9999), data=Fdf)
+friedman_test(DV ~ IV | id, 
+              distribution=approximate(B=9999), data=Fdf)
 ```
 P值小于0.05，拒绝原假设，可以认为四种不同的测试方式之间有差异。
 
@@ -8614,7 +8723,8 @@ age sbp dbp wbc   mtfc
 
 ```{r warning=FALSE}
 records <- read.table("example1")
-ex <- rename(records, c("V1"="age","V2"="sbp","V3"="dbp","V4"="wbc","V5"="mtfc"))
+ex <- rename(records, c("V1"="age","V2"="sbp",
+                        "V3"="dbp","V4"="wbc","V5"="mtfc"))
 set.seed(123)
 fit <- lmp(mtfc~age+sbp+log10(wbc),data=ex,perm = "Prob")
 summary(fit)
@@ -8633,7 +8743,8 @@ getRegr <- function(dat, idx) {
 }
 
 (bsRegr <- boot(ex, statistic=getRegr, R=999))
-boot.ci(bsRegr, conf=0.95, type="bca", index=1)$bca #需要指定索引参数
+ #需要指定索引参数
+boot.ci(bsRegr, conf=0.95, type="bca", index=1)$bca
 ```
 
 
@@ -8697,11 +8808,14 @@ getAnovaWild <- function(dat, idx) {
   Ur <- sample(c(-1, 1), size=n, replace=TRUE, prob=c(0.5, 0.5))
   
   ## 2nd option for choosing random variate U
-  Uf <- sample(c(-(sqrt(5) - 1)/2, (sqrt(5) + 1)/2), size=n, replace=TRUE,
-               prob=c((sqrt(5) + 1)/(2*sqrt(5)), (sqrt(5) - 1)/(2*sqrt(5))))
-  
-  Ystar <- Yhat + (Er*Ur)[idx]          ## for E* with Rademacher-variables
-  # Ystar <- Yhat + (Er*Uf)[idx]        ## for E* with 2nd option
+  Uf <- sample(c(-(sqrt(5) - 1)/2, (sqrt(5) + 1)/2), 
+               size=n, replace=TRUE,
+               prob=c((sqrt(5) + 1)/(2*sqrt(5)), 
+                      (sqrt(5) - 1)/(2*sqrt(5))))
+  ## for E* with Rademacher-variables
+  Ystar <- Yhat + (Er*Ur)[idx]          
+  # Ystar <- Yhat + (Er*Uf)[idx]       
+  ## for E* with 2nd option
   anBS  <- anova(lm(Ystar ~ site, data=dat))
   anBS["site", "F value"]
 }
@@ -8759,8 +8873,11 @@ par(mfrow=c(1,1))
 data(Affairs,package="AER")
 Affairs$ynaffair[Affairs$affairs > 0] <- 1
 Affairs$ynaffair[Affairs$affairs==0] <- 0
-Affairs$ynaffair <- factor(Affairs$ynaffair,levels=c(0,1),labels=c("No","Yes"))
-fit<- glm(Affairs$ynaffair~gender+age+yearsmarried+children+religiousness+education+occupation+rating,data=Affairs,family=binomial())
+Affairs$ynaffair <- factor(Affairs$ynaffair,
+                           levels=c(0,1),labels=c("No","Yes"))
+fit<- glm(Affairs$ynaffair~gender+age+yearsmarried+
+            children+religiousness+education+occupation+rating,
+          data=Affairs,family=binomial())
 summary(fit)
 set.seed(123)
 PermTest(fit,B=250)
@@ -8772,7 +8889,8 @@ yearsmarried、religiousness和rating三个变量的P值较小，可能是婚外
 
 ```{r}
 data(breslow.dat,package="robust")
-fitm <- glm(breslow.dat$sumY~Base+Age+Trt,data=breslow.dat,family = poisson())
+fitm <- glm(breslow.dat$sumY~Base+Age+Trt,
+            data=breslow.dat,family = poisson())
 summary(fitm)
 set.seed(123)
 PermTest(fitm,B=250)
@@ -8808,10 +8926,11 @@ bs <- function(formula,data,indices){
 }
 
 result <- boot(data = Affairs,statistic = bs,R=1000,
-               formula=ynaffair~gender+age+yearsmarried+
-                 children+religiousness+education+occupation+rating)
+         formula=ynaffair~gender+age+yearsmarried+
+         children+religiousness+education+occupation+rating)
 print(result)
-#print(result,index = 8) #多个统计量，添加索引
+#多个统计量，添加索引
+#print(result,index = 8) 
 plot(result,index = 8)
 
 boot.ci(result,type = "perc",index = 8)
@@ -8825,7 +8944,8 @@ type参数有norm(normal approximation方法)、basic(basic bootstrap方法)、s
 DVm<-c(20.5, 19.8, 19.7, 20.4, 20.1, 20.0, 19.0, 19.9)
 DVf<-c(20.7, 19.8, 19.5, 20.8, 20.4, 19.6, 20.2)
 tDf <- data.frame(DV=c(DVm, DVf),
-                  IV=factor(rep(c("m", "f"), c(length(DVm), length(DVf)))))
+                  IV=factor(rep(c("m", "f"), 
+                  c(length(DVm), length(DVf)))))
 getDM <- function(dat, idx) {
   Mfm <- aggregate(DV ~ IV, data=dat, subset=idx, FUN=mean)
   -diff(Mfm$DV)
@@ -8836,7 +8956,8 @@ boot.ci(bsTind, conf=0.95, type=c("basic", "bca"))
 ```
 参数法
 ```{r}
-tt <- t.test(DV ~ IV, alternative="two.sided", var.equal=TRUE, data=tDf)
+tt <- t.test(DV ~ IV, alternative="two.sided", 
+             var.equal=TRUE, data=tDf)
 tt$conf.int
 ```
 
