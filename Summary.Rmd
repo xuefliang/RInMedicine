@@ -1,5 +1,5 @@
 ---
-classoption: "hyperref`r if (.Platform$OS.type != 'windows') ',nofonts'`"
+classoption: "hyperref"
 documentclass: ctexart
 header-includes:
 - \usepackage{fancyhdr}
@@ -15,6 +15,7 @@ output:
     number_sections: yes
     template: /home/xuefliang/R/x86_64-pc-linux-gnu-library/3.2/rticles/rmarkdown/templates/ctex/resources/default.latex
     toc: yes
+    toc_depth: 3
   html_document:
     toc: yes
   word_document: default
@@ -146,8 +147,6 @@ tex -v
 #字体查看
 fc-list :lang=zh-cn
 ```
-
-由于水平有限，书中难免有错误和疏漏之处，诚恳地期望各位专家和读者批评指正，深表感谢。
 
 \pagebreak
 
