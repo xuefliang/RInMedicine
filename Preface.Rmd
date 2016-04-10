@@ -19,10 +19,7 @@ sudo apt-get install build-essential gfortran libxml2-dev
 libcurl4-openssl-dev libfreetype6-dev libbz2-dev liblapack-dev  
 libpcre++-dev liblzma-dev r-cran-rcpp r-cran-rjava openjdk-7-* 
   libgmp3-dev libmysql++-dev libmpfr-dev libgdal1-dev libproj-dev 
-libglu1-mesa-dev r-cran-boot r-cran-class r-cran-cluster 
-r-cran-codetools r-cran-foreign r-cran-kernsmooth r-cran-lattice 
-r-cran-mass r-cran-matrix r-cran-mgcv r-cran-nlme r-cran-nnet 
-r-cran-rpart r-cran-spatial r-cran-survival r-cran-rodbc
+libglu1-mesa-dev 
 
 #Step 1: Update Sources.List File
 #- Edit the sources.list file
